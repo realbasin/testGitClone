@@ -14,6 +14,7 @@
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>artdialog/dialog-plus-min.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/layindex.js?date=20174281530"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js"></script>
+<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.js"></script>
 </head>
 <body class="indexbody">
   <a class="btn-paograms" onclick="togglePopMenu();"></a>

@@ -16,6 +16,7 @@
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/laymain.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>switchery/switchery.min.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js"></script>
+<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.js"></script>
 <!--[if lt IE 9]>
       <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5.js"></script>
 <![endif]-->
