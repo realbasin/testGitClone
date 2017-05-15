@@ -1,0 +1,13 @@
+<?php
+//缓存语言表
+//lang['cache_'缓存key]=缓存名称
+//lang['cache_'+缓存key+'_des']=缓存说明
+$lang['cache_setting_config']='系统配置';
+$lang['cache_setting_config_des']='系统核心配置表缓存，一般无需清理';
+$lang['cache_watermark_fonts']='水印字体';
+$lang['cache_watermark_fonts_des']='图片水印字体缓存';
+$lang['cache_wechat_menu']='微信菜单';
+$lang['cache_wechat_menu_des']='微信自定义菜单与个性菜单缓存';
+$lang['cache_sor_code']='客户端来源';
+$lang['cache_sor_code_des']='客户端来源列表缓存';
+?>

@@ -1,0 +1,99 @@
+
+.app{min-height:420px; margin-top:20px; min-width:970px; position:relative; padding-bottom:100px;}
+.app>div{float:left;}
+.app .panel{background-color:#F8F8F8;}
+.app .red{color:#d9534f;}
+.app .green{color:#008000;}
+
+.app .app-preview{width:350px; border:1px solid #e5e5e5; border-radius:18px 18px 0 0;}
+.app .app-preview .app-header{height:70px; background:url('../images/iphone_head.png') center center no-repeat;}
+.app .app-preview .app-content{width:322px; margin:0 auto; padding-bottom:11px; border:1px solid #c5c5c5; min-height:300px; background-color:#f9f9f9;}
+
+
+.app .app-preview .title{position:relative;width: 100%;}
+.app .app-preview .title h1{margin:0; padding:18px 60px 0 60px; height:64px; line-height:46px; font-size:16px; color:#fff; text-align: center; background:url('../images/titlebar.png') no-repeat;}
+.app .app-preview .title h1 span{display:inline-block; width:200px; height:46px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+.app .app-preview .app-region{position:relative;}
+.app .app-preview .app-region .arrow-top,.app .app-preview .arrow-top:after{width: 0; height: 0; border-style: solid; border-width: 0 8px 10px 8px; border-color: transparent transparent  #d1d1d1 transparent; position: absolute; left: 50%; top: -10px;}
+.app .app-preview .app-region .arrow-top:after{content: ""; border-bottom-color: #f8f8f8; top: 1px; left:-8px; z-index:1;}
+.app .app-preview .app-region .panel{border-radius:0; position:relative; width:100%; border: 1px solid #666666;}
+.app .app-preview .app-region .panel .panel-body{padding:0 11px 4px 11px;}
+.app .app-preview .app-region .panel .panel-body h4,.app .app-side .app-add-item .addItem-wrap h4{height:40px; line-height:40px; font-size:14px; font-weight:bold;}
+.app .app-preview .app-region .panel .panel-body ul,.app .app-side .app-add-item .addItem-wrap ul{width:100%; margin: 0 auto;}
+.app .app-preview .app-region .panel .panel-body ul li,.app .app-side .app-add-item .addItem-wrap ul li{float: left; display: table; margin: 0 0 10px 5px; background: #fff;}
+.app .app-preview .app-region .app-add-filed a,.app .app-side .app-add-item .addItem-wrap .app-add-filed a {display:table-cell; width:60px; height:45px; text-align:center; box-sizing: border-box; white-space:normal; vertical-align:middle; line-height:14px; cursor:pointer; padding:6px 8px; color:#428bca;}
+
+.app .app-side{margin:0;}
+.app .app-side .panel-body{padding:12px 10px;}
+.app .app-side>div{position:relative; padding-bottom:20px; width:600px; margin-left:20px;}
+.app .app-side .card{padding:20px 0 20px 20px; margin:0 20px 20px 0; border:1px solid #ddd; background:#FFF;}
+.app .app-side .arrow-left,.app .app-side .arrow-left:after{width: 0; height: 0; border-style: solid; border-width: 8px 10px 8px 0; border-color: transparent #d1d1d1 transparent transparent; position: absolute; left: -10px; top: 19px;}
+.app .app-side .arrow-left:after{content: ""; border-right-color: #f8f8f8; left: 1px; top: -8px;}
+.app .app-side .card .divider{margin:15px 0; padding-right:30px; width:95%;border-top:1px solid #DDD;}
+.app .app-side .card .btns{display:none;}
+.app .app-side .card:hover .btns{display:block;}
+.custom-link .popover{width:360px; max-width:600px;}
+
+.conditionMenu .well h3,.publicAd .well h3{margin:0 ; font-size:16px; line-height:30px; font-weight:bold;}
+.conditionMenu .app .app-preview{border-radius:18px; padding-bottom:100px; position:relative;}
+.conditionMenu .app .app-preview:after{content:""; position:absolute; bottom:20px; left:145px; width:60px; height:60px; border:1px solid #ddd; border-radius:100%;}
+.conditionMenu .app .app-content{border-bottom:1px solid #c5c5c5; min-height:380px; position:relative; background:#fff;padding: 0;}
+.conditionMenu .alert{background:#f8f8f8; width:100%; margin-bottom:0;}
+
+.conditionMenu .app .nav-menu .nav-menu-wx{position:absolute; bottom:0; left:0; right:0; color:#333; text-align:center;}
+.conditionMenu .app .nav-menu a{display:block; height:100%;}
+.conditionMenu .app .nav-menu .nav-menu-wx{background:#FAFAFA; border-top:1px solid #e5e5e5;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-home{-webkit-box-sizing:border-box; -moz-box-sizing:border-box; box-sizing:border-box; height:100%; float:left; display:block; text-align:center; line-height:44px;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-home i{color:#737373;  font-size:30px; margin-top:4.5px;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-group i{color:#888; display:inline-block; width:12px; height:12px; line-height:14px; text-align:center; font-size:14px; }
+.conditionMenu .app .nav-menu .nav-menu-wx.has-nav-0 .nav-home{width:100%;}
+.conditionMenu .app .nav-menu .nav-menu-wx.has-nav-1 .nav-home,.conditionMenu .app .nav-menu .nav-menu-wx.has-nav-2 .nav-home,.conditionMenu .app .nav-menu .nav-menu-wx.has-nav-3 .nav-home{width:16%;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-group{width:100%; float:left;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-group .nav-group-item{position:relative; float:left; display:block; height:100%; line-height:44px; text-align:center; border-left:1px solid #e5e5e5;box-sizing:border-box;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-group .nav-group-item.active{border:1px solid #0000FF;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-group .nav-group-item.active span{
+	display: block;
+    position: absolute;  
+    width: 16px;
+    height: 16px;
+    right:0;
+    top: 0;
+    background-image: url(../images/delete.png);
+    cursor: pointer;
+}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-group .nav-group-item a{color:#333; text-shadow: 0 0 2px #f5f5f5; text-align:center; overflow:hidden; text-overflow:ellipsis;text-decoration:none;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-group .nav-group-item.open dl{display: block;}
+.conditionMenu .app .nav-menu .nav-menu-wx.has-nav-1 .nav-group-item{width:100%;}
+.conditionMenu .app .nav-menu .nav-menu-wx.has-nav-2 .nav-group-item{width:50%;}
+.conditionMenu .app .nav-menu .nav-menu-wx.has-nav-3 .nav-group-item{width:33.3%;}
+.conditionMenu .app .nav-menu .nav-menu-wx .nav-group .dropup{position:relative;}
+.conditionMenu .app .nav-menu .nav-menu-wx dl{display:block; position:absolute; z-index:220; bottom:40px; left:50%; width:85px; margin-left:-45px; min-height:40px; background:#fff; border:1px solid #afaeaf; border-radius:5px; -webkit-box-shadow:inset 0 0 3px #fff;}
+.conditionMenu .app .nav-menu .nav-menu-wx dl:before, .conditionMenu .app .nav-menu .nav-menu-wx dl:after{content:""; display:inline-block; position:absolute; z-index:240; bottom:0;left:50%; width:0; height:0; border:8px solid red; border-color:#afaeaf transparent transparent transparent; margin-left:-8px; margin-bottom:-16px;}
+.conditionMenu .app .nav-menu .nav-menu-wx dl:after{z-index:241; border-color:#fff transparent transparent transparent; margin-bottom:-15px;}
+.conditionMenu .app .nav-menu .nav-menu-wx dl dd+dd{border-top:1px solid #ddd;}
+.conditionMenu .app .nav-menu .nav-menu-wx dl dd{margin:0; line-height:40px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.conditionMenu .app .nav-menu .nav-menu-wx dl dd:last-of-type{background:none;}
+.conditionMenu .app .nav-menu .nav-menu-wx dl dd.active{border:1px solid #0000FF;}
+.conditionMenu .app .nav-menu .nav-menu-wx dl dd.active span{
+	display: block;
+    position: absolute;  
+    width: 16px;
+    height: 16px;
+    right:0;
+    top: 0;
+    background-image: url(../images/delete.png);
+    cursor: pointer;
+}
+.conditionMenu .app .nav-menu .nav-menu-wx dl dd a{display:block; color:#4f4d4f; text-shadow:0 0 1px #fff;}
+.conditionMenu .app-side .card{margin:10px 0 5px 0 ; padding:15px;}
+.conditionMenu .app-side .app-conditionMenu-edit .first-nav h3{font-size:14px; font-weight:bold; margin-bottom:10px;}
+
+
+.radio-inline{
+	padding: 0 10px;
+}
+
+
+
+

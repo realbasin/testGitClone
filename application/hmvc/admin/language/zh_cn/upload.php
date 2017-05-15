@@ -1,0 +1,16 @@
+<?php
+$lang['file_move_fail']='移动文件失败';
+$lang['file_scan_fail']='木马文件';
+$lang['file_upload_null']='还没有上传任何文件';
+$lang['file_function_error']='系统没有finfo_open或finfo_file方法，请检查PHP设置';
+$lang['file_move_target_fail']='文件保存路径错误';
+$lang['file_move_target_permission_fail']='上传文件夹没有写入权限';
+$lang['file_exceeds_size']='上传文件大小超过限制';
+$lang['file_upload_partially']='文件上传错误';
+$lang['file_upload_didnt']='不允许上传的文件类型';
+$lang['missing_temporary_folder']='临时文件夹丢失';
+$lang['write_file_fail']='写入文件失败';
+$lang['unable_validate_extension']='无法验证文件类型';
+$lang['unset_mime']='配置文件没有设置该MIME类型';
+$lang['validate_mime_file_error']='无法验证文件类型，文件类型配置错误';
+?>
