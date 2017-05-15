@@ -11,6 +11,8 @@
  * --hmvc-disable-all 设置了此参数那么就会禁用所有hmvc项目的计划任务.
  * --hmvc-enable 设置只启用这些hmvc项目的计划任务,值是hmvc项目的模块名称,多个用逗号分割.比如:admin,api
  * --hmvc-disable 设置需要禁用的hmvc项目的计划任务,,值是hmvc项目的模块名称,多个用逗号分割.比如:admin,api
+ * 在控制台输入 php /home/wwwroot/admin.xiaoshushidai.cn/index.php task=task_CronService
+ * 就可以启用定时任务功能
  */
 class task_CronService extends Task_Single {
 	
