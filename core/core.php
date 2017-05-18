@@ -756,7 +756,7 @@ class Core {
 	 * 根据入口文件情况略做修改
 	 */ 
 	static function getUrl($contrl, $method = '', $module = '', $args = array()) {
-		$url = "/frame.php?" . \Base::getConfig() -> getRouterUrlControllerKey() . '=' . $contrl . '&' . \Base::getConfig() -> getRouterUrlMethodKey() . '=' . $method . '&' . \Base::getConfig() -> getRouterUrlModuleKey() . '=' . $module;
+		$url = "/?" . \Base::getConfig() -> getRouterUrlControllerKey() . '=' . $contrl . '&' . \Base::getConfig() -> getRouterUrlMethodKey() . '=' . $method . '&' . \Base::getConfig() -> getRouterUrlModuleKey() . '=' . $module;
 		if ($args) {
 			$url = $url . '&';
 			foreach ($args as $k => $v) {

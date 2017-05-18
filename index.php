@@ -198,6 +198,7 @@ define('ST_PATH', '/storage/');
 ;
 //设置全局缓存
 getGlobalConfig();
+//获取全局缓存之后，根据需要，需要做设置调整
 //启动
 \Base::run();
 ?>

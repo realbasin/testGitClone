@@ -57,7 +57,7 @@ function loadMenuTree(_islink) {
     //发送AJAX请求
     $.ajax({
         type: "get",
-        url: "/frame.php?c=index&a=get_nav&m=admin&time=" + Math.random(),
+        url: "/?c=index&a=get_nav&m=admin&time=" + Math.random(),
         dataType: "html",
         success: function (data, textStatus) {
             //将得到的数据插件到页面中

@@ -45,7 +45,7 @@
           <label><?php echo \Core::L('variable_value');?></label>
         </dt>
         <dd class="opt">
-          <input type="text" name="value" id="value" class="input-txt" value="" sucmsg=" "  >
+          <textarea type="text" rows="4" class="tarea" name="value" id="value" class="input-txt" sucmsg=" "  ></textarea>
           <span class="Validform_checktip"></span>
           <p class="notic"><?php echo \Core::L('variable_value_notice');?></p>
         </dd>
