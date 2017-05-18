@@ -191,7 +191,7 @@ $(function(){
         colModel : [
             {display: '<?php echo \Core::L("operate");?>', name : 'operation', width : 80, sortable : false, align: 'center', className: 'handle-m'},
             {display: '编号', name : 'id', width : 50, sortable : true, align: 'center'}, 
-			{display: '贷款名称', name : 'name', width : 60, sortable : true, align : 'center'},           
+			{display: '贷款名称', name : 'name', width : 60, sortable : true, align : 'center'},
 			{display: '借款人', name : 'user_id', width : 100, sortable : true, align: 'left'},
 			{display: '贷款金额', name : 'borrow_amount', width : 80, sortable : true, align: 'center'},
 			{display: '利率(%)', name : 'rate', width : 50, sortable : true, align: 'center'},
@@ -204,7 +204,7 @@ $(function(){
 			{display: '推荐', name : 'is_recommend', width : 30, sortable : true, align: 'center'},
 			{display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
 			{display: '预告', name : 'is_advance', width : 30, sortable : true, align: 'center'},
-			{display: '新手享', name : 'is_new', width : 40, sortable : true, align: 'center'},
+
 			{display: '启用', name : 'is_effect', width : 30, sortable : true, align: 'center'},
 			{display: '隐藏', name : 'is_hidden', width : 30, sortable : true, align: 'center'},
 			{display: '初审人', name : 'first_audit_admin_id', width : 80, sortable : true, align: 'center'},
