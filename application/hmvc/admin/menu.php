@@ -43,6 +43,46 @@ $menu = array(
 					),
 				)
 			),
+			3 => array(
+				'text' => '会员管理',
+				'subtext'=>'会员管理',
+				'img'=>'user',
+				'list' => array(
+					
+				)
+			),
+			4 => array(
+				'text' => '资金管理',
+				'subtext'=>'资金管理',
+				'img'=>'fund',
+				'list' => array(
+					
+				)
+			),
+			5 => array(
+				'text' => '待办事务',
+				'subtext'=>'待办事务',
+				'img'=>'backlog',
+				'list' => array(
+					
+				)
+			),
+			6 => array(
+				'text' => '数据统计',
+				'subtext'=>'数据统计',
+				'img'=>'statistics',
+				'list' => array(
+					
+				)
+			),
+			7 => array(
+				'text' => '前端设置',
+				'subtext'=>'前端设置',
+				'img'=>'front',
+				'list' => array(
+					
+				)
+			),
 		);
 
 return $menu;
