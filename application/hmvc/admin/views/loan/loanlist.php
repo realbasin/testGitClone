@@ -197,18 +197,18 @@ $(function(){
 			{display: '利率(%)', name : 'rate', width : 50, sortable : true, align: 'center'},
 			{display: '期数', name : 'repay_time', width : 40, sortable : true, align: 'center'},
 			{display: '还款方式', name : 'loantype', width : 60, sortable : true, align: 'center'},
-			{display: '投标状态', name : 'deal_status', width : 60, sortable : true, align: 'center'},
-			{display: '是否放款', name : 'is_has_loans', width : 50, sortable : true, align: 'center'},
-			{display: '流标返还', name : 'is_has_received', width : 50, sortable : true, align: 'center'},
-			{display: '投标数', name : 'buy_count', width : 40, sortable : true, align: 'center'},
-			{display: '推荐', name : 'is_recommend', width : 30, sortable : true, align: 'center'},
+			{display: '投标状态', name : 'loan_status', width : 60, sortable : true, align: 'center'},
+			{display: '是否放款', name : 'is_has_loans', width : 50, sortable : false, align: 'center'},
+			{display: '流标返还', name : 'is_has_received', width : 50, sortable : false, align: 'center'},
+			{display: '投标数', name : 'buy_count', width : 40, sortable : false, align: 'center'},
+			{display: '推荐', name : 'is_recommend', width : 30, sortable : false, align: 'center'},
 			{display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
-			{display: '预告', name : 'is_advance', width : 30, sortable : true, align: 'center'},
+			{display: '预告', name : 'is_advance', width : 30, sortable : false, align: 'center'},
 
 			{display: '启用', name : 'is_effect', width : 30, sortable : true, align: 'center'},
-			{display: '隐藏', name : 'is_hidden', width : 30, sortable : true, align: 'center'},
+			{display: '隐藏', name : 'is_hidden', width : 30, sortable : false, align: 'center'},
 			{display: '初审人', name : 'first_audit_admin_id', width : 80, sortable : true, align: 'center'},
-			{display: '复审人', name : 'admin2_id', width : 80, sortable : true, align: 'center'}
+			{display: '复审人', name : 'second_audit_admin_id', width : 80, sortable : true, align: 'center'}
             ],
         buttons : [
             {display: '<i class="fa fa-plus"></i> 新增贷款', name : 'add', bclass : 'add', title : '新增贷款', onpress : flexPress }
