@@ -43,7 +43,7 @@ class  controller_loan_loan extends controller_sysBase {
 		//当前页
 		$page = \Core::postGet('curpage');
 		//需要获取的字段
-		$fields = 'id,name,user_id,borrow_amount,rate,repay_time,loantype,deal_status,is_has_loans,is_has_received,buy_count,is_recommend,sor_code,is_advance,is_new,is_effect,is_hidden,first_audit_admin_id,admin2_id,repay_time_type';
+		$fields = 'id,name,user_id,borrow_amount,rate,repay_time,loantype,loan_status,sor_code,is_effect,first_audit_admin_id,repay_time_type,second_audit_admin_id';
 		//查询条件
 		$where = array();
 		//排序
@@ -56,7 +56,7 @@ class  controller_loan_loan extends controller_sysBase {
 		$where['is_delete']=0;
 		$where['publish_wait']=0;
 		//简易查询条件
-		if (\Core::post('query')) {
+		if (\Core::postGet('query')) {
 			$where[\Core::postGet('qtype') . " like"] = "%" . \Core::postGet('query') . "%";
 		}
 		//高级查询条件
@@ -90,11 +90,15 @@ class  controller_loan_loan extends controller_sysBase {
 		if(\Core::get('sor_code')!=null && \Core::get('sor_code')!='-1'){
 			$where['sor_code']=\Core::get('sor_code');
 		}
-		if(\Core::get('deal_status')!=null && \Core::get('deal_status')!='-1'){
+		if(\Core::get('loan_status')!=null && \Core::get('deal_status')!='-1'){
 			$where['deal_status']=\Core::get('deal_status');
 		}
+		//已迁移到loan_bid表 修改为根据流标状态获取贷款id，获取在该id数组中的贷款
 		if(\Core::get('is_has_received')!=null && \Core::get('is_has_received')!='-1'){
-			$where['is_has_received']=\Core::get('is_has_received');
+			$is_has_received =\Core::get('is_has_received');
+			$loanId = \Core::dao('loan_loanbid')->getIds($is_has_received);
+
+			$where['id '] = $loanId;
 		}
 		if(\Core::get('user_id')!=null && is_numeric(\Core::get('user_id'))){
 			$where['user_id like']="%".\Core::get('user_id')."%";
@@ -105,7 +109,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$orderby[\Core::postGet('sortname')] = \Core::postGet('sortorder');
 		}
 		
-		$data = \Core::dao('loan_deal') -> getFlexPage($page, $pagesize, $fields, $where, $orderby,'id');
+		$data = \Core::dao('loan_loanbase') -> getFlexPage($page, $pagesize, $fields, $where, $orderby,'id');
 		//处理返回结果
 		$json = array();
 		$json['page'] = $page;
@@ -117,25 +121,31 @@ class  controller_loan_loan extends controller_sysBase {
 		$userIds=array();
 		$adminFirstIds=array();
 		$adminSecondIds=array();
+		$loanIds = array();
+		if(!($data['rows'])) {
+			echo @json_encode($json);
+			exit;
+		}
 		foreach ($data['rows'] as $v) {
 			$userIds[]=$v['user_id'];
 			$adminFirstIds[]=$v['first_audit_admin_id'];
-			$adminSecondIds[]=$v['admin2_id'];
+			$adminSecondIds[]=$v['second_audit_admin_id'];
+			$loanIds[] = $v['id'];
 		}
 		$userDao=\Core::dao('user_user');
 		$adminDao=\Core::dao('sys_admin_admin');
-		
+		$loanbidDao = \Core::dao('loan_loanbid');
 		$userNames=$userDao->getUser($userIds,'id,user_name,real_name');
 		$firstAdminNames=$adminDao->getAdmin($adminFirstIds,'admin_id,admin_name,admin_real_name,admin_mobile');
 		$secondAdminNames=$adminDao->getAdmin($adminSecondIds,'admin_id,admin_name,admin_real_name,admin_mobile');
-		
-		
+		$loanInfos = $loanbidDao->getLoan($loanIds,'loan_id,is_has_loans,is_has_received,is_hidden,is_recommend,buy_count');
+
 		foreach ($data['rows'] as $v) {
 			$row = array();
 			$row['id'] = $v['id'];
 			$opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
 			$opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>编辑</a></li>";
-			if($v['deal_status']>=4)
+			if($v['loan_status']>=4)
 			{
 				$opration.="<li><a href='javascript:loan_repay_plan(".$v['id'].")'>还款计划</a></li>";
 				$opration.="<li><a href='javascript:loan_detail(".$v['id'].")'>投标详情和操作</a></li>";
@@ -152,18 +162,18 @@ class  controller_loan_loan extends controller_sysBase {
 			$row['cell'][] = $v['rate']."%";
 			$row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
 			$row['cell'][] = $loanBusiness->enumLoanType($v['loantype']);
-			$row['cell'][] = $loanBusiness->enumDealStatus($v['deal_status']);
-			$row['cell'][] = $v['is_has_loans']?\Core::L('yes'):\Core::L('no');
-			$row['cell'][] = $v['is_has_received']?\Core::L('yes'):\Core::L('no');
-			$row['cell'][] = $v['buy_count'];
-			$row['cell'][] = $v['is_recommend']?\Core::L('yes'):\Core::L('no');
+			$row['cell'][] = $loanBusiness->enumDealStatus($v['loan_status']);
+			$row['cell'][] = (\Core::arrayKeyExists($v['id'],$loanInfos)?\Core::arrayGet(\Core::arrayGet($loanInfos, $v['id']),'is_has_loans'):0)?\Core::L('yes'):\Core::L('no');
+			$row['cell'][] = (\Core::arrayKeyExists($v['id'],$loanInfos)?\Core::arrayGet(\Core::arrayGet($loanInfos, $v['id']),'is_has_received'):0)?\Core::L('yes'):\Core::L('no');
+			$row['cell'][] = \Core::arrayKeyExists($v['id'],$loanInfos)?\Core::arrayGet(\Core::arrayGet($loanInfos, $v['id']),'buy_count'):0;
+			$row['cell'][] = (\Core::arrayKeyExists($v['id'],$loanInfos)?\Core::arrayGet(\Core::arrayGet($loanInfos, $v['id']),'is_recommend'):0)?\Core::L('yes'):\Core::L('no');
 			$row['cell'][] = $loanBusiness->enumSorCode($v['sor_code']);
-			$row['cell'][] = $v['is_advance']?\Core::L('yes'):\Core::L('no');
-			$row['cell'][] = $v['is_new']?\Core::L('yes'):\Core::L('no');
+			$row['cell'][] = (\Core::arrayKeyExists($v['id'],$loanInfos)?\Core::arrayGet(\Core::arrayGet($loanInfos, $v['id']),'is_advance'):0)?\Core::L('yes'):\Core::L('no');
+			
 			$row['cell'][] = $v['is_effect']?\Core::L('yes'):\Core::L('no');
-			$row['cell'][] = $v['is_hidden']?\Core::L('yes'):\Core::L('no');
+			$row['cell'][] = (\Core::arrayKeyExists($v['id'],$loanInfos)?\Core::arrayGet(\Core::arrayGet($loanInfos, $v['id']),'is_hidden'):0)?\Core::L('yes'):\Core::L('no');
 			$row['cell'][] = \Core::arrayKeyExists($v['first_audit_admin_id'], $firstAdminNames)?\Core::arrayGet(\Core::arrayGet($firstAdminNames, $v['first_audit_admin_id'],''),'admin_real_name'):($v['first_audit_admin_id']=='-1'?'自动审核':'');
-			$row['cell'][] = \Core::arrayKeyExists($v['admin2_id'], $secondAdminNames)?\Core::arrayGet(\Core::arrayGet($secondAdminNames, $v['admin2_id'],''),'admin_real_name'):'';
+			$row['cell'][] = \Core::arrayKeyExists($v['second_audit_admin_id'], $secondAdminNames)?\Core::arrayGet(\Core::arrayGet($secondAdminNames, $v['second_audit_admin_id'],''),'admin_real_name'):'';
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}

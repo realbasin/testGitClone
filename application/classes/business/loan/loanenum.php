@@ -54,7 +54,9 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('sor_code',$sorcodeList);
 				}
 			}
-			return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):$sorcodeList;
+			//midify by zlz 201705181526 客户端来源为空时出现object对象字符串[object Object]
+			//return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):$sorcodeList;
+			return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):'';
 		}
 		
 		//还款天/月
