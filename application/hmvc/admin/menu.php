@@ -38,7 +38,9 @@ $menu = array(
 					array('link'=>'','text'=>$lang['loan'],
 						'sub'=>array(
 							array('link'=>'loan_loan,all','text'=>$lang['loan_all']),
-							array('link'=>'loan_loan,notice','text'=>$lang['loan_notice']),
+							//array('link'=>'loan_loan,notice','text'=>$lang['loan_notice']),
+							//add by zlz 20170518
+							array('link'=>'loan_loan,op_log','text'=>$lang['loan_op_log']),
 						)
 					),
 				)

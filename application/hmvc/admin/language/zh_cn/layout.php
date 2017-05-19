@@ -81,4 +81,6 @@ $lang['wechat_user_tag']='粉丝标签';
 $lang['loan_all']='全部贷款';
 $lang['loan_add']='新增贷款';
 $lang['loan_notice']='预告中贷款';
+//add by zlz 20170518
+$lang['loan_op_log'] = '审核日志列表';
 ?>

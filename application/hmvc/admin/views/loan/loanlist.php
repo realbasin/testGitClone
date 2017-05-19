@@ -64,22 +64,7 @@
               </label>
             </dd>
           </dl>
-          <dl>
-            <dt>贷款金额</dt>
-            <dd>
-              <label>
-                <input type="text" value="" name="borrow_amount" id="borrow_amount" class="s-input-txt" placeholder="输入贷款金额">
-              </label>
-            </dd>
-          </dl>
-          <dl>
-            <dt>利率</dt>
-            <dd>
-              <label>
-                <input type="text" value="" name="rate" id="rate" class="s-input-txt" placeholder="输入贷款利率">
-              </label>
-            </dd>
-          </dl>
+          
           <dl>
             <dt>贷款期数</dt>
             <dd>
@@ -109,19 +94,7 @@
               </select>
             </dd>
           </dl>
-          <dl>
-            <dt>投标类型</dt>
-            <dd>
-              <select class="class-select" id="cate_id" name="cate_id" value="-1">
-                <option value="-1">-全部类型-</option>
-                <?php if($dealcate){?>
-                <?php foreach($dealcate as $k=>$v){?>
-                	<?php echo "<option value='".$k."'>".$v['name']."</option>";?>
-                <?php }?>
-                <?php }?>
-              </select>
-            </dd>
-          </dl>
+
           <dl>
             <dt>贷款用途</dt>
             <dd>
@@ -171,14 +144,23 @@
               </select>
             </dd>
           </dl>
-          <dl>
-            <dt>贷款人ID</dt>
-            <dd>
-              <label>
-                <input type="text" value="" name="user_id" id="user_id" class="s-input-txt" placeholder="输入贷款人id">
-              </label>
-            </dd>
-          </dl>
+            <dl>
+                <dt>手机号</dt>
+                <dd>
+                    <label>
+                        <input type="text" value="" name="user_mobile" id="user_mobile" class="s-input-txt" placeholder="输入手机号">
+                    </label>
+                </dd>
+            </dl>
+
+            <dl>
+                <dt>贷款人名称</dt>
+                <dd>
+                    <label>
+                        <input type="text" value="" name="user_name" id="user_name" class="s-input-txt" placeholder="输入贷款人名称">
+                    </label>
+                </dd>
+            </dl>
         </div>
       </div>
       <div class="bottom"><a href="javascript:void(0);" id="submit" style="color: #ffffff;" class="btn btn-green mr5">提交查询</a><a href="javascript:void(0);" id="reset" style="color: #ffffff;" class="btn btn-orange" title="撤销查询结果，还原列表项所有内容"><i class="fa fa-retweet"></i>撤销</a></div>
@@ -193,29 +175,32 @@ $(function(){
             {display: '编号', name : 'id', width : 50, sortable : true, align: 'center'}, 
 			{display: '贷款名称', name : 'name', width : 60, sortable : true, align : 'center'},
 			{display: '借款人', name : 'user_id', width : 100, sortable : true, align: 'left'},
+
+            {display: '推荐人', name : 'pid', width : 100, sortable : true, align: 'left'},
+
 			{display: '贷款金额', name : 'borrow_amount', width : 80, sortable : true, align: 'center'},
 			{display: '利率(%)', name : 'rate', width : 50, sortable : true, align: 'center'},
 			{display: '期数', name : 'repay_time', width : 40, sortable : true, align: 'center'},
 			{display: '还款方式', name : 'loantype', width : 60, sortable : true, align: 'center'},
-			{display: '投标状态', name : 'loan_status', width : 60, sortable : true, align: 'center'},
+			{display: '投标状态', name : 'deal_status', width : 60, sortable : false, align: 'center'},
 			{display: '是否放款', name : 'is_has_loans', width : 50, sortable : false, align: 'center'},
 			{display: '流标返还', name : 'is_has_received', width : 50, sortable : false, align: 'center'},
 			{display: '投标数', name : 'buy_count', width : 40, sortable : false, align: 'center'},
-			{display: '推荐', name : 'is_recommend', width : 30, sortable : false, align: 'center'},
-			{display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
-			{display: '预告', name : 'is_advance', width : 30, sortable : false, align: 'center'},
 
-			{display: '启用', name : 'is_effect', width : 30, sortable : true, align: 'center'},
-			{display: '隐藏', name : 'is_hidden', width : 30, sortable : false, align: 'center'},
+			{display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
+
+
+
+
 			{display: '初审人', name : 'first_audit_admin_id', width : 80, sortable : true, align: 'center'},
 			{display: '复审人', name : 'second_audit_admin_id', width : 80, sortable : true, align: 'center'}
             ],
-        buttons : [
-            {display: '<i class="fa fa-plus"></i> 新增贷款', name : 'add', bclass : 'add', title : '新增贷款', onpress : flexPress }
-        ],
         searchitems : [
             {display: '编号', name : 'id'},
-            {display: '贷款名称', name : 'name'}
+            {display: '贷款名称', name : 'name'},
+            {display: '贷款金额', name : 'borrow_amount'},
+            {display: '贷款利率', name : 'rate'},
+            {display: '贷款人ID', name : 'user_id'},
             ],
         sortname: "id",
         sortorder: "desc",
@@ -233,40 +218,25 @@ $(function(){
     
 });
 
-function flexPress(name, grid) {
-	if(name=='add'){
-		location.href='<?php echo adminUrl('loan_loan','add');?>';
-	}
-}
-
-//编辑
-function loan_edit(id){
-	location.href='<?php echo adminUrl('loan_loan','edit');?>';
-}
-
 //还款计划
 function loan_repay_plan(id){
-	location.href='<?php echo adminUrl('loan_loan','repay_plan');?>';
+	location.href='<?php echo adminUrl('loan_loan','repay_plan');?>'+'&loan_id='+id;
 }
 
 //详情
 function loan_detail(id){
-	location.href='<?php echo adminUrl('loan_loan','detail');?>';
-}
-
-//合同
-function loan_contract(id){
-	//dialog
+	location.href='<?php echo adminUrl('loan_loan','detail');?>'+'&loan_id='+id;
 }
 
 //预览
 function loan_preview(id){
 	//window
+    location.href='<?php echo adminUrl('loan_loan','preview');?>'+'&loan_id='+id;
 }
 
 //审核日志
 function loan_audit_log(id){
-	location.href='<?php echo adminUrl('loan_loan','audit_log');?>';
+	location.href='<?php echo adminUrl('loan_loan','audit_log');?>'+'&loan_id='+id;
 }
 
 $('#syshelp').on("click",function(){

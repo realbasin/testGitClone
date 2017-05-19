@@ -61,7 +61,7 @@ class dao_loan_loanbid extends Dao {
 		return $this->getDb()->select($fields) -> from($this -> getTable()) ->where(array('loan_id'=>$loanIds)) -> execute() -> key('loan_id') -> rows();
 	}
 	//根据流标返还状态获取贷款id
-	public function getIds($is_has_received) {
-		return $this->getDb()->from($this->getTable())->where(array('is_has_received'=>$is_has_received))->execute()->values('loan_id');
+	public function getIds($where) {
+		return $this->getDb()->from($this->getTable())->where($where)->execute()->values('loan_id');
 	}
 }
