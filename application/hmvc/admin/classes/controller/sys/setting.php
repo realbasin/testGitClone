@@ -20,6 +20,7 @@ class  controller_sys_setting extends controller_sysBase {
 		if (chksubmit()) {
 			$site_name = \Core::post('site_name');
 			$site_icp = \Core::post('site_icp');
+			$url_model=\Core::post('url_model');
 			$time_zone = \Core::post('time_zone');
 			$statistics_code = \Core::post('statistics_code');
 			$sys_log = \Core::post('sys_log');
@@ -29,6 +30,7 @@ class  controller_sys_setting extends controller_sysBase {
 
 			$update[] = array('name' => 'site_name', 'value' => $site_name);
 			$update[] = array('name' => 'site_icp', 'value' => $site_icp);
+			$update[] = array('name' => 'url_model', 'value' => $url_model);
 			$update[] = array('name' => 'time_zone', 'value' => $time_zone);
 			$update[] = array('name' => 'statistics_code', 'value' => $statistics_code);
 			$update[] = array('name' => 'sys_log', 'value' => $sys_log);
@@ -692,6 +694,47 @@ class  controller_sys_setting extends controller_sysBase {
 			$row['cell'][] = $v['content'];
 			$row['cell'][] = $v['ip'];
 			$row['cell'][] = date('Y-m-d H:i:s', $v['operatetime']);
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		//返回JSON
+		echo @json_encode($json);
+	}
+
+	//系统变量
+	public function do_variablessys() {
+		\Core::view() -> load('sys_variablesSysSetting');
+	}
+	
+	public function do_variablessys_json(){
+		$pagesize = \Core::postGet('rp');
+		$page = \Core::postGet('curpage');
+		$fields = "name,value,info";
+		$where = array('sys' => 1);
+		$orderby = array();
+		if (!$page || !is_numeric($page))
+			$page = 1;
+		if (!$pagesize || !is_numeric($pagesize))
+			$pagesize = 15;
+		//查询条件
+		if (\Core::postGet('query') && in_array(\Core::postGet('qtype'), array('name', 'value', 'info'))) {
+			$where[\Core::postGet('qtype') . " like"] = "%" . \Core::postGet('query') . "%";
+		}
+		//排序
+		if (\Core::postGet('sortorder') && in_array(\Core::postGet('sortname'), array('name'))) {
+			$orderby[\Core::postGet('sortname')] = \Core::postGet('sortorder');
+		}
+		$data = \Core::dao('sys_setting') -> getFlexPage($page, $pagesize, $fields, $where, $orderby);
+		//处理返回结果
+		$json = array();
+		$json['page'] = $page;
+		$json['total'] = $data['total'];
+		foreach ($data['rows'] as $v) {
+			$row = array();
+			$row['id'] = $v['name'];
+			$row['cell'][] = $v['name'];
+			$row['cell'][] = $v['value'];
+			$row['cell'][] = $v['info'];
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
