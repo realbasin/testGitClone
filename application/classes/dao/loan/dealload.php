@@ -44,5 +44,11 @@ class dao_loan_dealload extends Dao {
 	public function getLoads($deal_id,$field){
 		return $this->getDb()->select($field)->from($this->getTable())->where('deal_id',$deal_id)->execute()->rows();
 	}
+	
+	//获取奖励（折扣）总额
+	//默认缓存
+	public function getStatRebateTotal(){
+		return $this->getDb()->select('SUM(rebate_money) as rebatetotal')->from($this->getTable())->where(array('is_has_loans'=>1,'is_rebate'=>1))->cache(C('stat_sql_cache_time'),'stat_load_rebate_total')->execute()->value('rebatetotal');
+	}
 
 }
