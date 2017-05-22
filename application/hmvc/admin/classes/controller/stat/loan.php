@@ -10,8 +10,31 @@ class  controller_stat_loan extends Controller {
 	}
 	
 	//借出汇总
+	//查询缓存10分钟
 	public function do_all(){
+		$datestart=\Core::post('datestart');
+		$dateend=\Core::post('dateend');
+		$where=array();
+		if($datestart){
+			$timestart=strtotime($datestart);
+		}else{
+			$timestart=0;
+		}
+		if($dateend){
+			$timeend=strtotime($dateend);
+		}else{
+			$timeend=0;
+		}
 		
+		$daoRepay=\Core::dao('loan_dealloadrepay');
+		$daoUser=\Core::dao('user_user');
+		$daoLoad=\Core::dao('loan_dealload');
+		$data=$daoRepay->getStatLoanAll($timestart,$timeend);
+		$data['balancetotal']=$daoUser->getStatBalanceTotal();
+		$data['rebatetotal']=$daoLoad->getStatRebateTotal();
+		$data['datestart']=$datestart;
+		$data['dateend']=$dateend;
+		\Core::view()->set($data)->load('stat_loanAll');
 	}
 	
 	//投资人数

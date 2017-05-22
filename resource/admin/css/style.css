@@ -151,7 +151,11 @@ a:hover {
 	line-height: 1.8em;
 }
 
+.def-row { font-size: 0!important; *word-spacing:-1px/*IE6、7*/;}
 
+.def-row li { font-size: 12px; vertical-align: top; letter-spacing: normal; display: inline-block!important; *display: inline/*IE7*/; *zoom:1/*IE7*/;}
+
+.clear { font-size: 0; line-height: 0; height: 0; clear: both; float: none; padding: 0; margin: 0; border: 0; zoom: 1; }
 /* ==========================登录页样式.结束======================== */
 
 
@@ -1415,7 +1419,53 @@ a:hover {
 	*zoom: 1;
 }
 
+/*统计*/
 
+.stat-general { }
+
+.stat-general .row { border: none !important; }
+
+.stat-general ul { overflow: hidden; }
+
+.stat-general li { width: 25%; height: 60px; position: relative; z-index: 1; border-top: dashed 1px #E7E7E7; border-left: dashed 1px #E7E7E7; margin: -1px 0 0 -1px; }
+
+.stat-general li h4 { font-size: 14px; line-height: 20px; color: #555; position: absolute; z-index: 1; top: 10px; left: 3%; }
+
+.stat-general li h6 { font-size: 12px; line-height: 20px; color: #999; font-weight: normal; position: absolute; z-index: 1; bottom: 10px; left: 3%; }
+
+.stat-general li h2 { font-size: 20px; line-height: 40px; font-weight: normal; color: #2cbca3; position: absolute; z-index: 1; top: 10px; right: 5%; }
+
+/*统计-单行*/
+
+.stat-general-single { }
+
+.stat-general-single .row { border: none !important; }
+
+.stat-general-single .opt { background-color: #FBFBFB!important; border: none !important; }
+
+.stat-general-single ul { overflow: hidden; }
+
+.stat-general-single li { width: 16.5%; height: 20px; position: relative; z-index: 1; border-left: dashed 1px #D7D7D7; margin-left: -1px; }
+
+.stat-general-single li h4 { font-size: 14px; line-height: 20px; color: #555; position: absolute; z-index: 1; top: 0; left: 5%; }
+
+.stat-general-single li h6 { font-size: 12px; line-height: 20px; color: #999; font-weight: normal; position: absolute; z-index: 1; top: 0; right: 5%; }
+
+.stat-general-single li h2 { font-size: 20px; line-height: 20px; font-weight: normal; color: #2cbca3; position: absolute; z-index: 1; top: 0; right: 12%; }
+
+/*统计类型图标*/
+
+.stat-chart { padding: 10px 0; }
+
+.stat-chart .title { font-size: 0; padding-bottom: 10px; border-bottom: solid 1px #E6E6E6; }
+
+.stat-chart .title h3 { font-size: 16px; line-height: 20px; color: #333; font-weight: normal; vertical-align: middle; display: inline-block; }
+
+.stat-chart .title h5 { vertical-align: middle; display: inline-block; margin-left: 20px; }
+
+.stat-chart .no-date { font-size: 14px; color: #999; text-align: center; width: 100%; height: 24px; padding: 100px 0; }
+
+.stat-chart .no-date i { font-size: 18px; color: #fc0; margin-right: 6px; }
 /**********************************元素样式*************************************/
 
 textarea {
