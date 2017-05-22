@@ -385,8 +385,8 @@
 			shortcuts:
 			{
 				'prev-days': [1,3,5,7],
-				//'next-days': [3,5,7],
 				'prev' : ['week','month','year'],
+				//'next-days': [1,3,5,7],
 				//'next' : ['week','month','year']
 			},
 			customShortcuts : [],

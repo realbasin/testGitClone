@@ -76,7 +76,7 @@ $menu = array(
 					array('link'=>'','text'=>'借出统计',
 						'sub'=>array(
 							array('link'=>'stat_loan,all','text'=>'借出汇总'),
-							array('link'=>'stat_loan,investor','text'=>'投资人数'),
+							array('link'=>'stat_loan,investor','text'=>'投资人数/金额'),
 							array('link'=>'stat_loan,investAmount','text'=>'投资额'),
 							array('link'=>'stat_loan,payment','text'=>'回款统计'),
 							array('link'=>'stat_loan,due','text'=>'待收统计'),

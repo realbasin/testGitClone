@@ -13,13 +13,12 @@
 <link href="<?php echo RS_PATH?>css/font-awesome.min.css" rel="stylesheet" type="text/css" />
 <link href="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.css" rel="stylesheet" type="text/css" />
 <link href="<?php echo RS_PATH?>jquery/jquery-ui.min.css" rel="stylesheet" type="text/css" />
-<link href="<?php echo RS_PATH?>jquery/jquery.datetimepicker.css" rel="stylesheet" type="text/css" />
+<link href="<?php echo RS_PATH?>jquery/jquery.daterangepicker.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/language_<?php echo strtolower(\Base::getConfig()->getLanguageTypeDirName());?>.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery-1.8.3.min.js"></script>
-<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery-ui-1.10.3.min.js"></script>
-<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery-ui.zh-CN.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.nicescroll.js"></script>
-<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.datetimepicker.full.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>moment.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.daterangepicker.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>artdialog/dialog-plus-min.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/laymain.js"></script>
@@ -29,7 +28,9 @@
 <!--[if lt IE 9]>
       <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5.js"></script>
 <![endif]-->
-
+<!--[if IE]>
+	<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5shiv.min.js"></script>
+<![endif]-->
 </head>
 <body class="mainbody">
 <div class="location">
@@ -45,9 +46,10 @@
 		<form method="post" id="form1" name="form1">
     <input type="hidden" name="form_submit" value="ok" />
    <div class="title">
-         按时间段查询：<input class="s-input-txt" type="text" value="<?php echo $datestart;?>" id="datestart" name="datestart">
+         按时间段查询：<span id="daterange"><input class="s-input-txt" type="text" readonly="true" value="<?php echo $datestart;?>" id="datestart" name="datestart">
          	至
-         	<input class="s-input-txt" type="text" value="<?php echo $dateend;?>" id="dateend" name="dateend">
+         	<input class="s-input-txt" type="text" readonly="true" value="<?php echo $dateend;?>" id="dateend" name="dateend">
+         	</span>
          	<input type="submit" style="height: 26px;padding: 0 5px;margin-left: 20px;" value="提交查询"></button>
       </div>
       </form>
@@ -213,8 +215,26 @@ $(function(){
     
 });
 
-$.datetimepicker.setLocale('ch');
-$('#datestart,#dateend').datetimepicker({format:"Y-m-d",timepicker:false,todayButton:false});
+$('#daterange').dateRangePicker({
+	shortcuts:
+			{
+				'prev-days': [1,3,5,7,30,60],
+				'prev' : ['week','month','year']
+			},
+	endDate:'<?php echo date('Y-m-d',time());?>',
+	getValue: function()
+	{
+		if ($('#datestart').val() && $('#dateend').val() )
+			return $('#datestart').val() + ' to ' + $('#dateend').val();
+		else
+			return '';
+	},
+	setValue: function(s,s1,s2)
+	{
+		$('#datestart').val(s1);
+		$('#dateend').val(s2);
+	}
+});
 
 $('#syshelp').on("click",function(){
 	var d = dialog({

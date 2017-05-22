@@ -37,7 +37,7 @@
   <i class="home"></i>
   <span>借出统计</span>
   <i class="arrow"></i>
-  <span>投资人数</span>
+  <span>投资人数/金额</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -46,88 +46,78 @@
     <input type="hidden" name="form_submit" value="ok" />
    <div class="title">
          按时间段查询：
-         <input class="input-txt" type="text" value="" id="daterange" name="daterange">
-         	<input type="submit" style="height: 26px;padding: 0 5px;margin-left: 20px;" value="提交查询"></button>
+         <span id="daterange">
+         <input class="s-input-txt" type="text" readonly="true" value="<?php echo $datestart?$datestart:date('Y-m-d',strtotime('-30 day'));?>" id="datestart" name="datestart">
+         	至
+         	<input class="s-input-txt" type="text" readonly="true" value="<?php echo $dateend?$dateend:date('Y-m-d',time());?>" id="dateend" name="dateend">
+         		</span>
+         	<input type="button" id="btnsearch" style="height: 26px;padding: 0 5px;margin-left: 20px;" value="提交查询"></button>
       </div>
       </form>
    </div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>借出汇总图表</h3>
+      <h3>投资人数/金额汇总表</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
-  
+ 	<div  id="flexitable" class="flexitable">
+ 		<table class="flexigrid">
+      <thead>
+        <tr>
+          <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
+          <th width="150" style="width: 150px;" align="center">时间</th>
+          <th width="150" style="width: 150px;" align="center">投资用户数量</th>
+          <th width="150" style="width: 150px;" align="center">投资金额</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+	</div>
 </div>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>highcharts/highcharts.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>highcharts/modules/exporting.js"></script>
 <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>highcharts/plugin/highcharts-zh_CN.js"></script>
 <script>
-$(function(){
-	    $('#container').highcharts({
-        chart: {
-            type: 'column'
-        },
-        title: {
-            text: '借出汇总'
-        },
-        subtitle: {
-            text: '借出汇总图表 '+datetext
-        },
-        xAxis: {
-            type: 'category',
-            labels: {
-                rotation: -45,
-                style: {
-                    fontSize: '13px',
-                    fontFamily: 'Verdana, sans-serif'
-                }
-            }
-        },
-        yAxis: {
-            min: 0,
-            title: {
-                text: '金额 (元)'
-            }
-        },
-        legend: {
-            enabled: false
-        },
-        tooltip: {
-            pointFormat: '金额: <b>{point.y:.1f} 元</b>'
-        },
-        series: [{
-            name: '总计金额',
-            data: [
-               
-            ],
-            dataLabels: {
-                enabled: true,
-                rotation: -90,
-                color: '#FFFFFF',
-                align: 'right',
-                format: '{point.y:.1f}', // one decimal
-                y: 10, // 10 pixels down from the top
-                style: {
-                    fontSize: '12px',
-                    fontFamily: 'Verdana, sans-serif'
-                }
-            }
-        }]
-    });
-    
-});
-
+$('.flexigrid').flexigrid({	
+	usepager: false,
+	reload: false,
+	columnControl: false,
+	title: '投资人数量/金额汇总',
+	buttons : [
+               {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
+           ]
+	});	
+	
+function btnPress(name, grid) {
+    if (name == 'csv') {
+        window.location.href = '<?php echo adminUrl('stat_loan','investor_export');?>';
+    }
+};
+	
 $('#daterange').dateRangePicker({
 	shortcuts:
 			{
-				'prev-days': [1,3,5,7],
-				//'next-days': [3,5,7],
-				'prev' : ['week','month'],
-				//'next' : ['week','month','year']
+				'prev-days': [1,3,5,7,30,60],
+				'prev' : null,
 			},
 	maxDays:60,
-	separator:' ~ '
+	startDate:'<?php echo date('Y-m-d',strtotime("-60 day"));?>',
+	endDate:'<?php echo date('Y-m-d',time());?>',
+	getValue: function()
+	{
+		if ($('#datestart').val() && $('#dateend').val() )
+			return $('#datestart').val() + ' to ' + $('#dateend').val();
+		else
+			return '';
+	},
+	setValue: function(s,s1,s2)
+	{
+		$('#datestart').val(s1);
+		$('#dateend').val(s2);
+	}
 });
 
 $('#syshelp').on("click",function(){
@@ -138,7 +128,108 @@ $('#syshelp').on("click",function(){
        d.show(this);
 });
 
+//查询
+$('#btnsearch').on('click',function(){
+	var datestart=$('#datestart').val();
+	var dateend=$('#dateend').val();
+	var url='<?php echo adminUrl('stat_loan','investor');?>';
+	url+='&datestart='+datestart+'&dateend='+dateend;
+	location.href=url;
+});
 
+//查询初始化
+function initSearch(){
+	var datestart=$('#datestart').val();
+	var dateend=$('#dateend').val();
+	$.ajax({
+		url:'<?php echo adminUrl('stat_loan','investor_json');?>',
+  		type:'get',
+  		data:{
+  			datestart:datestart,
+  			dateend:dateend
+  		},
+  		dataType:'json',
+  		success:function(msg){
+  			if(msg.code!=200){
+  				jsprint(msg.message);
+  				return;
+  			}
+  			fillCharts(msg.data);
+  			fillFlexTable(msg.data);
+  		},
+  		 error: function(XMLHttpRequest, textStatus, errorThrown){
+  		 	jsprint('网络也太差了吧！');
+  		 }
+	});
+}
+
+function fillFlexTable(data){
+	var jsonhtml='{"rows":[';
+	$.each(data, function(key,val) {
+		jsonhtml+='{"id":"'+key+'",';
+		jsonhtml+='"cell":[';
+		jsonhtml+='"'+val.createdate+'",';
+		jsonhtml+='"'+val.usertotal+'",';
+		jsonhtml+='"￥'+val.moneytotal+'",';
+		jsonhtml+='""]},';
+	});
+	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
+	jsonhtml+='],"total":"'+data.length+'"}';
+	$('.flexigrid').flexAddData(JSON.parse(jsonhtml));
+}
+
+function fillCharts(data){
+	var datestart=$('#datestart').val();
+	var dateend=$('#dateend').val();
+	var createdateArr=[];
+	var usertotalArr=[];
+	var moneytotalArr=[];
+	$.each(data, function(key,val) {
+		createdateArr[key]='"'+val.createdate+'"';
+		usertotalArr[key]=parseInt(val.usertotal);
+		moneytotalArr[key]=parseFloat(val.moneytotal);
+	});
+	var chart = new Highcharts.Chart('container', {
+    title: {
+        text: '投资人数/金额汇总图表',
+    },
+    subtitle: {
+        text: '数据时间:('+datestart+" 至 "+dateend+")",
+    },
+    xAxis: {
+        categories: createdateArr
+    },
+    yAxis: {
+        title: {
+            text: '投资人数/投资金额'
+        },
+        plotLines: [{
+            value: 0,
+            width: 1,
+            color: '#808080'
+        }]
+    },
+    tooltip: {
+        valueSuffix: ''
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'middle',
+        borderWidth: 0
+    },
+    series: [{
+        name: '投资人数',
+        data: usertotalArr
+    }, 
+    {
+        name: '投资金额',
+        data: moneytotalArr
+    }]
+});
+}
+
+initSearch();
 </script>
 </body>
 </html>

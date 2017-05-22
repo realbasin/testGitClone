@@ -45,10 +45,21 @@ class dao_loan_dealload extends Dao {
 		return $this->getDb()->select($field)->from($this->getTable())->where('deal_id',$deal_id)->execute()->rows();
 	}
 	
+	//报表
 	//获取奖励（折扣）总额
 	//默认缓存
 	public function getStatRebateTotal(){
 		return $this->getDb()->select('SUM(rebate_money) as rebatetotal')->from($this->getTable())->where(array('is_has_loans'=>1,'is_rebate'=>1))->cache(C('stat_sql_cache_time'),'stat_load_rebate_total')->execute()->value('rebatetotal');
+	}
+	
+	//报表
+	//获取投资人数量已经投资金额
+	//默认缓存
+	public function getInvest($beginDate,$endDate){
+		$where=array();
+		$where['create_time >=']=$beginDate;
+		$where['create_time <=']=$endDate;
+		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(DISTINCT user_id) as usertotal,sum(money) as moneytotal")->from($this->getTable())->where($where)->groupBy("FROM_UNIXTIME(create_time,'%Y-%m-%d')")->execute()->rows();
 	}
 
 }
