@@ -118,7 +118,17 @@ $(function(){
     
 });
 
-$('#daterange').dateRangePicker();
+$('#daterange').dateRangePicker({
+	shortcuts:
+			{
+				'prev-days': [1,3,5,7],
+				//'next-days': [3,5,7],
+				'prev' : ['week','month'],
+				//'next' : ['week','month','year']
+			},
+	maxDays:60,
+	separator:' ~ '
+});
 
 $('#syshelp').on("click",function(){
 	var d = dialog({

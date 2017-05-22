@@ -522,16 +522,21 @@
 			var defaultTopText = '';
 			if (opt.singleDate)
 				defaultTopText = lang('default-single');
-			else if (opt.minDays && opt.maxDays)
+			else if (opt.minDays && opt.maxDays){
 				defaultTopText = lang('default-range');
-			else if (opt.minDays)
+				defaultTopText=defaultTopText.replace(/\%d/,opt.minDays).replace(/\%d/,opt.maxDays);
+			}
+			else if (opt.minDays){
 				defaultTopText = lang('default-more');
-			else if (opt.maxDays)
+				defaultTopText=defaultTopText.replace(/\%d/,opt.minDays);
+			}
+			else if (opt.maxDays){
 				defaultTopText = lang('default-less');
+				defaultTopText=defaultTopText.replace(/\%d/,opt.maxDays);
+			}
 			else
 				defaultTopText = lang('default-default');
-
-			box.find('.default-top').html( defaultTopText.replace(/\%d/,opt.minDays).replace(/\%d/,opt.maxDays));
+			box.find('.default-top').html( defaultTopText );
 
 
 			setTimeout(function()
