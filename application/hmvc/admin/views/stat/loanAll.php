@@ -218,7 +218,7 @@ $('#datestart,#dateend').datetimepicker({format:"Y-m-d",timepicker:false,todayBu
 
 $('#syshelp').on("click",function(){
 	var d = dialog({
-        content: "<li>借出总统计",
+        content: "<li>可以对图表进行相关格式的导出",
         quickClose: true
         });
        d.show(this);

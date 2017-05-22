@@ -39,7 +39,7 @@ class  controller_stat_loan extends Controller {
 	
 	//投资人数
 	public function do_investor(){
-		
+		\Core::view()->load('stat_investor');
 	}
 	
 	//投资额
