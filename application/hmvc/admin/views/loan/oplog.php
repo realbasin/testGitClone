@@ -63,15 +63,15 @@
                 <dl>
                     <dt>操作阶段</dt>
                     <dd>
-                        <select class="class-select" id="use_type" name="use_type" value="-1">
+                        <select class="class-select" id="use_type" name="op_type" value="-1">
                             <option value="-1">-全部-</option>
                             <option value="1">初审操作</option>
                             <option value="2">认领操作</option>
                             <option value="3">取消认领操作</option>
                             <option value="4">彻底删除操作</option>
                             <option value="5">删除操作</option>
-                            <option value="5">恢复操作</option>
-                            <option value="5">复审操作</option>
+                            <option value="6">恢复操作</option>
+                            <option value="7">复审操作</option>
                         </select>
                     </dd>
                 </dl>
@@ -110,6 +110,12 @@
             searchitems : [
                 {display: '贷款编号', name : 'deal_id'},
             ],
+            buttons : [
+                {display: '<i class="fa"></i> 今', name : 'today',  title : '今', onpress : flexPress },
+                {display: '<i class="fa "></i> 昨', name : 'yesterday', title : '昨', onpress : flexPress },
+                {display: '<i class="fa"></i> 近一周', name : 'week',  title : '近一周', onpress : flexPress },
+                {display: '<i class="fa "></i> 近一月', name : 'month', title : '近一月', onpress : flexPress }
+            ],
             sortname: "create_time",
             sortorder: "desc",
             title: '审核日志列表',
@@ -129,8 +135,17 @@
 
     });
     function flexPress(name, grid) {
-        if(name=='add'){
-            location.href='<?php echo adminUrl('loan_loan','add');?>';
+        if(name=='today'){
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_loan','all_op_log_json');?>&'+'time='+name}).flexReload();
+        }
+        if(name=='yesterday'){
+            location.href='<?php echo adminUrl('loan_loan','all_op_log_json');?>';
+        }
+        if(name=='week'){
+            location.href='<?php echo adminUrl('loan_loan','all_op_log_json');?>';
+        }
+        if(name=='month'){
+            location.href='<?php echo adminUrl('loan_loan','all_op_log_json');?>';
         }
     }
 
