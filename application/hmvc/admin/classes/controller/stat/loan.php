@@ -222,7 +222,61 @@ class  controller_stat_loan extends controller_sysBase {
 	
 	//待收统计
 	public function do_due(){
-		
+		$datestart=\Core::postGet('datestart');
+		$dateend=\Core::postGet('dateend');
+		if(!$datestart || !$dateend){
+			$datestart=0;
+			$dateend=0;
+		}
+		\Core::view()->set('datestart',$datestart);
+		\Core::view()->set('dateend',$dateend);
+		\Core::view()->load('stat_due');
+	}
+	
+	public function do_due_json(){
+		$datestart=\Core::postGet('datestart');
+		$dateend=\Core::postGet('dateend');
+		if(!$datestart || !$dateend){
+			showJSON('100','请选择日期范围');
+		}
+		$daoRepay=\Core::dao('loan_dealloadrepay');
+		$data=$daoRepay->getDue(strtotime($datestart),strtotime($dateend));
+		if(!$data){
+			//空数据的情况
+			$datarow=array();
+			$datarow['repaydate']=$datestart;
+			$datarow['usertotal']="0";
+			$datarow['investrepay']="0.00";
+			$datarow['investcapital']="0.00";
+			$datarow['investinterest']="0.00";
+			$datarowend=$datarow;
+			$datarowend['repaydate']=$dateend;
+			$data[]=$datarow;
+			$data[]=$datarowend;
+		}
+		showJSON('200','',$data);
+	}
+	
+	public function do_due_export(){
+		$datestart=\Core::get('datestart');
+		$dateend=\Core::get('dateend');
+		$datestart=$datestart?$datestart:date('Y-m-d',strtotime('-30 day'));
+		$dateend=$dateend?$dateend:date('Y-m-d',time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'datetime';
+		$header['待收款人次'] = 'integer';
+		$header['待收总额'] = 'price';
+		$header['待收本金'] = 'price';
+		$header['待收利息'] = 'price';
+	
+
+		$daoRepay=\Core::dao('loan_dealloadrepay');
+		//Excel内容
+		$data=$daoRepay->getPayment(strtotime($datestart),strtotime($dateend));
+		//导出
+		$this -> log('导出待收统计汇总('.$datestart.' - '.$dateend.')', 'export');
+		exportExcel('待收统计汇总('.$datestart.' - '.$dateend.')', $header, $data);
 	}
 	
 	//待收明细
