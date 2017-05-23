@@ -46,7 +46,7 @@ function exportExcel($filename, $header = array(), $data = array()) {
 	header('Cache-Control: must-revalidate');
 	header('Pragma: public');
 	$writer = \Core::library("XLSXWriter");
-	$writer -> setAuthor("DaZhou InfoTech Ltd.");
+	$writer -> setAuthor("Xiaoshu InfoTech Ltd.");
 	if (empty($header)) {
 		$writer -> writeSheet($data);
 		$writer -> writeToStdOut();

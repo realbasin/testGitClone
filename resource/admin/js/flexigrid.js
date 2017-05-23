@@ -319,7 +319,6 @@
 
 				$('.pReload', this.mDiv).removeClass('loading');
 				this.loading = false;
-
 				if(!data) {
 					$(t).append('<table><tbody><tr><td colspan="100" class="no-data"><i class="fa fa-exclamation-circle"></i>' + p.nomsg + '</td></tr></tbody></table>');
 					return false;
@@ -1278,10 +1277,10 @@
 	}; //end flexToggleCol
 
 	$.fn.flexAddData = function(data) { // function to add data to grid
-
 		return this.each(function() {
 			if(this.grid) this.grid.addData(data);
 		});
+		
 
 	};
 
