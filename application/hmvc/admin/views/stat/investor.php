@@ -104,7 +104,7 @@ $('#daterange').dateRangePicker({
 				'prev' : null,
 			},
 	maxDays:60,
-	startDate:'<?php echo date('Y-m-d',strtotime("-60 day"));?>',
+	//startDate:'<?php echo date('Y-m-d',strtotime("-60 day"));?>',
 	endDate:'<?php echo date('Y-m-d',time());?>',
 	getValue: function()
 	{
