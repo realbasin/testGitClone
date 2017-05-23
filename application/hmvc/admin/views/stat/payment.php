@@ -37,7 +37,7 @@
   <i class="home"></i>
   <span>借出统计</span>
   <i class="arrow"></i>
-  <span>投资人数/金额</span>
+  <span>回款统计</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -57,7 +57,7 @@
    </div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>投资人数/金额汇总表</h3>
+      <h3>回款统计汇总图表</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
@@ -66,9 +66,16 @@
       <thead>
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
-          <th width="150" style="width: 150px;" align="center">时间</th>
-          <th width="150" style="width: 150px;" align="center">投资用户数量</th>
-          <th width="150" style="width: 150px;" align="center">投资金额</th>
+          <th width="100" style="width: 100px;" align="center">时间</th>
+          <th width="60" style="width: 60px;" align="center">收款人次</th>
+          <th width="100" style="width: 100px;" align="center">回款总额</th>
+          <th width="100" style="width: 100px;" align="center">回款本金</th>
+          <th width="80" style="width: 80px;" align="center">回款利息</th>
+          <th width="100" style="width: 100px;" align="center">提前还款罚息</th>
+          <th width="100" style="width: 100px;" align="center">逾期还款罚金</th>
+          <th width="100" style="width: 100px;" align="center">管理费(投资方)</th>
+          <th width="100" style="width: 100px;" align="center">管理费(借款方)</th>
+          <th width="100" style="width: 100px;" align="center">平台收入</th>
           <th></th>
         </tr>
       </thead>
@@ -85,7 +92,7 @@ $('.flexigrid').flexigrid({
 	usepager: false,
 	reload: false,
 	columnControl: false,
-	title: '投资人数量/金额汇总',
+	title: '回款统计汇总',
 	buttons : [
                {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
            ]
@@ -93,7 +100,7 @@ $('.flexigrid').flexigrid({
 	
 function btnPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_loan','investor_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
+        window.location.href = '<?php echo adminUrl('stat_loan','payment_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
     }
 };
 	
@@ -132,7 +139,7 @@ $('#syshelp').on("click",function(){
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var url='<?php echo adminUrl('stat_loan','investor');?>';
+	var url='<?php echo adminUrl('stat_loan','payment');?>';
 	url+='&datestart='+datestart+'&dateend='+dateend;
 	location.href=url;
 });
@@ -142,7 +149,7 @@ function initSearch(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	$.ajax({
-		url:'<?php echo adminUrl('stat_loan','investor_json');?>',
+		url:'<?php echo adminUrl('stat_loan','payment_json');?>',
   		type:'get',
   		data:{
   			datestart:datestart,
@@ -168,9 +175,16 @@ function fillFlexTable(data){
 	$.each(data, function(key,val) {
 		jsonhtml+='{"id":"'+key+'",';
 		jsonhtml+='"cell":[';
-		jsonhtml+='"'+val.createdate+'",';
+		jsonhtml+='"'+val.repaydate+'",';
 		jsonhtml+='"'+val.usertotal+'",';
-		jsonhtml+='"￥'+val.moneytotal+'",';
+		jsonhtml+='"￥'+val.investrepay+'",';
+		jsonhtml+='"￥'+val.investcapital+'",';
+		jsonhtml+='"￥'+val.investinterest+'",';
+		jsonhtml+='"￥'+val.repaypenalty+'",';
+		jsonhtml+='"￥'+val.repayfine+'",';
+		jsonhtml+='"￥'+val.investfee+'",';
+		jsonhtml+='"￥'+val.loanfee+'",';
+		jsonhtml+='"￥'+val.platfromincome+'",';
 		jsonhtml+='""]},';
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
@@ -181,27 +195,41 @@ function fillFlexTable(data){
 function fillCharts(data){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var createdateArr=[];
+	var repaydateArr=[];
 	var usertotalArr=[];
-	var moneytotalArr=[];
+	var investrepayArr=[];
+	var investcapitalArr=[];
+	var investinterestArr=[];
+	var repaypenaltyArr=[];
+	var repayfineArr=[];
+	var investfeeArr=[];
+	var loanfeeArr=[];
+	var platfromincomeArr=[];
 	$.each(data, function(key,val) {
-		createdateArr[key]=val.createdate;
+		repaydateArr[key]=val.repaydate;
 		usertotalArr[key]=parseInt(val.usertotal);
-		moneytotalArr[key]=parseFloat(val.moneytotal);
+		investrepayArr[key]=parseFloat(val.investrepay);
+		investcapitalArr[key]=parseFloat(val.investcapital);
+		investinterestArr[key]=parseFloat(val.investinterest);
+		repaypenaltyArr[key]=parseFloat(val.repaypenalty);
+		repayfineArr[key]=parseFloat(val.repayfine);
+		investfeeArr[key]=parseFloat(val.investfee);
+		loanfeeArr[key]=parseFloat(val.loanfee);
+		platfromincomeArr[key]=parseFloat(val.platfromincome);
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '投资人数/金额汇总图表',
+        text: '回款统计汇总图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
     },
     xAxis: {
-        categories: createdateArr
+        categories: repaydateArr
     },
     yAxis: {
         title: {
-            text: '投资人数/投资金额'
+            text: '人数/金额'
         },
         plotLines: [{
             value: 0,
@@ -219,12 +247,44 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '投资人数',
+        name: '收款人次',
         data: usertotalArr
     }, 
     {
-        name: '投资金额',
-        data: moneytotalArr
+        name: '回款总额',
+        data: investrepayArr
+    }, 
+    {
+        name: '回款本金',
+        data: investcapitalArr
+    }, 
+    {
+        name: '回款利息',
+        data: investinterestArr
+    }, 
+    {
+        name: '提前还款罚息',
+        data: repaypenaltyArr
+    }, 
+    {
+        name: '提前还款罚息',
+        data: repaypenaltyArr
+    }, 
+    {
+        name: '逾期还款罚金',
+        data: repayfineArr
+    }, 
+    {
+        name: '管理费(投资方)',
+        data: investfeeArr
+    }, 
+    {
+        name: '管理费(借款方)',
+        data: loanfeeArr
+    }, 
+    {
+        name: '平台收入',
+        data: platfromincomeArr
     }]
 });
 }

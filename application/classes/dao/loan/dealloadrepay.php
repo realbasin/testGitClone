@@ -68,4 +68,24 @@ class dao_loan_dealloadrepay extends Dao {
 		$total=$this->getDb()->select('count(DISTINCT user_id) as investor,sum(self_money) as investmoney,sum(if(has_repay = 0, repay_money,0)) as due,sum(if(has_repay = 0, self_money,0)) as capital,sum(if(has_repay = 0, (repay_money - self_money),0)) as interest,sum(if(has_repay = 1, repay_money,0)) as receivetatal,sum(if(has_repay = 1, self_money,0)) as receivecapital,sum(if(has_repay = 1, (repay_money - self_money),0)) as receiveinterest,sum(if(has_repay = 1 and status = 0, impose_money,0)) as receivefine,sum(if(has_repay = 1 and (status = 2 or status = 3), impose_money,0)) as receivepanalty')->from($this->getTable())->where($where)->cache(C('stat_sql_cache_time'),'stat_loan_all_'.$begin_time.'_'.$end_time)->execute()->row();
 		return $total;
 	}
+
+	//回款汇总
+	//默认缓存
+	public function getPayment($beginDate,$endDate){
+		$where=array();
+		$where['true_repay_time >=']=$beginDate;
+		$where['true_repay_time <=']=$endDate;
+		$where['has_repay']=1;
+		return $this->getDb()->select("FROM_UNIXTIME(true_repay_time,'%Y-%m-%d') as repaydate,count(user_id) as usertotal,sum(repay_money + impose_money - manage_money) as investrepay,sum(self_money) as investcapital,sum(repay_money - self_money) as investinterest,sum(if(status = 0, impose_money,0)) as repaypenalty,sum(if(status = 2 or status = 3, impose_money,0)) as repayfine,sum(manage_money) as investfee,sum(repay_manage_money + repay_manage_impose_money) as loanfee,sum(manage_money + repay_manage_money + repay_manage_impose_money) as platfromincome")->from($this->getTable())->where($where)->groupBy("FROM_UNIXTIME(true_repay_time,'%Y-%m-%d')")->cache(C('stat_sql_cache_time'),'stat_repay_payment_total'.$beginDate.'_'.$endDate)->execute()->rows();
+	}
+	
+	//待收统计
+	//默认缓存
+	public function getDue($beginDate,$endDate){
+		$where=array();
+		$where['repay_time >=']=$beginDate;
+		$where['repay_time <=']=$endDate;
+		$where['has_repay']=0;
+		return $this->getDb()->select("FROM_UNIXTIME(repay_time,'%Y-%m-%d') as repaydate,count(user_id) as usertotal,sum(repay_money + impose_money - manage_money) as investrepay,sum(self_money) as investcapital,sum(repay_money - self_money) as investinterest")->from($this->getTable())->where($where)->groupBy("FROM_UNIXTIME(repay_time,'%Y-%m-%d')")->cache(C('stat_sql_cache_time'),'stat_repay_due_total'.$beginDate.'_'.$endDate)->execute()->rows();
+	}
 }
