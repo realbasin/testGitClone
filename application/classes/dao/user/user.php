@@ -269,4 +269,10 @@ class dao_user_user extends Dao {
 		return $this->getDb()->from($this->getTable())->where($where)->limit(0,$limit)->execute()->values($field);
 	}
 
+	//统计获得账户余额
+	//缓存10分钟
+	public function getStatBalanceTotal(){
+		return $this->getDb()->select('SUM(AES_DECRYPT(money_encrypt,\''.AES_DECRYPT_KEY.'\')) as balancetotal')->from($this->getTable())->cache(C('stat_sql_cache_time'),'stat_user_balance_total')->execute()->value('balancetotal');
+	}
+
 }
