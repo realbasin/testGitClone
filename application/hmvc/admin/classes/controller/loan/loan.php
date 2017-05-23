@@ -440,7 +440,18 @@ class  controller_loan_loan extends controller_sysBase {
 		if(\Core::get('deal_id')!=null && is_numeric(\Core::get('deal_id'))){
 			$where['deal_id ']=\Core::get('deal_id');
 		}
+		if(\Core::get('op_type')!=-1 && is_numeric(\Core::get('op_type'))){
 
+			$where['op_id ']=\Core::get('op_type');
+		}
+		if(\Core::get('time')!=null){
+			$time = \Core::get('time');
+			if($time == 'today') {
+				$start_time = strtotime(date('Y-m-d'));
+				$end_time = strtotime(date('Y-m-d'));
+			}
+
+		}
 		$userDao=\Core::dao('user_user');
 		//简易排序条件
 		if (\Core::postGet('sortorder')) {
