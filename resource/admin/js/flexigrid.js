@@ -45,6 +45,7 @@
 			query: '',
 			qtype: '',
 			nomsg: '没有符合条件的记录',
+			placeholder:'搜索相关数据...',
 			minColToggle: 0, //minimum allowed column to be hidden
 			showToggleBtn: true, //show or hide column toggle popup
 			hideOnSubmit: true,
@@ -1103,7 +1104,7 @@
 
 				if(p.qtype == '') p.qtype = sitems[0].name;
 
-				$(g.sDiv).append("<div class='sDiv2'><select name='qtype' class='select'>" + sopt + "</select> <input type='text' size='30' name='q' class='qsbox'  placeholder='搜索相关数据...'/> <input type='button' class='btn' value='" + p.findtext + "' /></div>");
+				$(g.sDiv).append("<div class='sDiv2'><select name='qtype' class='select'>" + sopt + "</select> <input type='text' size='30' name='q' class='qsbox'  placeholder='"+p.placeholder+"'/> <input type='button' class='btn' value='" + p.findtext + "' /></div>");
 
 				$('input[type=button]', g.sDiv).click(function() { g.doSearch() });
 				$(g.mDiv).append(g.sDiv);

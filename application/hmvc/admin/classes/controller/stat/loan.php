@@ -281,6 +281,14 @@ class  controller_stat_loan extends controller_sysBase {
 	
 	//待收明细
 	public function do_dueDetail(){
+		\Core::view() -> load('stat_dueDetail');
+	}
+	
+	public function do_dueDetail_json(){
+		
+	}
+	
+	public function do_dueDetail_export(){
 		
 	}
 	
@@ -352,7 +360,7 @@ class  controller_stat_loan extends controller_sysBase {
 		//Excel内容
 		$data=$daoLoad->getInvestProportion(strtotime($datestart),strtotime($dateend));
 		//导出
-		$this -> log('投资额比例统计汇总('.$datestart.' - '.$dateend.')', 'export');
+		$this -> log('导出投资额比例统计汇总('.$datestart.' - '.$dateend.')', 'export');
 		exportExcel('投资额比例统计汇总('.$datestart.' - '.$dateend.')', $header, $data);
 	}
 }
