@@ -67,13 +67,14 @@
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
           <th width="80" style="width: 80px;" align="center">时间</th>
-          <th width="80" style="width: 80px;" align="center">5千及以下</th>
-          <th width="80" style="width: 80px;" align="center">5千至1万</th>
-          <th width="80" style="width: 80px;" align="center">1万至5万</th>
-          <th width="80" style="width: 80px;" align="center">5万至10万</th>
-          <th width="80" style="width: 80px;" align="center">10万至20万</th>
-          <th width="80" style="width: 80px;" align="center">20万至50万</th>
-          <th width="80" style="width: 80px;" align="center">50万以上</th>
+          <th width="80" style="width: 80px;" align="center">总人次</th>
+          <th width="80" style="width: 80px;" align="center">5千以下</th>
+          <th width="80" style="width: 80px;" align="center">5千(含)至1万</th>
+          <th width="80" style="width: 80px;" align="center">1万(含)至5万</th>
+          <th width="80" style="width: 80px;" align="center">5万(含)至10万</th>
+          <th width="90" style="width: 90px;" align="center">10万(含)至20万</th>
+          <th width="90" style="width: 90px;" align="center">20万(含)至50万</th>
+          <th width="80" style="width: 80px;" align="center">50万(含)以上</th>
           <th></th>
         </tr>
       </thead>
@@ -173,11 +174,15 @@ function fillFlexTable(data){
 	$.each(data, function(key,val) {
 		jsonhtml+='{"id":"'+key+'",';
 		jsonhtml+='"cell":[';
-		jsonhtml+='"'+val.repaydate+'",';
+		jsonhtml+='"'+val.createdate+'",';
 		jsonhtml+='"'+val.usertotal+'",';
-		jsonhtml+='"￥'+val.investrepay+'",';
-		jsonhtml+='"￥'+val.investcapital+'",';
-		jsonhtml+='"￥'+val.investinterest+'",';
+		jsonhtml+='"'+val.p1+'",';
+		jsonhtml+='"'+val.p2+'",';
+		jsonhtml+='"'+val.p3+'",';
+		jsonhtml+='"'+val.p4+'",';
+		jsonhtml+='"'+val.p5+'",';
+		jsonhtml+='"'+val.p6+'",';
+		jsonhtml+='"'+val.p7+'",';
 		jsonhtml+='""]},';
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
@@ -188,28 +193,37 @@ function fillFlexTable(data){
 function fillCharts(data){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var repaydateArr=[];
+	var createdateArr=[];
 	var usertotalArr=[];
 	var investrepayArr=[];
-	var investcapitalArr=[];
-	var investinterestArr=[];
+	var p1Arr=[];
+	var p2Arr=[];
+	var p3Arr=[];
+	var p4Arr=[];
+	var p5Arr=[];
+	var p6Arr=[];
+	var p7Arr=[];
 	
 	$.each(data, function(key,val) {
-		repaydateArr[key]=val.repaydate;
+		createdateArr[key]=val.createdate;
 		usertotalArr[key]=parseInt(val.usertotal);
-		investrepayArr[key]=parseFloat(val.investrepay);
-		investcapitalArr[key]=parseFloat(val.investcapital);
-		investinterestArr[key]=parseFloat(val.investinterest);
+		p1Arr[key]=parseInt(val.p1);
+		p2Arr[key]=parseInt(val.p2);
+		p3Arr[key]=parseInt(val.p3);
+		p4Arr[key]=parseInt(val.p4);
+		p5Arr[key]=parseInt(val.p5);
+		p6Arr[key]=parseInt(val.p6);
+		p7Arr[key]=parseInt(val.p7);
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '待收统计汇总图表',
+        text: '投资额比例汇总图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
     },
     xAxis: {
-        categories: repaydateArr
+        categories: createdateArr
     },
     yAxis: {
         title: {
@@ -231,20 +245,36 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '待收款人次',
+        name: '总人次',
         data: usertotalArr
     }, 
     {
-        name: '待收总额',
-        data: investrepayArr
+        name: '5千以下',
+        data: p1Arr
     }, 
     {
-        name: '待收本金',
-        data: investcapitalArr
+        name: '5千(含)至1万',
+        data: p2Arr
     }, 
     {
-        name: '待收利息',
-        data: investinterestArr
+        name: '1万(含)至5万',
+        data: p3Arr
+    }, 
+    {
+        name: '5万(含)至10万',
+        data: p4Arr
+    }, 
+    {
+        name: '10万(含)至20万',
+        data: p5Arr
+    }, 
+    {
+        name: '20万(含)至50万',
+        data: p6Arr
+    }, 
+    {
+        name: '50万(含)以上',
+        data: p7Arr
     }]
 });
 }

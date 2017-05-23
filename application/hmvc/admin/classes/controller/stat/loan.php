@@ -81,7 +81,7 @@ class  controller_stat_loan extends controller_sysBase {
 		$dateend=$dateend?$dateend:date('Y-m-d',time());
 		//Excel头部
 		$header = array();
-		$header['日期'] = 'datetime';
+		$header['日期'] = 'date';
 		$header['投资人数量'] = 'integer';
 		$header['投资金额'] = 'price';
 
@@ -137,7 +137,7 @@ class  controller_stat_loan extends controller_sysBase {
 		$dateend=$dateend?$dateend:date('Y-m-d',time());
 		//Excel头部
 		$header = array();
-		$header['日期'] = 'datetime';
+		$header['日期'] = 'date';
 		$header['投资人次'] = 'integer';
 		$header['投资成功金额'] = 'price';
 		$header['冻结投资金额'] = 'price';
@@ -201,7 +201,7 @@ class  controller_stat_loan extends controller_sysBase {
 		$dateend=$dateend?$dateend:date('Y-m-d',time());
 		//Excel头部
 		$header = array();
-		$header['日期'] = 'datetime';
+		$header['日期'] = 'date';
 		$header['收款人次'] = 'integer';
 		$header['回款总额'] = 'price';
 		$header['回款本金'] = 'price';
@@ -264,7 +264,7 @@ class  controller_stat_loan extends controller_sysBase {
 		$dateend=$dateend?$dateend:date('Y-m-d',time());
 		//Excel头部
 		$header = array();
-		$header['日期'] = 'datetime';
+		$header['日期'] = 'date';
 		$header['待收款人次'] = 'integer';
 		$header['待收总额'] = 'price';
 		$header['待收本金'] = 'price';
@@ -291,6 +291,68 @@ class  controller_stat_loan extends controller_sysBase {
 	
 	//投资比例
 	public function do_investProportion(){
-		
+		$datestart=\Core::postGet('datestart');
+		$dateend=\Core::postGet('dateend');
+		if(!$datestart || !$dateend){
+			$datestart=0;
+			$dateend=0;
+		}
+		\Core::view()->set('datestart',$datestart);
+		\Core::view()->set('dateend',$dateend);
+		\Core::view()->load('stat_investProportion');
+	}
+	
+	public function do_investProportion_json(){
+		$datestart=\Core::postGet('datestart');
+		$dateend=\Core::postGet('dateend');
+		if(!$datestart || !$dateend){
+			showJSON('100','请选择日期范围');
+		}
+		$daoLoad=\Core::dao('loan_dealload');
+		$data=$daoLoad->getInvestProportion(strtotime($datestart),strtotime($dateend));
+		if(!$data){
+			//空数据的情况
+			$datarow=array();
+			$datarow['createdate']=$datestart;
+			$datarow['usertotal']="0";
+			$datarow['p1']="0";
+			$datarow['p2']="0";
+			$datarow['p3']="0";
+			$datarow['p4']="0";
+			$datarow['p5']="0";
+			$datarow['p6']="0";
+			$datarow['p7']="0";
+			$datarowend=$datarow;
+			$datarowend['createdate']=$dateend;
+			$data[]=$datarow;
+			$data[]=$datarowend;
+		}
+		showJSON('200','',$data);
+	}
+	
+	public function do_investProportion_export(){
+		$datestart=\Core::get('datestart');
+		$dateend=\Core::get('dateend');
+		$datestart=$datestart?$datestart:date('Y-m-d',strtotime('-30 day'));
+		$dateend=$dateend?$dateend:date('Y-m-d',time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'date';
+		$header['成功投资总人次'] = 'integer';
+		$header['5千以下'] = 'integer';
+		$header['5千(含)至1万'] = 'integer';
+		$header['1万(含)至5万'] = 'integer';
+		$header['5万(含)至10万'] = 'integer';
+		$header['10万(含)至20万'] = 'integer';
+		$header['20万(含)至50万'] = 'integer';
+		$header['50万(含)以上'] = 'integer';
+	
+
+		$daoLoad=\Core::dao('loan_dealload');
+		//Excel内容
+		$data=$daoLoad->getInvestProportion(strtotime($datestart),strtotime($dateend));
+		//导出
+		$this -> log('投资额比例统计汇总('.$datestart.' - '.$dateend.')', 'export');
+		exportExcel('投资额比例统计汇总('.$datestart.' - '.$dateend.')', $header, $data);
 	}
 }

@@ -71,5 +71,15 @@ class dao_loan_dealload extends Dao {
 		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(user_id) as usertotal,sum(if(is_has_loans = 1, money,0)) as sucinvest,sum(if(is_has_loans = 0 and is_repay = 0, money,0)) as frozeninvest,sum(if(is_has_loans = 0 and is_repay = 1, money,0)) as failinvest,sum(if(is_has_loans = 1, rebate_money,0)) as prizeinvest")->from($this->getTable())->where($where)->groupBy("FROM_UNIXTIME(create_time,'%Y-%m-%d')")->cache(C('stat_sql_cache_time'),'stat_load_invest_amount_total'.$beginDate.'_'.$endDate)->execute()->rows();
 	}
 	
+	//获取投资额比例统计
+	//默认缓存
+	public function getInvestProportion($beginDate,$endDate){
+		$where=array();
+		$where['create_time >=']=$beginDate;
+		$where['create_time <=']=$endDate;
+		$where['is_has_loans']=1;
+		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(user_id) as usertotal,sum(if(money < 5000, 1, 0)) as p1,sum(if(money >= 5000 and money < 10000, 1, 0)) as p2,sum(if(money >= 10000 and money < 50000, 1, 0)) as p3,sum(if(money >= 50000 and money < 100000, 1, 0)) as p4,sum(if(money >= 100000 and money < 200000, 1, 0)) as p5,sum(if(money >= 200000 and money < 500000, 1, 0)) as p6,sum(if(money >= 500000, 1, 0)) as p7",false)->from($this->getTable())->where($where)->groupBy("FROM_UNIXTIME(create_time,'%Y-%m-%d')")->cache(C('stat_sql_cache_time'),'stat_load_invest_proportion_'.$beginDate.'_'.$endDate)->execute()->rows();
+	}
+	
 
 }
