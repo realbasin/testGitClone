@@ -175,9 +175,7 @@ $(function(){
             {display: '编号', name : 'id', width : 50, sortable : true, align: 'center'}, 
 			{display: '贷款名称', name : 'name', width : 60, sortable : true, align : 'center'},
 			{display: '借款人', name : 'user_id', width : 100, sortable : true, align: 'left'},
-
             {display: '推荐人', name : 'pid', width : 100, sortable : true, align: 'left'},
-
 			{display: '贷款金额', name : 'borrow_amount', width : 80, sortable : true, align: 'center'},
 			{display: '利率(%)', name : 'rate', width : 50, sortable : true, align: 'center'},
 			{display: '期数', name : 'repay_time', width : 40, sortable : true, align: 'center'},
@@ -186,15 +184,11 @@ $(function(){
 			{display: '是否放款', name : 'is_has_loans', width : 50, sortable : false, align: 'center'},
 			{display: '流标返还', name : 'is_has_received', width : 50, sortable : false, align: 'center'},
 			{display: '投标数', name : 'buy_count', width : 40, sortable : false, align: 'center'},
-
 			{display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
-
-
-
-
 			{display: '初审人', name : 'first_audit_admin_id', width : 80, sortable : true, align: 'center'},
 			{display: '复审人', name : 'second_audit_admin_id', width : 80, sortable : true, align: 'center'}
             ],
+        
         searchitems : [
             {display: '编号', name : 'id'},
             {display: '贷款名称', name : 'name'},
@@ -202,6 +196,7 @@ $(function(){
             {display: '贷款利率', name : 'rate'},
             {display: '贷款人ID', name : 'user_id'},
             ],
+
         sortname: "id",
         sortorder: "desc",
         title: '全部贷款'

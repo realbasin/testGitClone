@@ -55,5 +55,8 @@ class dao_loan_loanbase extends Dao {
 	public function getTable() {
 		return 'loan_base';
 	}
-
+	//根据id条件获取字段数据
+	public function getLoan($loanIds,$fields) {
+		return $this->getDb()->select($fields) -> from($this -> getTable()) ->where(array('id'=>$loanIds)) -> execute() -> key('id') -> rows();
+	}
 }

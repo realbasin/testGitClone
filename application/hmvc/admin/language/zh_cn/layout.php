@@ -83,4 +83,6 @@ $lang['loan_add']='新增贷款';
 $lang['loan_notice']='预告中贷款';
 //add by zlz 20170518
 $lang['loan_op_log'] = '审核日志列表';
+$lang['loan_repay_plan'] = '还款计划';
+$lang['loan_detail'] = '投标详情';
 ?>
