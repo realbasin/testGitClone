@@ -37,7 +37,7 @@
   <i class="home"></i>
   <span>借出统计</span>
   <i class="arrow"></i>
-  <span>投资人数/金额</span>
+  <span>成功投资比率</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -57,7 +57,7 @@
    </div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>投资人数/金额汇总表</h3>
+      <h3>成功投资比率汇总图表</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
@@ -67,8 +67,11 @@
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
           <th width="150" style="width: 150px;" align="center">时间</th>
-          <th width="150" style="width: 150px;" align="center">投资用户数量</th>
-          <th width="150" style="width: 150px;" align="center">投资金额</th>
+          <th width="150" style="width: 150px;" align="center">投资人次</th>
+          <th width="150" style="width: 150px;" align="center">成功投资金额</th>
+          <th width="150" style="width: 150px;" align="center">冻结投资额</th>
+          <th width="150" style="width: 150px;" align="center">投资失败金额</th>
+          <th width="150" style="width: 150px;" align="center">奖励金额</th>
           <th></th>
         </tr>
       </thead>
@@ -85,7 +88,7 @@ $('.flexigrid').flexigrid({
 	usepager: false,
 	reload: false,
 	columnControl: false,
-	title: '投资人数量/金额汇总',
+	title: '成功投资比率汇总',
 	buttons : [
                {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
            ]
@@ -93,7 +96,7 @@ $('.flexigrid').flexigrid({
 	
 function btnPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_loan','investor_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
+        window.location.href = '<?php echo adminUrl('stat_loan','investAmount_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
     }
 };
 	
@@ -132,7 +135,7 @@ $('#syshelp').on("click",function(){
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var url='<?php echo adminUrl('stat_loan','investor');?>';
+	var url='<?php echo adminUrl('stat_loan','investAmount');?>';
 	url+='&datestart='+datestart+'&dateend='+dateend;
 	location.href=url;
 });
@@ -142,7 +145,7 @@ function initSearch(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	$.ajax({
-		url:'<?php echo adminUrl('stat_loan','investor_json');?>',
+		url:'<?php echo adminUrl('stat_loan','investAmount_json');?>',
   		type:'get',
   		data:{
   			datestart:datestart,
@@ -170,7 +173,10 @@ function fillFlexTable(data){
 		jsonhtml+='"cell":[';
 		jsonhtml+='"'+val.createdate+'",';
 		jsonhtml+='"'+val.usertotal+'",';
-		jsonhtml+='"￥'+val.moneytotal+'",';
+		jsonhtml+='"￥'+val.sucinvest+'",';
+		jsonhtml+='"￥'+val.frozeninvest+'",';
+		jsonhtml+='"￥'+val.failinvest+'",';
+		jsonhtml+='"￥'+val.prizeinvest+'",';
 		jsonhtml+='""]},';
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
@@ -183,15 +189,21 @@ function fillCharts(data){
 	var dateend=$('#dateend').val();
 	var createdateArr=[];
 	var usertotalArr=[];
-	var moneytotalArr=[];
+	var sucinvestArr=[];
+	var frozeninvestArr=[];
+	var failinvestArr=[];
+	var prizeinvestArr=[];
 	$.each(data, function(key,val) {
 		createdateArr[key]=val.createdate;
 		usertotalArr[key]=parseInt(val.usertotal);
-		moneytotalArr[key]=parseFloat(val.moneytotal);
+		sucinvestArr[key]=parseFloat(val.sucinvest);
+		frozeninvestArr[key]=parseFloat(val.frozeninvest);
+		failinvestArr[key]=parseFloat(val.failinvest);
+		prizeinvestArr[key]=parseFloat(val.prizeinvest);
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '投资人数/金额汇总图表',
+        text: '成功投资比率汇总图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
@@ -201,7 +213,7 @@ function fillCharts(data){
     },
     yAxis: {
         title: {
-            text: '投资人数/投资金额'
+            text: '人数/金额'
         },
         plotLines: [{
             value: 0,
@@ -223,8 +235,20 @@ function fillCharts(data){
         data: usertotalArr
     }, 
     {
-        name: '投资金额',
-        data: moneytotalArr
+        name: '成功投资金额',
+        data: sucinvestArr
+    }, 
+    {
+        name: '冻结投资金额',
+        data: frozeninvestArr
+    }, 
+    {
+        name: '失败投资金额',
+        data: failinvestArr
+    }, 
+    {
+        name: '奖励金额',
+        data: prizeinvestArr
     }]
 });
 }
