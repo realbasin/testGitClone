@@ -267,7 +267,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$row['cell'][] = $v['id'];
 			$row['cell'][] = "<a href='javascript:loan_show(".$v['id'].")'>".$v['name']."</a>";
 			$row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
-			$row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'real_name').')':'';
+			$row['cell'][] = \Core::arrayKeyExists($v['user_id'], $pidNames)?\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'real_name').')':'';
 
 			$row['cell'][] = "￥".$v['borrow_amount'];
 			$row['cell'][] = $v['rate']."%";
@@ -441,16 +441,12 @@ class  controller_loan_loan extends controller_sysBase {
 			$where['deal_id ']=\Core::get('deal_id');
 		}
 		if(\Core::get('op_type')!=-1 && is_numeric(\Core::get('op_type'))){
-
 			$where['op_id ']=\Core::get('op_type');
 		}
-		if(\Core::get('time')!=null){
-			$time = \Core::get('time');
-			if($time == 'today') {
-				$start_time = strtotime(date('Y-m-d'));
-				$end_time = strtotime(date('Y-m-d'));
-			}
+		if(\Core::get('datestart')!=null || \Core::get('dateend')!=null){
 
+			$where['create_time >'] = strtotime(\Core::get('datestart'));
+			$where['create_time <'] = strtotime(\Core::get('dateend').' 23:59:59');
 		}
 		$userDao=\Core::dao('user_user');
 		//简易排序条件
