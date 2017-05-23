@@ -70,5 +70,6 @@ class dao_loan_dealload extends Dao {
 		$where['create_time <=']=$endDate;
 		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(user_id) as usertotal,sum(if(is_has_loans = 1, money,0)) as sucinvest,sum(if(is_has_loans = 0 and is_repay = 0, money,0)) as frozeninvest,sum(if(is_has_loans = 0 and is_repay = 1, money,0)) as failinvest,sum(if(is_has_loans = 1, rebate_money,0)) as prizeinvest")->from($this->getTable())->where($where)->groupBy("FROM_UNIXTIME(create_time,'%Y-%m-%d')")->cache(C('stat_sql_cache_time'),'stat_load_invest_amount_total'.$beginDate.'_'.$endDate)->execute()->rows();
 	}
+	
 
 }

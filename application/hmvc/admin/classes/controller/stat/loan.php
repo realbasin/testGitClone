@@ -60,6 +60,16 @@ class  controller_stat_loan extends controller_sysBase {
 		}
 		$daoLoad=\Core::dao('loan_dealload');
 		$data=$daoLoad->getInvest(strtotime($datestart),strtotime($dateend));
+		if(!$data){
+			$datarow=array();
+			$datarow['createdate']=$datestart;
+			$datarow['usertotal']="0";
+			$datarow['moneytotal']="0.00";
+			$datarowend=$datarow;
+			$datarowend['createdate']=$dateend;
+			$data[]=$datarow;
+			$data[]=$datarowend;
+		}
 		showJSON('200','',$data);
 	}
 	
@@ -104,6 +114,19 @@ class  controller_stat_loan extends controller_sysBase {
 		}
 		$daoLoad=\Core::dao('loan_dealload');
 		$data=$daoLoad->getInvestAmount(strtotime($datestart),strtotime($dateend));
+		if(!$data){
+			$datarow=array();
+			$datarow['createdate']=$datestart;
+			$datarow['usertotal']="0";
+			$datarow['sucinvest']="0.00";
+			$datarow['frozeninvest']="0.00";
+			$datarow['failinvest']="0.00";
+			$datarow['prizeinvest']="0.00";
+			$datarowend=$datarow;
+			$datarowend['createdate']=$dateend;
+			$data[]=$datarow;
+			$data[]=$datarowend;
+		}
 		showJSON('200','',$data);
 	}
 	
@@ -131,7 +154,70 @@ class  controller_stat_loan extends controller_sysBase {
 	
 	//回款统计
 	public function do_payment(){
-		
+		$datestart=\Core::postGet('datestart');
+		$dateend=\Core::postGet('dateend');
+		if(!$datestart || !$dateend){
+			$datestart=0;
+			$dateend=0;
+		}
+		\Core::view()->set('datestart',$datestart);
+		\Core::view()->set('dateend',$dateend);
+		\Core::view()->load('stat_payment');
+	}
+	
+	public function do_payment_json(){
+		$datestart=\Core::postGet('datestart');
+		$dateend=\Core::postGet('dateend');
+		if(!$datestart || !$dateend){
+			showJSON('100','请选择日期范围');
+		}
+		$daoRepay=\Core::dao('loan_dealloadrepay');
+		$data=$daoRepay->getPayment(strtotime($datestart),strtotime($dateend));
+		if(!$data){
+			//空数据的情况
+			$datarow=array();
+			$datarow['repaydate']=$datestart;
+			$datarow['usertotal']="0";
+			$datarow['investrepay']="0.00";
+			$datarow['investcapital']="0.00";
+			$datarow['investinterest']="0.00";
+			$datarow['repaypenalty']="0.00";
+			$datarow['repayfine']="0.00";
+			$datarow['investfee']="0.00";
+			$datarow['loanfee']="0.00";
+			$datarow['platfromincome']="0.00";
+			$datarowend=$datarow;
+			$datarowend['repaydate']=$dateend;
+			$data[]=$datarow;
+			$data[]=$datarowend;
+		}
+		showJSON('200','',$data);
+	}
+	
+	public function do_payment_export(){
+		$datestart=\Core::get('datestart');
+		$dateend=\Core::get('dateend');
+		$datestart=$datestart?$datestart:date('Y-m-d',strtotime('-30 day'));
+		$dateend=$dateend?$dateend:date('Y-m-d',time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'datetime';
+		$header['收款人次'] = 'integer';
+		$header['回款总额'] = 'price';
+		$header['回款本金'] = 'price';
+		$header['回款利息'] = 'price';
+		$header['提前还款罚息'] = 'price';
+		$header['逾期还款罚金'] = 'price';
+		$header['管理费(投资方)'] = 'price';
+		$header['管理费(借款方)'] = 'price';
+		$header['平台收入'] = 'price';
+
+		$daoRepay=\Core::dao('loan_dealloadrepay');
+		//Excel内容
+		$data=$daoRepay->getPayment(strtotime($datestart),strtotime($dateend));
+		//导出
+		$this -> log('导出回款统计汇总('.$datestart.' - '.$dateend.')', 'export');
+		exportExcel('回款统计汇总('.$datestart.' - '.$dateend.')', $header, $data);
 	}
 	
 	//待收统计
