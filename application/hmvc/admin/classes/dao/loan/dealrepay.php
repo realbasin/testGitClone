@@ -47,7 +47,7 @@ class dao_loan_dealrepay extends Dao {
 	 * @loan_id 贷款id
 	 * @field 查询字段
 	 */
-	public function getRepayPlan($loan_id,$field) {
-		return $this->getDb()->select($field)->from($this->getTable())->where(array('deal_id'=>$loan_id))->orderBy('l_key','asc')->execute()->rows();
+	public function getRepayPlan($where,$field) {
+		return $this->getDb()->select($field)->from($this->getTable())->where($where)->orderBy('l_key','asc')->execute()->rows();
 	}
 }

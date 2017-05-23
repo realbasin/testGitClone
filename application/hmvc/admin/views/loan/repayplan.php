@@ -60,8 +60,8 @@
                 {display: '查看', name : 'buy_count', width : 40, sortable : false, align: 'center'},
             ],
             buttons : [
-                {display: '<i class="fa"></i> 手动还款', name : 'add',  title : '手动还款', onpress : flexPress },
-                {display: '<i class="fa "></i> 导出还款计划列表', name : 'outlist', title : '导出还款计划列表', onpress : flexPress }
+                {display: '<i class="fa"></i> 手动还款', name : 'add',  title : '手动还款', bclass : 'csv',onpress : flexPress },
+                {display: '<i class="fa fa-file-excel-o"></i> 导出还款计划列表', name : 'cvs', bclass : 'csv', title : '导出还款计划列表', onpress : flexPress }
             ],
             sortname: "l_key",
             sortorder: "asc",
@@ -82,8 +82,8 @@
 
     });
     function flexPress(name, grid) {
-        if(name=='add'){
-            location.href='<?php echo adminUrl('loan_loan','add');?>';
+        if(name=='cvs'){
+            window.location.href = '<?php echo adminUrl('loan_loan','repayplan_export',array('deal_id'=>$loan_id));?>';
         }
     }
     //手动还款
@@ -117,9 +117,9 @@
         }).showModal();
     }
 
-    //详情
-    function loan_detail(id){
-        location.href='<?php echo adminUrl('loan_loan','detail');?>'+'&loan_id='+id;
+    //导出计划列表
+    function repay_plan_export_load(id,lkey){
+        location.href='<?php echo adminUrl('loan_loan','repayplan_export');?>'+'&deal_id='+id+'&l_key='+lkey;
     }
 
     //预览

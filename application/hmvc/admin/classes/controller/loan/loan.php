@@ -107,6 +107,141 @@ class  controller_loan_loan extends controller_sysBase {
 		$loan['need_money'] = number_format($loan['borrow_amount'] - $loan['load_money'],2);
 		\Core::view()->set('loan',$loan)->load('loan_detail');
 	}
+	//导出还款计划
+	public function do_repayplan_export(){
+		$where = array();
+		$deal_id = \Core::get('deal_id');
+		$l_key = \Core::get('l_key');
+
+		if($deal_id != null) {
+			$where['deal_id'] = $deal_id;
+		}
+		//贷款名
+		$loanName = \Core::dao('loan_loanbase')->getName($deal_id);
+		if($l_key != null) {
+			$where['l_key'] = $l_key;
+			$loanName .= '/第'.($l_key+1).'期';
+		}
+		//Excel头部
+		$header = array();
+		$header['第几期'] = 'integer';
+		$header['还款日'] = 'date';
+		$header['已还总额'] = 'string';
+		$header['待还总额'] = 'string';
+		$header['待还本息'] = 'string';
+		$header['管理费'] = 'string';
+		$header['逾期费用'] = 'string';
+		$header['逾期管理费'] = 'string';
+		$header['还款情况'] = 'string';
+		$header['还款时间'] = 'datetime';
+		$header['逾期天数'] = 'integer';
+		$fields = 'id,deal_id,l_key,repay_time,repay_money,manage_money,true_repay_time,status,has_repay,impose_money,manage_impose_money,true_repay_money,true_manage_money';
+		$repayPlanDao = \Core::dao('loan_dealrepay');
+		$data = $repayPlanDao->getRepayPlan($where,$fields);
+		unset($where);
+		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
+		$loanextDao = \Core::dao('loan_loanext');
+		$config_common = $loanextDao->getConfig('config_common');
+		$loadrepayDao = \Core::dao('loan_loadrepay');
+		$loanenumBusiness = \Core::business('loan_loanenum');
+		//Excel内容
+		foreach ($data as $v) {
+			$row = array();
+			$overdue_day = 0;
+			//判断是否逾期，计算应还金额等
+			//是否还款
+			if($v['has_repay'] == 1) {
+				//已还总额
+				$isrepay = $v['true_repay_money'];
+				//待还总额
+				$repay_all_money = '0.00';
+				//待还本息
+				$repay_money = '0.00';
+				//管理费
+				$manage_money = $v['true_manage_money'];
+				//逾期/违约金
+				$impose_money = $v['impose_money'];
+				//逾期/违约金管理费
+				$manage_impose_money = $v['manage_impose_money'];
+				//还款情况
+				$status = $v['status'] + 1;
+				$repaydate = date('Y-m-d H:i:s',$v['true_repay_time']);
+			}elseif($v['has_repay'] == 0) {
+				//未还款状态
+				//已还总额
+				$isrepay = '0.00';
+				//判断是否罚息
+				$time = time();
+				if($time > ($v['repay_time'] + 24 * 3600 - 1) && $v['repay_money'] > 0){
+					$status = 3;
+					//计算逾期时间,设置还款状态
+					$overdue_day = ceil((strtotime(date('Y-m-d',$time)) - $v['repay_time']) / (3600 * 24));
+					//根据日期判断是否严重逾期 获取费率
+					//费率修改为拓展表loan_ext中普通配置字段config_common中获取
+					if ($overdue_day >= C('YZ_IMPSE_DAY')) {
+						$status = 4;
+						$impose_fee = trim($config_common['impose_fee_day2']);
+						$manage_impose_fee = trim($config_common['manage_impose_fee_day2']);
+					}else {
+						$impose_fee = trim($config_common['impose_fee_day1']);
+						$manage_impose_fee = trim($config_common['manage_impose_fee_day1']);
+					}
+					$impose_fee = floatval($impose_fee);
+					$manage_impose_fee = floatval($manage_impose_fee);
+					$repay_money = $v['repay_money'];
+					$manage_money = $v['manage_money'];
+					//罚息
+					$impose_money = number_format($repay_money * $impose_fee * $overdue_day / 100,2);
+					//罚管理费
+					$manage_impose_money = number_format($repay_money * $manage_impose_fee * $overdue_day / 100,2);
+					$impose_all_money = $impose_money + $manage_impose_money;
+					$repay_all_money = $repay_money + $manage_money + $impose_all_money;
+					$repaydate = '';
+				}else {
+					//未逾期
+					$status = $v['status'];
+					$repay_money = $v['repay_money'];
+					$manage_money = $v['manage_money'];
+					//罚息
+					$impose_money = 0;
+					//罚管理费
+					$manage_impose_money = 0;
+					$repay_all_money = $repay_money + $manage_money;
+					$repaydate = '';
+				}
+			}
+			$l_key = $v['l_key'] + 1;
+			$row['l_key'] = $l_key;
+			$row['repay_time'] = date('Y-m-d',$v['repay_time']);
+			//已还总额
+			$row['true_repay_money'] = '￥'.$isrepay;
+
+			//待还总额
+			$row['need_repay_money'] = '￥'.$repay_all_money;
+
+			//待还本息
+			$row['repay_money'] = '￥'.$repay_money;
+			//管理费
+			$row['manage_money'] = '￥'.$manage_money;
+			//逾期/违约金
+			$row['impose_money'] = '￥'.$impose_money;
+			//逾期/违约金管理费
+			$row['manage_impose_money'] = '￥'.$manage_impose_money;
+			//还款状态
+			$row['repay_status'] = strip_tags($loanenumBusiness->enumLoanRepayType($status));
+			//还款时间
+			$row['true_repay_time'] = $repaydate;
+			//逾期天数
+			$row['over_day'] = ($overdue_day?$overdue_day:0);
+			$json['rows'][] = $row;
+		}
+		unset($data);
+
+		//导出
+		$this -> log($loanName.'/还款计划列表', 'export');
+		exportExcel($loanName.'/还款计划列表', $header, $json['rows']);
+		unset($json);
+	}
 	//贷款审核日志
 	public function do_audit_log(){
 		\Core::view()->set('loan_id',\Core::get('loan_id',0))->load('loan_auditlog');
@@ -289,10 +424,12 @@ class  controller_loan_loan extends controller_sysBase {
 	}
 	//获取还款计划JSON数据
 	public function do_all_repay_plan_json(){
-
+		$where = array();
+		$deal_id = \Core::get('loan_id');
+		$where['deal_id'] = $deal_id;
 		$repayPlanDao = \Core::dao('loan_dealrepay');
-		$data = $repayPlanDao->getRepayPlan(\Core::get('loan_id'),'*');
-
+		$data = $repayPlanDao->getRepayPlan($where,'*');
+		unset($where);
 		//处理返回结果
 		$json = array();
 		$json['total'] = 0;
@@ -381,12 +518,12 @@ class  controller_loan_loan extends controller_sysBase {
 			if($loadrepayDao->getIsSiteRepay($where) == 0){
 				$opration.="<li><a href='javascript:site_repay(".$v['deal_id'].")'>网站资金代还款</a></li>";
 			}
-			$opration.="<li><a href='javascript:repay_plan_export_load(".$v['deal_id'].")'>导出还款计划列表</a></li>";
+			$opration.="<li><a href='javascript:repay_plan_export_load(".$v['deal_id'].",".$v['l_key'].")'>导出还款计划列表</a></li>";
 			$opration.="</ul></span>";
 			$row['cell'][] = $opration;
 			$l_key = $v['l_key'] + 1;
 			$row['cell'][] = '第'  .$l_key.'期';
-			$row['cell'][] = $v['repay_date'];
+			$row['cell'][] = date('Y-m-d',$v['repay_time']);
 			//已还总额
 			$row['cell'][] = '￥'.$isrepay;
 			//待还总额
