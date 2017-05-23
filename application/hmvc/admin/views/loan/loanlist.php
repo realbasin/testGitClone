@@ -231,7 +231,7 @@ function loan_preview(id){
 
 //审核日志
 function loan_audit_log(id){
-	location.href='<?php echo adminUrl('loan_loan','audit_log');?>'+'&loan_id='+id;
+	location.href='<?php echo adminUrl('loan_oplog','audit_log');?>'+'&loan_id='+id;
 }
 
 $('#syshelp').on("click",function(){
