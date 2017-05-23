@@ -112,7 +112,6 @@ class  controller_loan_loan extends controller_sysBase {
 		$where = array();
 		$deal_id = \Core::get('deal_id');
 		$l_key = \Core::get('l_key');
-
 		if($deal_id != null) {
 			$where['deal_id'] = $deal_id;
 		}
@@ -236,7 +235,6 @@ class  controller_loan_loan extends controller_sysBase {
 			$json['rows'][] = $row;
 		}
 		unset($data);
-
 		//导出
 		$this -> log($loanName.'/还款计划列表', 'export');
 		exportExcel($loanName.'/还款计划列表', $header, $json['rows']);
@@ -511,7 +509,7 @@ class  controller_loan_loan extends controller_sysBase {
 			if($v['has_repay'] == 0) {
 				$opration.="<li><a href='javascript:manual_repay(".$v['deal_id'].",".$v['l_key'].",".$repay_all_money.")'>手动还款</a></li>";
 			}
-			//TODO 网站资金代还判断 deal_load_repay表is_site_repay字段
+			//网站资金代还判断 deal_load_repay表is_site_repay字段
 			$where = array();
 			$where['deal_id'] = $v['deal_id'];
 			$where['l_key'] = $v['l_key'];

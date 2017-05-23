@@ -121,17 +121,7 @@
     function repay_plan_export_load(id,lkey){
         location.href='<?php echo adminUrl('loan_loan','repayplan_export');?>'+'&deal_id='+id+'&l_key='+lkey;
     }
-
-    //预览
-    function loan_preview(id){
-        //window
-        location.href='<?php echo adminUrl('loan_loan','preview');?>'+'&loan_id='+id;
-    }
-
-    //审核日志
-    function loan_audit_log(id){
-        location.href='<?php echo adminUrl('loan_loan','audit_log');?>'+'&loan_id='+id;
-    }
+    
 
     $('#syshelp').on("click",function(){
         var d = dialog({
