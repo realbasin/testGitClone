@@ -88,4 +88,13 @@ class dao_loan_dealloadrepay extends Dao {
 		$where['has_repay']=0;
 		return $this->getDb()->select("FROM_UNIXTIME(repay_time,'%Y-%m-%d') as repaydate,count(user_id) as usertotal,sum(repay_money + impose_money - manage_money) as investrepay,sum(self_money) as investcapital,sum(repay_money - self_money) as investinterest")->from($this->getTable())->where($where)->groupBy("FROM_UNIXTIME(repay_time,'%Y-%m-%d')")->cache(C('stat_sql_cache_time'),'stat_repay_due_total'.$beginDate.'_'.$endDate)->execute()->rows();
 	}
+	
+	//待收明细
+	public function getDueDetail(Array $ids){
+		$this->getDb()->where(array('t_user_id'=>0,'user_id'=>$ids),'((',')');
+		$this->getDb()->where(array('t_user_id <>'=>0,'t_user_id'=>$ids),'OR (','))');
+		$this->getDb()->where(array('has_repay'=>0));
+		$this->getDb()->select("IF(t_user_id=0,user_id,t_user_id) AS u_id,SUM(self_money) AS self_money")->from($this->getTable())->groupBy("IF(t_user_id=0,user_id,t_user_id)");
+		return $this->getDb()->execute()->rows();
+	}
 }

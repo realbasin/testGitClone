@@ -47,10 +47,10 @@ $(function(){
         colModel : [
             {display: '会员ID', name : 'user_id', width : 120, sortable : true, align : 'center'},
 			{display: '会员名称', name : 'user_name', width : 120, sortable : false, align : 'center'},
-			{display: '真实姓名', name : 'real_name', width : 120, sortable : true, align: 'center'},
-			{display: '手机号码', name : 'mobile', width : 120, sortable : true, align: 'center'},
-			{display: '账户余额', name : 'money', width : 120, sortable : true, align: 'center'},
-			{display: '冻结资金', name : 'lock_money', width : 120, sortable : true, align: 'center'},
+			{display: '真实姓名', name : 'real_name', width : 120, sortable : false, align: 'center'},
+			{display: '手机号码', name : 'mobile', width : 120, sortable : false, align: 'center'},
+			{display: '账户余额', name : 'money', width : 120, sortable : false, align: 'center'},
+			{display: '冻结资金', name : 'lock_money', width : 120, sortable : false, align: 'center'},
 			{display: '待收本金', name : 'self_money', width : 120, sortable : false, align: 'center'}
             ],
         buttons : [
@@ -91,7 +91,7 @@ function flexExport(id){
 
 $('#syshelp').on("click",function(){
 	var d = dialog({
-        content: "<li>可以选择需要导出的行<li>如果不选择任何行，则导出全部数据",
+        content: "<li>可以选择需要导出的行<li>如果不选择任何行，则导出全部数据<li>查询条件不支持模糊查询，请输入完整信息",
         quickClose: true
         });
        d.show(this);
