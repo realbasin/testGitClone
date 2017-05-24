@@ -18,7 +18,7 @@ class  business_loan_loanenum extends Business {
 			'2'=>\Core::L('repayment_at_maturity'),
 			'3'=>'等额本金'
 			);
-			return ($loantype!='')?\Core::arrayGet($loanTypeArr, $loantype,''):'';
+			return ($loantype!='')?\Core::arrayGet($loanTypeArr, $loantype,''):$loanTypeArr;
 		}
 		
 		/*
@@ -96,6 +96,7 @@ class  business_loan_loanenum extends Business {
 		//贷款类型
 		public function enumDealLoanType($dealloantype=''){
 			$dealLoanTypeList=\Core::cache()->get('deal_loan_type');
+
 			if(!$dealLoanTypeList){
 				$dealLoanTypeDao=\Core::dao('loan_dealloantype');
 				$dealLoanTypeList=$dealLoanTypeDao->getDealLoanTypes('id,name');
@@ -103,7 +104,7 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('deal_loan_type',$dealLoanTypeList);
 				}
 			}
-			return $dealloantype?\Core::arrayGet(\Core::arrayGet($dealLoanTypeList, $dealloantype,''),'name',''):'';
+			return $dealloantype?\Core::arrayGet(\Core::arrayGet($dealLoanTypeList, $dealloantype,''),'name',''):$dealLoanTypeList;
 		}
 		//还款状态
 		public function enumLoanRepayType($status=''){

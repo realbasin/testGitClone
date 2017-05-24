@@ -105,7 +105,137 @@ class  controller_loan_loan extends controller_sysBase {
 			$loan['is_over_time'] = 0;
 		}
 		$loan['need_money'] = number_format($loan['borrow_amount'] - $loan['load_money'],2);
-		\Core::view()->set('loan',$loan)->load('loan_detail');
+		\Core::view()->set('loan',$loan)->set('loan_id',$loan_id)->load('loan_detail');
+	}
+	/**
+	 * 满标放款（真放款）
+	 * mark：生成还款计划/回款计划，扣除理财人冻结资金，发放邀请返利等
+	 */
+	public function do_loans(){
+		$nowtime = time();
+		$result = array();
+		$loan_info = array();
+		$result['code'] = '000';
+		$deal_id = \Core::get('id',0);
+		$loan_info['repay_start_time'] = \Core::get('repay_start_time','');
+		if(!$deal_id) {
+			$result['message'] = '贷款不存在';
+			return @json_encode($result);
+		}
+		if($loan_info['repay_start_time'] == '') {
+			$result['message'] = '放款失败，还款时间不能为空';
+			return @json_encode($result);
+		}else {
+			$loan_info['repay_start_time'] = strtotime($loan_info['repay_start_time']);
+		}
+		//验证时间格式
+		if($loan_info['repay_start_time']< $nowtime) {
+			$result['message'] = '放款失败，还款时间不能小于当前时间';
+			return @json_encode($result);
+		}
+		//获取标信息，确认是否符合放款条件
+		//要验证的字段
+		$fields = 'loan_id,deal_status,load_money';
+		//获取数据
+		$loanBid = \Core::dao('loan_loanbid')->getLoan($deal_id,$fields);
+		if(!$loanBid) {
+			$result['message'] = '贷款不存在';
+			return @json_encode($result);
+		}
+		if(!in_array($loanBid[$deal_id]['deal_status'],array(2, 4, 5))) {
+			$result['message'] = "放款失败，借款不是满标状态";
+			return @json_encode($result);
+		}
+		$borrow_money = \Core::dao('loan_loanbase')->getLoan($deal_id,'id,borrow_amount');
+		if($borrow_money[$deal_id]['borrow_amount'] < $loanBid[$deal_id]['load_money']) {
+			$result['message'] = "放款失败，问题标";
+			return @json_encode($result);
+		}
+		//放款给用户，放款时，将贷款设置为无效
+		$loanBid[$deal_id]['deal_status'] = $loan_info['deal_status'] = 4;
+		$loan_info['is_has_loans'] = 1;
+		$loan_info['loan_time'] = $loan_info['repay_start_time'];
+		//更新贷款状态
+		$effectNumbers = \Core::dao('loan_loanbid')->updateData(array('loan_id'=>$deal_id),$loan_info);
+		if($effectNumbers){
+			$result['code'] = 200;
+			$result['message'] = "放款成功";
+			return @json_encode($result);
+		}
+		//TODO 放款成功
+
+		$result['code'] = 200;
+		$result['message'] = "放款成功";
+		return @json_encode($result);
+
+	}
+
+	/**
+	 * 流标还返
+	 * $id deal_id
+	 * $type 0 普通返回，  1资金托管
+	 */
+	public function do_received(){
+		$result = array();
+		$result['code'] = '000';
+		$deal_id = \Core::get('id',0);
+		if($deal_id == 0){
+			$result['message'] = '返还失败，借款不存在';
+			return @json_encode($result);
+		}
+		$result['message'] = '待开发';
+		return @json_encode($result);
+	}
+	//贷款详细信息编辑
+	public function do_loan_show_edit(){
+		$loan_id = \Core::get('loan_id',0);
+		$loanBusiness=\Core::business('loan_loanenum');
+		//根据借款id，获取贷款基本信息
+		$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type';
+		$loanbase = \Core::dao('loan_loanbase')->getLoan($loan_id,$basefields);
+		//获取会员名称
+		$user_id = $loanbase[$loan_id]['user_id'];
+		$user = \Core::dao('user_user')->getUser($user_id,'id,user_name,real_name,pid');
+		$username = \Core::arrayKeyExists($user_id, $user)?\Core::arrayGet(\Core::arrayGet($user, $user_id),'user_name').'('.\Core::arrayGet(\Core::arrayGet($user, $user_id),'real_name').')':'';
+		if($username != '') {
+			$username = '<a href="#&user_id='.$user_id.'">'.$username.'</a>';
+		}
+		
+
+		//\Core::dump($dealloantype);die();
+		//根据借款id，获取标基本信息
+		//$bidfields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type';
+		//$loanbid = \Core::dao('loan_loanbid')->getLoan($loan_id,$basefields);
+		\Core::view()->set('loantype',$loanBusiness->enumLoanType())
+			->set('dealcate',$loanBusiness->enumDealCate())
+			->set('dealusetype',$loanBusiness->enumDealUseType())
+			->set('dealloantype',$loanBusiness->enumDealLoanType())
+			->set('loanbase',$loanbase[$loan_id])
+			->set('username',$username)
+			->set('sorcode',$loanBusiness->enumSorCode());
+		\Core::view()->load('loan_showEdit');
+		//\Core::dump($loan_id);die();
+	}
+	//投资人列表
+	public function do_bidlist_json(){
+		$deal_id = \Core::get('loan_id',0);
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$fields = 'deal_id,user_name,money,create_time,is_auto,is_has_loans,is_repay';
+		$data = \Core::dao('loan_dealload')->getList($where,$fields);
+		if($data){
+			foreach ($data as $k=>$v) {
+				//状态
+				$data[$k]['is_auto'] = $v['is_auto']?'自动':'手动';
+				//是否转账
+				$data[$k]['is_has_loans'] = $v['is_has_loans']?'已转账':'未转账';
+				//流标返还
+				$data[$k]['is_repay'] = $v['is_repay']?'已返还':'无返还';
+				//投标时间
+				$data[$k]['create_time'] = date('Y-m-d H:i:s',$v['create_time']);
+			}
+		}
+		showJSON('200','',$data);
 	}
 	//导出还款计划
 	public function do_repayplan_export(){
@@ -390,7 +520,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$opration.="</ul></span>";
 			$row['cell'][] = $opration;
 			$row['cell'][] = $v['id'];
-			$row['cell'][] = "<a href='javascript:loan_show(".$v['id'].")'>".$v['name']."</a>";
+			$row['cell'][] = "<a href='javascript:loan_show_edit(".$v['id'].")'>".$v['name']."</a>";
 			$row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
 			$row['cell'][] = \Core::arrayKeyExists($v['user_id'], $pidNames)?\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'real_name').')':'';
 

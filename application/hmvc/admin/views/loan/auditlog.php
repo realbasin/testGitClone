@@ -34,7 +34,6 @@
     <span><?php echo \Core::L('loan_all');?></span>
     <i class="arrow"></i>
     <span><?php echo \Core::L('loan_op_log');?></span>
-
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -64,11 +63,6 @@
             columnControl:false,
             reload:false,
         });
-
-        $('#submit').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_oplog','all_op_log_json');?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
-        });
-
         $('#reset').click(function(){
             $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_oplog','all_op_log_json');?>'}).flexReload();
             $("#formSearch")[0].reset();
@@ -78,7 +72,7 @@
 
     $('#syshelp').on("click",function(){
         var d = dialog({
-            content: "<?php echo \Core::L('loan_all_help');?>",
+            content: "<?php echo \Core::L('loan_op_log');?>",
             quickClose: true
         });
         d.show(this);

@@ -233,6 +233,10 @@ function loan_preview(id){
 function loan_audit_log(id){
 	location.href='<?php echo adminUrl('loan_oplog','audit_log');?>'+'&loan_id='+id;
 }
+//编辑贷款
+function loan_show_edit(id){
+    location.href='<?php echo adminUrl('loan_loan','loan_show_edit');?>'+'&loan_id='+id;
+}
 
 $('#syshelp').on("click",function(){
 	var d = dialog({
