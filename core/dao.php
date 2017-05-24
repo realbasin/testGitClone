@@ -81,7 +81,7 @@ abstract class Dao {
 	 * 			     比如：array('time'=>'desc')或者array('time'=>'desc','id'=>'asc')
 	 * @return int
 	 */
-	public function find($values, $isRows = false, Array $orderBy = array()) {
+	public function find($values, $isRows = false, Array $orderBy = array(),$key=null) {
 		if (empty($values)) {
 			return 0;
 		}
@@ -101,7 +101,7 @@ abstract class Dao {
 		if (!$isRows) {
 			$this -> getDb() -> limit(0, 1);
 		}
-		$rs = $this -> getDb() -> from($this -> getTable()) -> execute();
+		$rs = $this -> getDb() -> from($this -> getTable()) -> execute()->key($key);
 		if ($isRows) {
 			return $rs -> rows();
 		} else {
@@ -117,7 +117,7 @@ abstract class Dao {
 	 * @param type $fields  要搜索的字段，比如：id,name。留空默认*
 	 * @return type
 	 */
-	public function findAll($where = null, Array $orderBy = array(), $limit = null, $fields = null) {
+	public function findAll($where = null, Array $orderBy = array(), $limit = null, $fields = null, $key=null) {
 		if (!is_null($fields)) {
 			$this -> getDb() -> select($fields);
 		}
@@ -130,7 +130,7 @@ abstract class Dao {
 		if (!is_null($limit)) {
 			$this -> getDb() -> limit(0, $limit);
 		}
-		return $this -> getDb() -> from($this -> getTable()) -> execute() -> rows();
+		return $this -> getDb() -> from($this -> getTable()) -> execute()->key($key) -> rows();
 	}
 
 	/**
