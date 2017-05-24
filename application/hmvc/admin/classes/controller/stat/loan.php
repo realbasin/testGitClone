@@ -290,12 +290,6 @@ class  controller_stat_loan extends controller_sysBase {
 		$pagesize = \Core::postGet('rp');
 		$page = \Core::postGet('curpage');
 
-		$user_id = \Core::postGet('user_id');
-		$user_name = \Core::postGet('user_name');
-		$real_name = \Core::postGet('real_name');
-		$mobile = \Core::postGet('mobile');
-		$idno = \Core::postGet('idno');
-
 		$sortorder = \Core::postGet('sortorder');
 
 		$where = array();
@@ -417,8 +411,127 @@ class  controller_stat_loan extends controller_sysBase {
 		echo @json_encode($dataReturn);
 	}
 
+	//待收明细导出
 	public function do_dueDetail_export() {
+		$id = \Core::getPost("id");
+		$sortorder = \Core::getPost('sortorder');
+		$where = array();
+		$ids=array();
+		if ($id) {
+			$ids = explode(",", $id);
+		}
+		//查询条件
+		if (\Core::getPost('query') && in_array(\Core::getPost('qtype'), array('user_id', 'user_name', 'real_name', 'mobile', 'idno'))) {
+			switch(\Core::getPost('qtype')) {
+				case 'user_id' :
+					$where['id'] = \Core::getPost('query');
+					break;
+				case 'user_name' :
+					$where['user_name'] = \Core::getPost('query');
+					break;
+				case 'real_name' :
+					$where["TRIM(BOTH ' ' FROM AES_DECRYPT(real_name_encrypt,'" . AES_DECRYPT_KEY . "'))"] = \Core::getPost('query');
+					break;
+				case 'mobile' :
+					$where["TRIM(BOTH ' ' FROM AES_DECRYPT(mobile_encrypt,'" . AES_DECRYPT_KEY . "'))"] = \Core::getPost('query');
+					break;
+				case 'idno' :
+					$where["TRIM(BOTH ' ' FROM AES_DECRYPT(idno_encrypt,'" . AES_DECRYPT_KEY . "'))"] = \Core::getPost('query');
+					break;
+				default :
+					break;
+			}
+		}
 
+		$daoRepay = \Core::dao('loan_dealloadrepay');
+		$daoUser = \Core::dao('user_user');
+
+		$userFields = "id,user_name,
+			AES_DECRYPT(real_name_encrypt,'" . AES_DECRYPT_KEY . "') AS real_name,
+			AES_DECRYPT(mobile_encrypt,'" . AES_DECRYPT_KEY . "') AS mobile,
+			AES_DECRYPT(money_encrypt,'" . AES_DECRYPT_KEY . "') AS money,
+			lock_money";
+
+		$dataReturn = array();
+
+		if ($where) {
+			//有查询条件，先查user表
+			$sort = array();
+			if ($sortorder) {
+				$sort = array('id' => $sortorder);
+			}
+			if($ids){
+				$where['id']=$ids;
+			}
+			$data = $daoUser -> findAll($where, $sort, null, $userFields);
+			//如果有数据开始合并id，查repay表
+			if ($data) {
+				$idarr = array();
+				foreach ($data as $v) {
+					$idarr[] = $v['id'];
+				}
+				$dataRepay = $daoRepay -> getDueDetail($idarr);
+				if ($dataRepay) {
+					foreach ($dataRepay as $v) {
+						$row = array();
+						$row[] = $v['u_id'];
+						$udata = $data[$v['u_id']];
+						$row[] = $udata['user_name'];
+						$row[] = $udata['real_name'];
+						$row[] = $udata['mobile'];
+						$row[] = $udata['money'];
+						$row[] = $udata['lock_money'];
+						$row[] = $v['self_money'];
+						$dataReturn[] = $row;
+					}
+				}
+			}
+		} else {
+			//无查询条件，先查deal_load_repay表
+			$data = $daoRepay -> getDueDetail($ids);
+			if ($data) {
+				$idarr = array();
+				foreach ($data as $v) {
+					$idarr[] = $v['u_id'];
+				}
+				$userWhere = array('id' => $idarr);
+				$dataUser = $daoUser -> findAll($userWhere, array(), null, $userFields, 'id');
+				foreach ($data as $v) {
+					$row = array();
+					$row[] = $v['u_id'];
+					//以下代码这样写是因为本地测试库数据未同步完全，避免出错
+					$udata = \Core::arrayKeyExists($v['u_id'], $dataUser)?$dataUser[$v['u_id']]:array();
+					if(!$udata){
+						$udata['user_name']='';
+						$udata['real_name']='';
+						$udata['mobile']='';
+						$udata['money']='';
+						$udata['lock_money']='';
+					}
+					//////////////////////////////////////////////////////
+					$row[] = $udata['user_name'];
+					$row[] = $udata['real_name'];
+					$row[] = $udata['mobile'];
+					$row[] = $udata['money'];
+					$row[] = $udata['lock_money'];
+					$row[] = $v['self_money'];
+					$dataReturn[] = $row;
+				}
+			}
+		}
+        //开始导出
+        $header = array();
+		$header['会员ID'] = 'integer';
+		$header['会员名称'] = 'string';
+		$header['真实姓名'] = 'string';
+		$header['手机号码'] = 'string';
+		$header['账户余额'] = 'price';
+		$header['冻结资金'] = 'price';
+		$header['待收本金'] = 'price';
+		$dao_log = \Core::dao('sys_admin_log');
+		$export_range = $id ? $id : '全部';
+		$this -> log('导出待收明细统计' . '[会员id:' . $export_range . ']', 'export');
+		exportExcel('待收明细统计', $header, $dataReturn);
 	}
 
 	//投资排名
