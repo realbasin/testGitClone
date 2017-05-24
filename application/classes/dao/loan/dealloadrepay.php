@@ -91,8 +91,10 @@ class dao_loan_dealloadrepay extends Dao {
 	
 	//待收明细
 	public function getDueDetail(Array $ids){
-		$this->getDb()->where(array('t_user_id'=>0,'user_id'=>$ids),'((',')');
-		$this->getDb()->where(array('t_user_id <>'=>0,'t_user_id'=>$ids),'OR (','))');
+		if($ids){
+			$this->getDb()->where(array('t_user_id'=>0,'user_id'=>$ids),'((',')');
+			$this->getDb()->where(array('t_user_id <>'=>0,'t_user_id'=>$ids),'OR (','))');
+		}
 		$this->getDb()->where(array('has_repay'=>0));
 		$this->getDb()->select("IF(t_user_id=0,user_id,t_user_id) AS u_id,SUM(self_money) AS self_money")->from($this->getTable())->groupBy("IF(t_user_id=0,user_id,t_user_id)");
 		return $this->getDb()->execute()->rows();
