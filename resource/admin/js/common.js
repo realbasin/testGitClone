@@ -114,7 +114,7 @@ function getCookie(objName) { //获取指定名称的cookie的值
 //========================基于artdialog插件========================
 //可以自动关闭的提示，基于artdialog插件
 function jsprint(msgtitle, url, callback) {
-	var d = parent.dialog({
+	var d = dialog({
 		content: msgtitle
 	}).show();
 	setTimeout(function() {
