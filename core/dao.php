@@ -204,15 +204,21 @@ abstract class Dao {
 	/*
 	 * 获取flexigrid分页方法
 	 */ 
-	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array()){
+	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array(), $groupBy=null){
 		$data = array();
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
+		}
+		if($groupBy){
+			$this -> getDb() -> groupBy($groupBy);
 		}
 		$total = $this -> getDb() -> select('count(*) as total') -> from($this -> getTable()) -> execute() -> value('total');
 		//这里必须重新附加条件，上面的count会重置条件
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
+		}
+		if($groupBy){
+			$this -> getDb() -> groupBy($groupBy);
 		}
 		foreach ($orderBy as $k => $v) {
 			$this -> getDb() -> orderBy($k, $v);
