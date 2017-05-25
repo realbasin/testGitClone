@@ -203,16 +203,34 @@ abstract class Dao {
 	
 	/*
 	 * 获取flexigrid分页方法
+	 * 支持多表join
+	 * @$page当前页
+	 * @$pagesize每页数量
+	 * @$fields需要查询的字段
+	 * @$where条件语句
+	 * @$orderBy排序
+	 * @$groupBy分组查询
+	 * @$joins需join查询的arrays，格式为array(array('table','condition','joinmode'))表名，条件，模式
+	 * 如果有groupby语句，则count要使用其它方式
 	 */ 
-	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array(), $groupBy=null){
+	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array(), $groupBy=null,Array $joins=array(),$fieldsWrap=true){
 		$data = array();
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
 		}
-		if($groupBy){
-			$this -> getDb() -> groupBy($groupBy);
+		if($joins && is_array($joins)){
+			foreach($joins as $v){
+				if(count($v)<2) break;
+				$this -> getDb()->join($v[0], $v[1],$v[2]);
+			}
 		}
-		$total = $this -> getDb() -> select('count(*) as total') -> from($this -> getTable()) -> execute() -> value('total');
+		if($groupBy){
+			$this -> getDb() -> select('count(DISTINCT '.$this->getDb()->wrap($groupBy).') as total') -> from($this -> getTable());
+		}else{
+			$this -> getDb() -> select('count(*) as total') -> from($this -> getTable());
+		}
+
+		$total = $this -> getDb()-> execute() -> value('total');
 		//这里必须重新附加条件，上面的count会重置条件
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
@@ -220,11 +238,19 @@ abstract class Dao {
 		if($groupBy){
 			$this -> getDb() -> groupBy($groupBy);
 		}
+		if($joins && is_array($joins)){
+			foreach($joins as $v){
+				if(count($v)<2) break;
+				$this -> getDb()->join($v[0], $v[1],$v[2]);
+			}
+		}
 		foreach ($orderBy as $k => $v) {
 			$this -> getDb() -> orderBy($k, $v);
 		}
+		$this -> getDb() -> select($fields,$fieldsWrap) -> limit(($page - 1) * $pagesize, $pagesize) -> from($this -> getTable());
+		
 		$data['total']=$total;
-		$data['rows'] = $this -> getDb() -> select($fields) -> limit(($page - 1) * $pagesize, $pagesize) -> from($this -> getTable()) -> execute() ->rows();
+		$data['rows'] = $this->getDb()->execute() ->rows();
 
 		return $data;
 	}
