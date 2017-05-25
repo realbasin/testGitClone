@@ -29,9 +29,9 @@
 <div class="location">
     <div  class="right"><a href="javascript:void(null);" id="syshelp"   onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
     <i class="home"></i>
-    <span><?php echo \Core::L('audit');?></span>
+    <span><?php echo \Core::L('loan');?></span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('my_publish');?></span>
+    <span><?php echo \Core::L('first_publish');?></span>
 
 </div>
 <div class="line10"></div>
@@ -231,9 +231,10 @@
 
     });
 
-    //审核日志
-    function deal_op_log(id){
-        location.href='<?php echo adminUrl('loan_dealoplog','deal_op_log');?>';
+
+    //编辑
+    function loan_edit(id){
+        location.href='<?php echo adminUrl('loan_loan','edit');?>';
     }
 
     //还款计划
@@ -249,6 +250,11 @@
     //合同
     function loan_contract(id){
         //dialog
+    }
+
+    //预览
+    function loan_preview(id){
+        //window
     }
 
     //审核日志
@@ -278,7 +284,7 @@
         }
         //alert(ids);
         $.ajax({
-            url	: "<?php echo adminUrl('loan_audit','publish_audit_owner');?>&way=2",
+            url	: "<?php echo adminUrl('loan_audit','publish_audit_owner');?>&way=1",
             dataType: "json",
             async	: false,
             data	: {id: id, ids: ids},

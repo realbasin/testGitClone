@@ -39,10 +39,10 @@ return
 		'indexHandle' => new \I_Database_Index_Handle_Default(),
 		'masters' => array(
 		    'master01' => array(
-			'hostname' => '58.67.193.152',
+			'hostname' => '127.0.0.1',
 			'port' => 3306,
 			'username' => 'root',
-			'password' => 'xssdxssdxssd',
+			'password' => '87ksdk@lkcxo4#',
 		    )
 		),
 		/*

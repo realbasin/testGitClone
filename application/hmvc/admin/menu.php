@@ -42,7 +42,7 @@ $menu = array(
 							array('link'=>'loan_loan,notice','text'=>$lang['loan_notice']),
 						)
 					),
-					array('link'=>'','text'=>$lang['publish'],
+					array('link'=>'','text'=>$lang['audit'],
 						'sub'=>array(
 							array('link'=>'loan_audit,first_publish','text'=>$lang['first_publish']),
 							array('link'=>'loan_audit,publish','text'=>$lang['publish']),

@@ -536,6 +536,59 @@ class  controller_stat_loan extends controller_sysBase {
 
 	//投资排名
 	public function do_investRank() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		$enum=\Core::business('loan_loanenum');
+		$loanTypeList=$enum->enumDealLoanTypeActive();
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> set('loantype', $loanTypeList);
+		\Core::view() -> load('stat_investRank');
+	}
+	
+	//投资排名json
+	public function do_investRank_json() {
+		$pagesize = \Core::getPost('rp');
+		$page = \Core::getPost('curpage');
+		$datestart=\Core::getPost('datestart');
+		$dateend=\Core::getPost('dateend');
+		$loantype=\Core::getPost('loantype');
+		$sort=\Core::getPost('sortorder');
+		
+		if(!$sort){
+			$sort='desc';
+		}
+		
+		if (!$page || !is_numeric($page))
+			$page = 1;
+		if (!$pagesize || !is_numeric($pagesize))
+			$pagesize = 15;
+
+		$data = \Core::dao('loan_dealloadtransfer') -> getStatTotalAmount($page, $pagesize, strtotime($datestart), strtotime($dateend), $loantype,$sort);
+		//处理返回结果
+//		$json = array();
+//		$json['page'] = $page;
+//		$json['total'] = $data['total'];
+//		foreach ($data['rows'] as $v) {
+//			$row = array();
+//			$row['id'] = $v['id'];
+//			$row['cell'][] = "<a class='btn red' onclick='flexDelete({$v['id']})'><i class='fa fa-trash-o'></i> " . \Core::L('delete') . "</a>";
+//			$row['cell'][] = $v['admin_name'];
+//			$row['cell'][] = $v['content'];
+//			$row['cell'][] = $v['ip'];
+//			$row['cell'][] = date('Y-m-d H:i:s', $v['operatetime']);
+//			$row['cell'][] = '';
+//			$json['rows'][] = $row;
+//		}
+		//返回JSON
+		echo @json_encode($json);
+	}
+	
+	public function do_investRank_export() {
 
 	}
 

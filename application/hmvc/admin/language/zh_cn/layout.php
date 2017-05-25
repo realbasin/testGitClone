@@ -85,7 +85,7 @@ $lang['loan_ing']='未满标贷款';
 $lang['loan_flow']='流标的贷款';
 $lang['loan_reject']='审核失败的贷款';
 
-$lang['publish']='审核管理';
+$lang['audit']='审核管理';
 $lang['first_publish']='首单待审核列表';
 $lang['publish']='续借待审核列表';
 $lang['my_publish']='我的待审核列表';
