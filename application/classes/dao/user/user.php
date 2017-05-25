@@ -237,7 +237,7 @@ class dao_user_user extends Dao {
 	 * @field 要查询的字段
 	 * @limit 限制取多少条，默认20条
 	 */
-	public function getUsersByName($userName,$field='id,user_name,real_name',$limit=10){
+	public function getUsersByName($userName,$field='id,user_name,AES_DECRYPT(real_name_encrypt) as real_name,AES_DECRYPT(mobile_encrypt) as mobile',$limit=10){
 		return $this->getDb()->select($field)->from($this->getTable())->where(array('user_name like'=>'%'.$userName.'%'))->limit(0,$limit)->execute()->rows();
 	}
 

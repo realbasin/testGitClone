@@ -28,7 +28,7 @@ class dao_loan_dealcity extends Dao {
 	}
 	
 	public function getCitys(){
-		return $this->getDb()->select('*')->from($this->getTable())->where->(array('is_effect'=>1,'is_delete'=>0))->order('sort asc')->execute()->rows();
+		return $this->getDb()->select('*')->from($this->getTable())->where(array('is_effect'=>1,'is_delete'=>0))->order('sort asc')->execute()->rows();
 	}
 
 }

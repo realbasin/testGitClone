@@ -41,6 +41,18 @@ $menu = array(
 							array('link'=>'loan_loan,notice','text'=>$lang['loan_notice']),
 						)
 					),
+					array('link'=>'','text'=>$lang['publish'],
+						'sub'=>array(
+							array('link'=>'loan_loanbase,first_publish','text'=>$lang['first_publish']),
+							array('link'=>'loan_loanbase,publish','text'=>$lang['publish']),
+							array('link'=>'loan_loanbase,my_publish','text'=>$lang['my_publish']),
+							array('link'=>'loan_loanbase,true_publish','text'=>$lang['true_publish']),
+							array('link'=>'loan_loan,all','text'=>$lang['loan_ing']),
+							array('link'=>'loan_loan,all','text'=>$lang['loan_flow']),
+							array('link'=>'loan_loan,all','text'=>$lang['loan_reject']),
+						)
+					),
+
 				)
 			),
 			3 => array(

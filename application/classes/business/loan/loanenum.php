@@ -103,4 +103,5 @@ class  business_loan_loanenum extends Business {
 			}
 			return $dealloantype?\Core::arrayGet(\Core::arrayGet($dealLoanTypeList, $dealloantype,''),'name',''):$dealLoanTypeList;
 		}
+	
 }
