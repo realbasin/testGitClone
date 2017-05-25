@@ -204,6 +204,15 @@ abstract class Dao {
 	/*
 	 * 获取flexigrid分页方法
 	 * 支持双表join
+	 * @$page当前页
+	 * @$pagesize每页数量
+	 * @$fields需要查询的字段
+	 * @$where条件语句
+	 * @$orderBy排序
+	 * @$groupBy分组查询
+	 * @$joinTable需join查询的表名
+	 * @$joinCondition联合查询的on条件
+	 * @$joinMode联合方式inner left right
 	 */ 
 	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array(), $groupBy=null,$joinTable=null,$joinCondition=null,$joinMode=''){
 		$data = array();
