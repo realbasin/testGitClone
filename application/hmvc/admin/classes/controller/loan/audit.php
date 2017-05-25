@@ -1,10 +1,10 @@
 <?php
 defined('IN_XIAOSHU') or exit('Access Invalid!');
 
-class  controller_loan_loanbase extends controller_sysBase {
+class  controller_loan_audit extends controller_sysBase {
 
     public function before($method, $args) {
-        \Language::read('loan');
+        \Language::read('');
     }
 
     public function do_index() {

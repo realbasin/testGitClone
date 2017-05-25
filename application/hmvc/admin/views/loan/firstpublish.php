@@ -195,7 +195,7 @@
 <script>
     $(function(){
         $("#flexitable").flexigrid({
-            url: '<?php echo adminUrl('loan_loanbase',$action);?>',
+            url: '<?php echo adminUrl('loan_audit',$action);?>',
             colModel : [
                 {display: '<?php echo \Core::L("operate");?>', name : 'operation', width : 80, sortable : false, align: 'center', className: 'handle-m'},
                 {display: '编号', name : 'id', width : 50, sortable : true, align: 'center'},
@@ -221,11 +221,11 @@
         });
 
         $('#submit').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_loanbase',$action);?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit',$action);?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
         });
 
         $('#reset').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_loanbase',$action);?>'}).flexReload();
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit',$action);?>'}).flexReload();
             $("#formSearch")[0].reset();
         });
 
@@ -284,7 +284,7 @@
         }
         //alert(ids);
         $.ajax({
-            url	: "<?php echo adminUrl('loan_loanbase','publish_audit_owner');?>&way=1",
+            url	: "<?php echo adminUrl('loan_audit','publish_audit_owner');?>&way=1",
             dataType: "json",
             async	: false,
             data	: {id: id, ids: ids},
