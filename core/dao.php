@@ -203,14 +203,18 @@ abstract class Dao {
 	
 	/*
 	 * 获取flexigrid分页方法
+	 * 支持双表join
 	 */ 
-	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array(), $groupBy=null){
+	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array(), $groupBy=null,$joinTable=null,$joinCondition=null,$joinMode=''){
 		$data = array();
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
 		}
 		if($groupBy){
 			$this -> getDb() -> groupBy($groupBy);
+		}
+		if($joinTable && $joinCondition){
+			$this -> getDb()->join($joinTable, $joinCondition,$joinMode);
 		}
 		$total = $this -> getDb() -> select('count(*) as total') -> from($this -> getTable()) -> execute() -> value('total');
 		//这里必须重新附加条件，上面的count会重置条件
@@ -219,6 +223,9 @@ abstract class Dao {
 		}
 		if($groupBy){
 			$this -> getDb() -> groupBy($groupBy);
+		}
+		if($joinTable && $joinCondition){
+			$this -> getDb()->join($joinTable, $joinCondition,$joinMode);
 		}
 		foreach ($orderBy as $k => $v) {
 			$this -> getDb() -> orderBy($k, $v);
