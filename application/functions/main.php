@@ -46,7 +46,7 @@ function exportExcel($filename, $header = array(), $data = array()) {
 	header('Cache-Control: must-revalidate');
 	header('Pragma: public');
 	$writer = \Core::library("XLSXWriter");
-	$writer -> setAuthor("DaZhou InfoTech Ltd.");
+	$writer -> setAuthor("Xiaoshu InfoTech Ltd.");
 	if (empty($header)) {
 		$writer -> writeSheet($data);
 		$writer -> writeToStdOut();
@@ -210,5 +210,19 @@ function priceFormat($price) {
 //获得32位随机数
 function getRandString($prefix = '') {
 	return md5($prefix . microtime() . mt_rand());
+}
+
+//设置流水号
+function setTransactionId()
+{
+    list($usec, $sec) = explode(" ", microtime());
+
+    $msec = round($usec*1000);
+
+    $millisecond = str_pad($msec, 3 , '0', STR_PAD_RIGHT);
+
+    $transaction_id = date("YmdHis").$millisecond;
+
+    return $transaction_id;
 }
 ?>

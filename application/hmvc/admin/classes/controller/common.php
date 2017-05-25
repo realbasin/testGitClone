@@ -4,7 +4,7 @@ defined('IN_XIAOSHU') or exit('Access Invalid!');
  * 通用调用控制器
  * 无需管理员权限
  */
-class  controller_common extends Controller {
+class  controller_common extends controller_sysBase {
 	public function do_index() {
 
 	}

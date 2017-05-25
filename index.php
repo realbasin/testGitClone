@@ -15,6 +15,9 @@ define('STORAGE_PATH',  ROOT_PATH.'/storage/');
 define('RS_PATH', '/resource/');
 /*供前端引用的项目存储路径，必须是相对地址或者http地址*/
 define('ST_PATH', '/storage/');
+//以下定义是方维原先的
+//数据库加密
+define("AES_DECRYPT_KEY","__FANWEP2P__");
 /* 初始化配置 */
 \Base::initialize()
 	/* 设置异常管理程序保留的内存大小，单位byte */
@@ -198,6 +201,7 @@ define('ST_PATH', '/storage/');
 ;
 //设置全局缓存
 getGlobalConfig();
+//获取全局缓存之后，根据需要，需要做设置调整
 //启动
 \Base::run();
 ?>

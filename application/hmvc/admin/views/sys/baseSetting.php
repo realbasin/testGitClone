@@ -56,10 +56,19 @@
       </dl>
       <dl class="row">
         <dt class="tit">
+          <label>是否使用url重写模式</label>
+        </dt>
+        <dd class="opt">
+       <input type="checkbox" class="js-switch blue" name="url_model" id="url_model" <?php if(C('url_model')) echo 'checked';?> />
+          <p class="notic">是否启用url重写模式</p>
+        </dd>
+      </dl>
+      <dl class="row">
+        <dt class="tit">
           <label><?php echo \Core::L('time_zone');?></label>
         </dt>
         <dd class="opt">
-        <select name="time_zone" id="time_zone">
+        <select name="time_zone" id="time_zone" value="<?php echo C('time_zone');?>">
 	<option value="-12">(GMT -12:00) Eniwetok, Kwajalein</option>
             <option value="-11">(GMT -11:00) Midway Island, Samoa</option>
             <option value="-10">(GMT -10:00) Hawaii</option>
@@ -158,9 +167,7 @@
         });
        d.show(ctrl);
 };
-$(function(){
-		$('#time_zone').val('<?php echo C('time_zone');?>');
-});
+$('#time_zone').val('<?php echo C('time_zone');?>');
 </script>
 </body>
 </html>

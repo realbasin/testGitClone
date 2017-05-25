@@ -62,7 +62,7 @@ final class Language {
 	 * @return string 字符串形式的返回结果
 	 */
 	public static function get($key, $charset = '') {
-		$result = self::$language_content[$key] ? self::$language_content[$key] : '';
+		$result = \Core::arrayKeyExists($key, self::$language_content) ? self::$language_content[$key] : '';
 		if (strtoupper(\Base::getConfig() -> getLanguageCharset()) == 'UTF-8' || strtoupper($charset) == 'UTF-8')
 			return $result;
 		//json格式时不转换
