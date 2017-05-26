@@ -133,7 +133,8 @@ class  controller_loan_loan extends controller_sysBase {
 		$fields = 'loan_id,deal_status,load_money';
 		//获取数据
 		$loanBid = \Core::dao('loan_loanbid')->getOneLoanById($deal_id,$fields);
-		if(!$loanBid) {
+		$loanBase = \Core::dao('loan_loanbase')->getOneLoanById($deal_id,'id,user_id,borrow_amount');
+		if(!$loanBid || !$loanBase) {
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
 		}
@@ -151,13 +152,39 @@ class  controller_loan_loan extends controller_sysBase {
 		$loanBid['deal_status'] = $loanbid_info['deal_status'] = 4;
 		$loanbid_info['is_has_loans'] = 1;
 		$loanbid_info['loan_time'] = $loanbid_info['repay_start_time'];
+		//放款，修改用户余额
+		$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],$loanBase['borrow_amount']);
+		if($editMoneyStatus === false){
+			$result['message'] = "放款失败，修改余额出错";
+			return @json_encode($result);
+		}else {
+			$editMoneyStatus = false;
+		}
+		//收取服务费
+		//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
+		$loanextDao = \Core::dao('loan_loanext');
+		$config_common = $loanextDao->getConfig('config_common');
+		//$servicesfee = trim($config_common['services_fee']);
+		$servicesfee = 0.05;
+		$services_fee = $loanBase['borrow_amount'] * floatval($servicesfee) / 100;
+		//服务费，修改用户余额
+		$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],-$services_fee);
+		if($editMoneyStatus === false){
+			$result['message'] = "放款失败，收取服务费出错";
+			return @json_encode($result);
+		}else {
+			$editMoneyStatus = false;
+		}
+		//扣除本地标风险保证金
+		$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($loanBase['user_id'],-$services_fee);
+		$money = \Core::dao('user_user')->getUserMoney($loanBase['user_id']);
+
+		\Core::dump($money);die();
 		//更新贷款状态
 		$effectBidNumbers = \Core::dao('loan_loanbid')->updateData(array('loan_id'=>$deal_id),$loanbid_info);
 		$effectBaseNumbers = \Core::dao('loan_loanbase')->updateData(array('id'=>$deal_id),$loanbase_info);
 		if($effectBidNumbers && $effectBaseNumbers){
-			$result['code'] = 200;
-			$result['message'] = "放款成功";
-			return @json_encode($result);
+			$loanstatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],$loanBase['borrow_amount']);
 		}
 		//TODO 放款成功
 
