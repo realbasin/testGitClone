@@ -48,14 +48,14 @@ class  controller_stat_borrow extends controller_sysBase {
 		\Core::view() -> load('stat_borrower');
 	}
 	
-	//借款人统计数据
+	//已放款借款人统计数据
 	public function do_borrower_json(){
 		$datestart = \Core::postGet('datestart');
 		$dateend = \Core::postGet('dateend');
 		if (!$datestart || !$dateend) {
 			showJSON('100', '请选择日期范围');
 		}
-		$daoDeal = \Core::dao('loan_deal');
+		$daoDeal = \Core::dao('loan_loanbid');
 		$data = $daoDeal -> getStatBorrower(strtotime($datestart), strtotime($dateend));
 		if (!$data) {
 			$datarow = array();
@@ -83,12 +83,20 @@ class  controller_stat_borrow extends controller_sysBase {
 		$daoDeal = \Core::dao('loan_deal');
 		$data = $daoDeal -> getStatBorrower(strtotime($datestart), strtotime($dateend));
 		//导出
-		$this -> log('导出借款人数量统计(' . $datestart . ' - ' . $dateend . ')', 'export');
-		exportExcel('借款人数量统计(' . $datestart . ' - ' . $dateend . ')', $header, $data);
+		$this -> log('导出已放款借款人次统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('已放款借款人次统计(' . $datestart . ' - ' . $dateend . ')', $header, $data);
 	}
 	
 	//借款额统计
 	public function do_borrowerAmount(){
+		
+	}
+	
+	public function do_borrowerAmount_json(){
+		
+	}
+	
+	public function do_borrowerAmount_export(){
 		
 	}
 	
