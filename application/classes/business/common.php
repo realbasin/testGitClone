@@ -13,7 +13,7 @@ class  business_common extends Business {
 
 	//获取sql查询条数
 	public function getCount($sql) {
-		$sqlcount = "select count(*) as total from(" . $sql . ")";
+		$sqlcount = "select count(*) as total from(" . $sql . ") as TotalTable";
 		return \Core::db() -> execute($sqlcount) -> value('total', 0);
 	}
 
@@ -23,7 +23,8 @@ class  business_common extends Business {
 		$sqlList = $sql . $limit;
 		$data = array();
 		$data['total'] = $this -> getCount($sql);
-		$data['rows'] = \Core::db() -> execute($sqlList);
+		$data['rows'] = \Core::db() -> execute($sqlList)->rows();
+
 		return $data;
 	}
 
