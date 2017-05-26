@@ -37,6 +37,11 @@ $cache = array(
 				'cache_name'=>'贷款类型',
 				'cache_des'=>'贷款类型'
 			),
+			array(
+				'id' => 'deal_loan_type_active',
+				'cache_name'=>'当前使用的贷款类型列表',
+				'cache_des'=>'当前使用的贷款类型列表'
+			),
 		);
 
 return $cache;

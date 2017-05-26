@@ -39,7 +39,7 @@ class  business_loan_loanenum extends Business {
 			$delStatusArr['15']='已垫付';
 			$delStatusArr['17']='满标(待放款)';
 			$delStatusArr['18']='满标(已放款)';
-			return ($status!='')?\Core::arrayGet($delStatusArr, $status,''):'';
+			return ($status!='')?\Core::arrayGet($delStatusArr, $status,''):$delStatusArr;
 		}
 		
 		/*
@@ -54,9 +54,7 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('sor_code',$sorcodeList);
 				}
 			}
-			//midify by zlz 201705181526 客户端来源为空时出现object对象字符串[object Object]
-			//return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):$sorcodeList;
-			return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):'';
+			return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):$sorcodeList;
 		}
 		
 		//还款天/月
@@ -64,7 +62,7 @@ class  business_loan_loanenum extends Business {
 			$rTimeType=array();
 			$rTimeType['0']=\Core::L('repay_time_type_day');
 			$rTimeType['1']=\Core::L('repay_time_type_month');
-			return ($repaytimetype!='')?\Core::arrayGet($rTimeType, $repaytimetype,''):'';
+			return ($repaytimetype!='')?\Core::arrayGet($rTimeType, $repaytimetype,''):$rTimeType;
 		}
 		
 		//放标类型
@@ -96,7 +94,6 @@ class  business_loan_loanenum extends Business {
 		//贷款类型
 		public function enumDealLoanType($dealloantype=''){
 			$dealLoanTypeList=\Core::cache()->get('deal_loan_type');
-
 			if(!$dealLoanTypeList){
 				$dealLoanTypeDao=\Core::dao('loan_dealloantype');
 				$dealLoanTypeList=$dealLoanTypeDao->getDealLoanTypes('id,name');
@@ -175,5 +172,18 @@ class  business_loan_loanenum extends Business {
 				}
 			}
 			return $has_html.'<br>'.$no_html.'<br>'.$fail_html;
+		}
+		
+		//当前使用的贷款类型List
+		public function enumDealLoanTypeActive(){
+			$dealLoanTypeList=\Core::cache()->get('deal_loan_type_active');
+			if(!$dealLoanTypeList){
+				$dealLoanTypeDao=\Core::dao('loan_dealloantype');
+				$dealLoanTypeList=$dealLoanTypeDao->getDealLoanTypes('id,name',array('is_effect'=>1,'is_delete'=>0));
+				if($dealLoanTypeList){
+					\Core::cache()->set('deal_loan_type_active',$dealLoanTypeList);
+				}
+			}
+			return $dealLoanTypeList;
 		}
 }

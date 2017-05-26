@@ -536,7 +536,83 @@ class  controller_stat_loan extends controller_sysBase {
 
 	//投资排名
 	public function do_investRank() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		$enum=\Core::business('loan_loanenum');
+		$loanTypeList=$enum->enumDealLoanTypeActive();
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> set('loantype', $loanTypeList);
+		\Core::view() -> load('stat_investRank');
+	}
+	
+	//投资排名json
+	public function do_investRank_json() {
+		$pagesize = \Core::getPost('rp');
+		$page = \Core::getPost('curpage');
+		$datestart=\Core::getPost('datestart',date('Y-m-d', strtotime('-30 day')));
+		$dateend=\Core::getPost('dateend',date('Y-m-d', time()));
+		$loantype=\Core::getPost('loantype',0);
+		$sort=\Core::getPost('sortorder','DESC');
+		
+		if (!$page || !is_numeric($page))
+			$page = 1;
+		if (!$pagesize || !is_numeric($pagesize))
+			$pagesize = 15;
 
+		$data = \Core::business('loan_stat') -> getStatTotalAmount($page, $pagesize, strtotime($datestart), strtotime($dateend), $loantype,$sort);
+		
+		$json = array();
+		$json['page'] = $page;
+		$json['total'] = $data['total'];
+		foreach ($data['rows'] as $v) {
+			$row = array();
+			$row['id'] = $v['stat_user'];
+			$row['cell'][] = $v['stat_user_name'].($v['stat_user_real_name']?"(".$v['stat_user_real_name'].")":"");
+			$row['cell'][] = $v['stat_mobile'];
+			$row['cell'][] = $v['stat_amount_total'];
+			$row['cell'][] = $v['stat_amount_1'];
+			$row['cell'][] = $v['stat_amount_3'];
+			$row['cell'][] = $v['stat_amount_6'];
+			$row['cell'][] = $v['stat_amount_9'];
+			$row['cell'][] = $v['stat_amount_12'];
+			$row['cell'][] = $v['stat_bond'];
+			$row['cell'][] = $v['stat_amount_bond'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		//返回JSON
+		echo @json_encode($json);
+	}
+	
+	//排名导出
+	public function do_investRank_export() {
+		$datestart=\Core::getPost('datestart',date('Y-m-d', strtotime('-30 day')));
+		$dateend=\Core::getPost('dateend',date('Y-m-d', time()));
+		$loantype=\Core::getPost('loantype',0);
+		$sort=\Core::getPost('sortorder','DESC');
+		
+		$sql=\Core::business('loan_stat') -> getStatTotalAmount(0, 0, strtotime($datestart), strtotime($dateend), $loantype,$sort,1);
+
+		$header = array();
+		$header['投资人ID'] = 'string';
+		$header['投资人用户名'] = 'string';
+		$header['投资人真实姓名'] = 'string';
+		$header['手机号码'] = 'string';
+		$header['普通标(1)'] = 'price';
+		$header['普通标(3)'] = 'price';
+		$header['普通标(6)'] = 'price';
+		$header['普通标(9)'] = 'price';
+		$header['普通标(12)'] = 'price';
+		$header['债券标'] = 'price';
+		$header['债券转让金额'] = 'price';
+		$header['总投标金额'] = 'price';
+		
+		\Core::business('common')->exportExcel($sql, '借出排名统计('.$datestart.'~'.$dateend.')', $header, adminUrl('stat_loan','investRank'));
 	}
 
 	//投资比例
