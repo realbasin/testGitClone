@@ -36,7 +36,7 @@
 <div class="location">
   <div  class="right"><a href="javascript:void(null);" id="syshelp"   onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
   <i class="home"></i>
-  <span>借出统计</span>
+  <span>借入统计</span>
   <i class="arrow"></i>
   <span>借入汇总</span>
 </div>

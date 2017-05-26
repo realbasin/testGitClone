@@ -34,4 +34,86 @@ class  controller_stat_borrow extends controller_sysBase {
 		
 		\Core::view() -> set($data) -> load('stat_borrowAll');
 	}
+	
+	//借款人数统计
+	public function do_borrower(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_borrower');
+	}
+	
+	//借款人统计数据
+	public function do_borrower_json(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$daoDeal = \Core::dao('loan_deal');
+		$data = $daoDeal -> getStatBorrower(strtotime($datestart), strtotime($dateend));
+		if (!$data) {
+			$datarow = array();
+			$datarow['createdate'] = $datestart;
+			$datarow['usertotal'] = "0";
+			$datarowend = $datarow;
+			$datarowend['createdate'] = $dateend;
+			$data[] = $datarow;
+			$data[] = $datarowend;
+		}
+		showJSON('200', '', $data);
+	}
+	
+	//借款人统计导出
+	public function do_borrower_export(){
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'date';
+		$header['借款人数量'] = 'integer';
+
+		$daoDeal = \Core::dao('loan_deal');
+		$data = $daoDeal -> getStatBorrower(strtotime($datestart), strtotime($dateend));
+		//导出
+		$this -> log('导出借款人数量统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('借款人数量统计(' . $datestart . ' - ' . $dateend . ')', $header, $data);
+	}
+	
+	//借款额统计
+	public function do_borrowerAmount(){
+		
+	}
+	
+	//已还统计
+	public function do_repayment(){
+		
+	}
+	
+	//待还统计
+	public function do_noRepayment(){
+		
+	}
+	
+	//逾期排名
+	public function do_overdueDetail(){
+		
+	}
+	
+	//逾期分析
+	public function do_overdueAnalyze(){
+		
+	}
+	
+	//逾期波动
+	public function do_overdueDay(){
+		
+	}
 }
