@@ -69,58 +69,58 @@
           </li>
           <li title="账户余额合计：<?php echo $balancetotal;?> 元">
             <h4>账户余额合计</h4>
-            <h6>投资人账户余额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $balancetotal;?>" data-speed="1000"></h2>
+            <h6>账户余额（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $balancetotal;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
           <li title="成功投资金额：<?php echo $investmoney;?> 元">
             <h4>成功投资金额</h4>
-            <h6>投资人成功投资金额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $investmoney;?>" data-speed="1000"></h2>
+            <h6>成功投资金额（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $investmoney;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
           <li title="奖励总额：<?php echo $rebatetotal;?> 元">
             <h4>奖励总额</h4>
-            <h6>投资人的奖励总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $rebatetotal;?>" data-speed="1000"></h2>
+            <h6>奖励总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $rebatetotal;?>" data-speed="1000"></h2>
           </li>
           <li title="待收总额：<?php echo $due;?> 元">
             <h4>待收总额</h4>
-            <h6>投资人的待收总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $due;?>" data-speed="1000"></h2>
+            <h6>待收总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $due;?>" data-speed="1000"></h2>
           </li>
           <li title="待收本金总额：<?php echo $capital;?> 元">
             <h4>待收本金总额</h4>
-            <h6>投资人的待收本金总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $capital;?>" data-speed="1000"></h2>
+            <h6>待收本金总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $capital;?>" data-speed="1000"></h2>
           </li>
           <li title="待收利息总额：<?php echo $interest;?> 元">
             <h4>待收利息总额</h4>
-            <h6>投资人的待收利息总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $interest;?>" data-speed="1000"></h2>
+            <h6>待收利息总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $interest;?>" data-speed="1000"></h2>
           </li>
           <li title="已收总额：<?php echo $receivetatal;?> 元">
             <h4>已收总额</h4>
-            <h6>投资人已收总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $receivetatal;?>" data-speed="1000"></h2>
+            <h6>已收总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receivetatal;?>" data-speed="1000"></h2>
           </li>
           <li title="已收本金总额：<?php echo $receivecapital;?> 元">
             <h4>已收本金总额</h4>
-            <h6>投资人已收本金总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $receivecapital;?>" data-speed="1000"></h2>
+            <h6>已收本金总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receivecapital;?>" data-speed="1000"></h2>
           </li>
           <li title="已收利息总额：<?php echo $receiveinterest;?> 元">
             <h4>已收利息总额</h4>
-            <h6>投资人已收利息总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $receiveinterest;?>" data-speed="1000" ></h2>
+            <h6>已收利息总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receiveinterest;?>" data-speed="1000" ></h2>
           </li>
           <li title="提前还款罚息：<?php echo $receivefine;?> 元">
             <h4>提前还款罚息</h4>
             <h6>提前还款罚息总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $receivefine;?>" data-speed="1000"></h2>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receivefine;?>" data-speed="1000"></h2>
           </li>
           <li title="逾期还款罚金：<?php echo $receivepanalty;?> 元">
             <h4>逾期还款罚金</h4>
             <h6>逾期还款罚金总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $receivepanalty;?>" data-speed="1000" ></h2>
+            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receivepanalty;?>" data-speed="1000" ></h2>
           </li>
         </ul>
       </dl>
@@ -181,7 +181,7 @@ $(function(){
             enabled: false
         },
         tooltip: {
-            pointFormat: '金额: <b>{point.y:.1f} 元</b>'
+            pointFormat: '金额: <b>{point.y:.2f} 元</b>'
         },
         series: [{
             name: '总计金额',
@@ -203,7 +203,7 @@ $(function(){
                 rotation: -90,
                 color: '#FFFFFF',
                 align: 'right',
-                format: '{point.y:.1f}', // one decimal
+                format: '{point.y:.2f}', // one decimal
                 y: 10, // 10 pixels down from the top
                 style: {
                     fontSize: '12px',

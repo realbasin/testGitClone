@@ -354,5 +354,17 @@ function getRandString($prefix = '') {
 	return md5($prefix . microtime() . mt_rand());
 }
 
+//设置流水号
+function setTransactionId()
+{
+    list($usec, $sec) = explode(" ", microtime());
 
+    $msec = round($usec*1000);
+
+    $millisecond = str_pad($msec, 3 , '0', STR_PAD_RIGHT);
+
+    $transaction_id = date("YmdHis").$millisecond.mt_rand(100, 999);
+
+    return $transaction_id;
+}
 ?>

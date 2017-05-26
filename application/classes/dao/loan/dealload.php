@@ -80,10 +80,18 @@ class dao_loan_dealload extends Dao {
 		$where['is_has_loans']=1;
 		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(user_id) as usertotal,sum(if(money < 5000, 1, 0)) as p1,sum(if(money >= 5000 and money < 10000, 1, 0)) as p2,sum(if(money >= 10000 and money < 50000, 1, 0)) as p3,sum(if(money >= 50000 and money < 100000, 1, 0)) as p4,sum(if(money >= 100000 and money < 200000, 1, 0)) as p5,sum(if(money >= 200000 and money < 500000, 1, 0)) as p6,sum(if(money >= 500000, 1, 0)) as p7",false)->from($this->getTable())->where($where)->groupBy("FROM_UNIXTIME(create_time,'%Y-%m-%d')")->cache(C('stat_sql_cache_time'),'stat_load_invest_proportion_'.$beginDate.'_'.$endDate)->execute()->rows();
 	}
-	//获取投资人列表
-	//默认缓存
-	public function getList($where,$fileds){
-		return $this->getDb()->select($fileds)->from($this->getTable())->where($where)->execute()->rows();
+	
+	//获取总支出奖励
+	public function getAllRebate($beginDate,$endDate){
+		$fields="ifnull(sum(rebate_money),0) as rebate_all";
+		$this->getDb()->select($fields)->from($this->getTable());
+		$this->getDb()->where(array('is_rebate'=>1));
+		if($beginDate && $endDate){
+			$this->getDb()->where(array('create_time >='=>$beginDate,'create_time <='=>$endDate));
+		}
+		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$beginDate.$endDate);
+		return $this->getDb()->execute()->value('rebate_all');
 	}
+	
 
 }

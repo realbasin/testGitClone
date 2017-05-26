@@ -90,8 +90,8 @@ $menu = array(
 					array('link'=>'','text'=>'借入统计',
 						'sub'=>array(
 							array('link'=>'stat_borrow,all','text'=>'借入汇总'),
-							array('link'=>'stat_borrow,brrower','text'=>'借款人数'),
-							array('link'=>'stat_borrow,brrowerAmount','text'=>'借款额'),
+							array('link'=>'stat_borrow,borrower','text'=>'借款人数'),
+							array('link'=>'stat_borrow,borrowerAmount','text'=>'借款额'),
 							array('link'=>'stat_borrow,repayment','text'=>'已还统计'),
 							array('link'=>'stat_borrow,noRepayment','text'=>'待还统计'),
 							array('link'=>'stat_borrow,overdueDetail','text'=>'逾期排名'),

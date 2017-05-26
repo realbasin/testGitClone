@@ -5,12 +5,11 @@ defined('IN_XIAOSHU') or exit('Access Invalid!');
  * 业务通用使用调用类
  * 多表查询分页
  * 通用业务功能
+ * -------非常重要-----------
+ * 非多表联合查询需求请使用dao
+ * -------非常重要-----------
  */
 class  business_common extends Business {
-	public function business() {
-
-	}
-
 	//获取sql查询条数
 	public function getCount($sql) {
 		$sqlcount = "select count(*) as total from(" . $sql . ") as TotalTable";
@@ -27,6 +26,14 @@ class  business_common extends Business {
 
 		return $data;
 	}
+	
+	//执行指定$sql语句
+	public function getDatas($sql,$cacheTime=600,$cacheKey=''){
+		if($cacheKey){
+			return \Core::db() ->cache($cacheTime,$cacheKey)-> execute($sql)->rows();
+		}
+		return \Core::db() -> execute($sql)->rows();
+	}
 
 	//自动分片的Excel导出
 	//@sql String 要执行的sql语句
@@ -36,12 +43,13 @@ class  business_common extends Business {
 	//@format dataFormat.php中的数据格式化方法
 	public function exportExcel($sql, $excelName, $head, $murl,$format='',$page=0) {
 		if($page){
-			$data=$this->getPageList($page,C('export_perpage'),$sql)->rows();
+			$datas=$this->getPageList($page,C('export_perpage'),$sql)->rows();
+			$data=$datas['rows'];
 			if(!$format){
 				$formatBusiness=\Core::business('dataFormat');
 				$data=$formatBusiness->format($format,$data);
 			}
-			exportExcel($excelName."[".$page."]", $head, $data['rows']);
+			exportExcel($excelName."[".$page."]", $head, $data);
 			exit;
 		}
 		$total = $this -> getCount($sql);

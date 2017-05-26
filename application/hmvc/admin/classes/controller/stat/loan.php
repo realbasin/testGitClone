@@ -611,8 +611,8 @@ class  controller_stat_loan extends controller_sysBase {
 		$header['债券标'] = 'price';
 		$header['债券转让金额'] = 'price';
 		$header['总投标金额'] = 'price';
-		
-		\Core::business('common')->exportExcel($sql, '借出排名统计('.$datestart.'~'.$dateend.')', $header, adminUrl('stat_loan','investRank'));
+		$this -> log('导出借出排名统计('.$datestart.'~'.$dateend.')', 'export');
+		\Core::business('common')->exportExcel($sql, '借出排名统计('.$datestart.'~'.$dateend.')', $header, adminUrl('stat_loan','investRank').'&datestart='.$datestart.'&dateend='.$dateend.'&loantype='.$loantype);
 	}
 
 	//投资比例

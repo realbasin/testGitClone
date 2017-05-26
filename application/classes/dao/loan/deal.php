@@ -191,5 +191,18 @@ class dao_loan_deal extends Dao {
 	public function getDeal($id,$field){
 		return $this->getDb()->select($field)->from($this->getTable())->where($id)->execute()->row();
 	}
+	
+	//获取借款用户统计
+	public function getStatBorrower($datestart,$dateend){
+		$this->getDb()->select("FROM_UNIXTIME(loan_time,'%Y-%m-%d') as createdate,count(user_id) as usertotal");
+		$this->getDb()->from($this->getTable());
+		$this->getDb()->where(array('is_delete'=>0,'is_effect'=>1));
+		if($datestart && $dateend){
+			$this->getDb()->where(array('loan_time >='=>$datestart,'loan_time <='=>$dateend));
+		}
+		$this->getDb()->groupBy("createdate");
+		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$datestart.$dateend);
+		return $this->getDb()->execute()->row();
+	}
 
 }
