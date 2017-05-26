@@ -37,7 +37,7 @@
   <i class="home"></i>
   <span>借入统计</span>
   <i class="arrow"></i>
-  <span>已放款借款人次</span>
+  <span>借款金额</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -57,7 +57,7 @@
    </div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>已放款借款人次汇总表</h3>
+      <h3>借款金额汇总表</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
@@ -66,8 +66,13 @@
       <thead>
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
-          <th width="200" style="width: 200px;" align="center">时间</th>
-          <th width="200" style="width: 200px;" align="center">借款人次</th>
+          <th width="150" style="width: 150px;" align="center">时间</th>
+          <th width="150" style="width: 150px;" align="center">申请借款金额</th>
+          <th width="100" style="width: 100px;" align="center">申请人数</th>
+          <th width="150" style="width: 150px;" align="center">满标放款金额</th>
+          <th width="150" style="width: 150px;" align="center">流标失败金额</th>
+          <th width="150" style="width: 150px;" align="center">审核通过金额</th>
+          <th width="150" style="width: 150px;" align="center">审核通过人数</th>
           <th></th>
         </tr>
       </thead>
@@ -84,7 +89,7 @@ $('.flexigrid').flexigrid({
 	usepager: false,
 	reload: false,
 	columnControl: false,
-	title: '借款用户数量',
+	title: '借款金额',
 	buttons : [
                {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
            ]
@@ -131,7 +136,7 @@ $('#syshelp').on("click",function(){
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var url='<?php echo adminUrl('stat_borrow','borrower');?>';
+	var url='<?php echo adminUrl('stat_borrow','borrowerAmount');?>';
 	url+='&datestart='+datestart+'&dateend='+dateend;
 	location.href=url;
 });
@@ -141,7 +146,7 @@ function initSearch(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	$.ajax({
-		url:'<?php echo adminUrl('stat_borrow','borrower_json');?>',
+		url:'<?php echo adminUrl('stat_borrow','borrowerAmount_json');?>',
   		type:'get',
   		data:{
   			datestart:datestart,
@@ -187,7 +192,7 @@ function fillCharts(data){
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '已放款借款人次汇总图表',
+        text: '借款人数汇总图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
@@ -215,7 +220,7 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '借款人次',
+        name: '借款人数',
         data: usertotalArr
     }]
 });
