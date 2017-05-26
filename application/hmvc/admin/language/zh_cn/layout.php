@@ -89,5 +89,10 @@ $lang['audit']='审核管理';
 $lang['first_publish']='首单待审核列表';
 $lang['publish']='续借待审核列表';
 $lang['my_publish']='我的待审核列表';
-$lang['true_publish']='复审核列表'
+$lang['true_publish']='复审核列表';
+
+//add by zlz 20170518
+$lang['loan_op_log'] = '审核日志列表';
+$lang['loan_repay_plan'] = '还款计划';
+$lang['loan_detail'] = '投标详情';
 ?>

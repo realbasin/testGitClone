@@ -39,7 +39,7 @@ class  business_loan_loanenum extends Business {
 			$delStatusArr['15']='已垫付';
 			$delStatusArr['17']='满标(待放款)';
 			$delStatusArr['18']='满标(已放款)';
-			return ($status!='')?\Core::arrayGet($delStatusArr, $status,''):$delStatusArr;
+			return ($status!='')?\Core::arrayGet($delStatusArr, $status,''):'';
 		}
 		
 		/*
@@ -54,7 +54,9 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('sor_code',$sorcodeList);
 				}
 			}
-			return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):$sorcodeList;
+			//midify by zlz 201705181526 客户端来源为空时出现object对象字符串[object Object]
+			//return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):$sorcodeList;
+			return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):'';
 		}
 		
 		//还款天/月
@@ -62,7 +64,7 @@ class  business_loan_loanenum extends Business {
 			$rTimeType=array();
 			$rTimeType['0']=\Core::L('repay_time_type_day');
 			$rTimeType['1']=\Core::L('repay_time_type_month');
-			return ($repaytimetype!='')?\Core::arrayGet($rTimeType, $repaytimetype,''):$rTimeType;
+			return ($repaytimetype!='')?\Core::arrayGet($rTimeType, $repaytimetype,''):'';
 		}
 		
 		//放标类型
@@ -75,7 +77,7 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('deal_cate',$dealCateList);
 				}
 			}
-			return $dealcate?\Core::arrayGet(\Core::arrayGet($dealCateList, $dealcate,''),'name',''):$dealCateList;
+			return $dealcate?\Core::arrayGet(\Core::arrayGet($dealCateList, $dealcate,''),'name',''):'';
 		}
 
 		//贷款用途
@@ -88,12 +90,13 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('deal_use_type',$useTypeList);
 				}
 			}
-			return $usetype?\Core::arrayGet(\Core::arrayGet($useTypeList, $usetype,''),'name',''):$useTypeList;
+			return $usetype?\Core::arrayGet(\Core::arrayGet($useTypeList, $usetype,''),'name',''):'';
 		}
 		
 		//贷款类型
 		public function enumDealLoanType($dealloantype=''){
 			$dealLoanTypeList=\Core::cache()->get('deal_loan_type');
+
 			if(!$dealLoanTypeList){
 				$dealLoanTypeDao=\Core::dao('loan_dealloantype');
 				$dealLoanTypeList=$dealLoanTypeDao->getDealLoanTypes('id,name');
@@ -116,4 +119,43 @@ class  business_loan_loanenum extends Business {
 			}
 			return $dealLoanTypeList;
 		}
+		//还款状态
+		public function enumLoanRepayType($status=''){
+			$repayType=array();
+			$repayType['0']=\Core::L('loan_repay_stay');
+			$repayType['1']=\Core::L('loan_repay_advanced');
+			$repayType['2']=\Core::L('loan_repay_nomal');
+			$repayType['3']=\Core::L('loan_repay_overdue_nopay');
+			$repayType['4']=\Core::L('loan_repay_serious_overdue');
+			return ($status!='')?\Core::arrayGet($repayType, $status,''):'';
+		}
+		//手动还款
+		public function repayLoanBills($id='',$l_key='',$user_id=''){
+			$id = intval($id);
+			$root = array();
+			$root["status"] = 0;//0:出错;1:正确;
+			if ($id == 0) {
+				$root["show_err"] = "操作失败！";
+				return $root;
+			}
+			if ($user_id <= 0) {
+				$root["show_err"] = "用户不存在！";
+				return $root;
+			}
+			if($l_key < 0){
+				$lkeys = \Core::dao('loan_loadrepay')->getLkeys($id);
+				$ids = $lkeys;
+			}else {
+				$ids = explode(",", $l_key);
+				sort($ids);
+			}
+			//当前用户余额
+			$user_total_money = \Core::dao('user_user')->getUser($user_id,'id,AES_DECRYPT(money_encrypt,'."'__FANWEP2P__'".') AS money');
+			if ($user_total_money[$user_id]['money'] <= 0) {
+				$root["show_err"] = "余额不足";
+				return $root;
+			}
+
+		}
+
 }
