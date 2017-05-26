@@ -110,6 +110,21 @@ function adminUrl($ctl, $mtd = '', $args = array()) {
 	return \Core::getUrl($ctl, $mtd, \Core::config() -> getAdminModule(), $args);
 }
 
+/**
+ * 循环创建目录
+ *
+ * @param string $dir 待创建的目录
+ * @param  $mode 权限
+ * @return boolean
+ */
+function mk_dir($dir, $mode = '0777') {
+	if (is_dir($dir) || @mkdir($dir, $mode))
+		return true;
+	if (!mk_dir(dirname($dir), $mode))
+		return false;
+	return @mkdir($dir, $mode);
+}
+
 /*
  * 获取文件夹大小
  */
@@ -182,6 +197,13 @@ function delDir($path) {
 	}
 }
 
+/**
+ * 读取目录列表
+ * 不包括 . .. 文件 三部分
+ *
+ * @param string $path 路径
+ * @return array 数组格式的返回结果
+ */
 function readDirList($path) {
 	if (is_dir($path)) {
 		$handle = @opendir($path);
@@ -205,6 +227,126 @@ function readDirList($path) {
 function priceFormat($price) {
 	$price_format = number_format($price, 2, '.', '');
 	return $price_format;
+}
+
+
+//类似js的escape
+function phpEscape($str) {
+	preg_match_all("/[\x80-\xff].|[\x01-\x7f]+/", $str, $r);
+	$ar = $r[0];
+	foreach ($ar as $k => $v) {
+		if (ord($v[0]) < 128)
+			$ar[$k] = rawurlencode($v);
+		else
+			$ar[$k] = "%u" . bin2hex(iconv("GB2312", "UCS-2", $v));
+	}
+	return join("", $ar);
+}
+
+/**
+ * 取上一步来源地址
+ *
+ * @param
+ * @return string 字符串类型的返回结果
+ */
+function getReferer() {
+	return empty($_SERVER['HTTP_REFERER']) ? '' : $_SERVER['HTTP_REFERER'];
+}
+
+/**
+ * 邮件/短信/通知 内容转换函数
+ *
+ * @param string $message 内容模板内容
+ * @param array $param 内容参数数组
+ * @return string 通知内容
+ */
+function ReplaceText($message, $param) {
+	if (!is_array($param))
+		return false;
+	foreach ($param as $k => $v) {
+		$message = str_replace('{$' . $k . '}', $v, $message);
+	}
+	return $message;
+}
+
+/**
+ * 字符串切割函数，一个字母算一个位置,一个字算2个位置
+ *
+ * @param string $string 待切割的字符串
+ * @param int $length 切割长度
+ * @param string $dot 尾缀
+ */
+function strCut($string, $length, $dot = '') {
+	$string = str_replace(array('&nbsp;', '&amp;', '&quot;', '&#039;', '&ldquo;', '&rdquo;', '&mdash;', '&lt;', '&gt;', '&middot;', '&hellip;'), array(' ', '&', '"', "'", '“', '”', '—', '<', '>', '·', '…'), $string);
+	$strlen = strlen($string);
+	if ($strlen <= $length)
+		return $string;
+	$maxi = $length - strlen($dot);
+	$strcut = '';
+	if (strtolower(CHARSET) == 'utf-8') {
+		$n = $tn = $noc = 0;
+		while ($n < $strlen) {
+			$t = ord($string[$n]);
+			if ($t == 9 || $t == 10 || (32 <= $t && $t <= 126)) {
+				$tn = 1;
+				$n++;
+				$noc++;
+			} elseif (194 <= $t && $t <= 223) {
+				$tn = 2;
+				$n += 2;
+				$noc += 2;
+			} elseif (224 <= $t && $t < 239) {
+				$tn = 3;
+				$n += 3;
+				$noc += 2;
+			} elseif (240 <= $t && $t <= 247) {
+				$tn = 4;
+				$n += 4;
+				$noc += 2;
+			} elseif (248 <= $t && $t <= 251) {
+				$tn = 5;
+				$n += 5;
+				$noc += 2;
+			} elseif ($t == 252 || $t == 253) {
+				$tn = 6;
+				$n += 6;
+				$noc += 2;
+			} else {
+				$n++;
+			}
+			if ($noc >= $maxi)
+				break;
+		}
+		if ($noc > $maxi)
+			$n -= $tn;
+		$strcut = substr($string, 0, $n);
+	} else {
+		$dotlen = strlen($dot);
+		$maxi = $length - $dotlen;
+		for ($i = 0; $i < $maxi; $i++) {
+			$strcut .= ord($string[$i]) > 127 ? $string[$i] . $string[++$i] : $string[$i];
+		}
+	}
+	$strcut = str_replace(array('&', '"', "'", '<', '>'), array('&amp;', '&quot;', '&#039;', '&lt;', '&gt;'), $strcut);
+	return $strcut . $dot;
+}
+
+/**
+ * 取得随机数
+ *
+ * @param int $length 生成随机数的长度
+ * @param int $numeric 是否只产生数字随机数 1是0否
+ * @return string
+ */
+function random($length, $numeric = 0) {
+	$seed = base_convert(md5(microtime() . $_SERVER['DOCUMENT_ROOT']), 16, $numeric ? 10 : 35);
+	$seed = $numeric ? (str_replace('0', '', $seed) . '012340567890') : ($seed . 'zZ' . strtoupper($seed));
+	$hash = '';
+	$max = strlen($seed) - 1;
+	for ($i = 0; $i < $length; $i++) {
+		$hash .= $seed{mt_rand(0, $max)};
+	}
+	return $hash;
 }
 
 //获得32位随机数

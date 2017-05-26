@@ -103,4 +103,17 @@ class  business_loan_loanenum extends Business {
 			}
 			return $dealloantype?\Core::arrayGet(\Core::arrayGet($dealLoanTypeList, $dealloantype,''),'name',''):$dealLoanTypeList;
 		}
+		
+		//当前使用的贷款类型List
+		public function enumDealLoanTypeActive(){
+			$dealLoanTypeList=\Core::cache()->get('deal_loan_type_active');
+			if(!$dealLoanTypeList){
+				$dealLoanTypeDao=\Core::dao('loan_dealloantype');
+				$dealLoanTypeList=$dealLoanTypeDao->getDealLoanTypes('id,name',array('is_effect'=>1,'is_delete'=>0));
+				if($dealLoanTypeList){
+					\Core::cache()->set('deal_loan_type_active',$dealLoanTypeList);
+				}
+			}
+			return $dealLoanTypeList;
+		}
 }

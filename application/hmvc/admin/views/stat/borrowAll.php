@@ -36,9 +36,9 @@
 <div class="location">
   <div  class="right"><a href="javascript:void(null);" id="syshelp"   onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
   <i class="home"></i>
-  <span>借出统计</span>
+  <span>借入统计</span>
   <i class="arrow"></i>
-  <span>借出汇总</span>
+  <span>借入汇总</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -62,72 +62,72 @@
 	    <dl class="row">
         <dd class="opt">
         <ul class="def-row">
-          <li title="投资人数：<?php echo $investor;?> 人">
-            <h4>投资人数</h4>
-            <h6>投资人数量</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $investor;?>" data-speed="1000"></h2>
+          <li title="成功借入金额：<?php echo $suc_borrow_amount;?> 元">
+            <h4>成功借入金额</h4>
+            <h6>成功借入金额（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $suc_borrow_amount;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="账户余额合计：<?php echo $balancetotal;?> 元">
-            <h4>账户余额合计</h4>
-            <h6>账户余额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $balancetotal;?>" data-speed="1000" data-decimals="2"></h2>
+          <li title="支出奖励：<?php echo $rebate_all;?> 元">
+            <h4>支出奖励</h4>
+            <h6>支出奖励（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $rebate_all;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="成功投资金额：<?php echo $investmoney;?> 元">
-            <h4>成功投资金额</h4>
-            <h6>成功投资金额（元）</h6>
-            <h2 class="timer" id="count-number"  data-to="<?php echo $investmoney;?>" data-speed="1000" data-decimals="2"></h2>
+          <li title="待还总额：<?php echo $to_paid_amount;?> 元">
+            <h4>待还总额</h4>
+            <h6>待还总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $to_paid_amount;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="奖励总额：<?php echo $rebatetotal;?> 元">
-            <h4>奖励总额</h4>
-            <h6>奖励总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $rebatetotal;?>" data-speed="1000"></h2>
+          <li title="待还本金总额：<?php echo $to_paid_capital;?> 元">
+            <h4>待还本金总额</h4>
+            <h6>待还本金总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $to_paid_capital;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="待收总额：<?php echo $due;?> 元">
-            <h4>待收总额</h4>
-            <h6>待收总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $due;?>" data-speed="1000"></h2>
+          <li title="待还利息总额：<?php echo $to_paid_interest;?> 元">
+            <h4>待还利息总额</h4>
+            <h6>待还利息总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $to_paid_interest;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="待收本金总额：<?php echo $capital;?> 元">
-            <h4>待收本金总额</h4>
-            <h6>待收本金总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $capital;?>" data-speed="1000"></h2>
+          <li title="待还管理费总额：<?php echo $to_paid_fee;?> 元">
+            <h4>待还管理费总额</h4>
+            <h6>待还管理费总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $to_paid_fee;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="待收利息总额：<?php echo $interest;?> 元">
-            <h4>待收利息总额</h4>
-            <h6>待收利息总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $interest;?>" data-speed="1000"></h2>
+          <li title="已还总额：<?php echo $paid_amount;?> 元">
+            <h4>已还总额</h4>
+            <h6>已还总额（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $paid_amount;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="已收总额：<?php echo $receivetatal;?> 元">
-            <h4>已收总额</h4>
-            <h6>已收总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receivetatal;?>" data-speed="1000"></h2>
+          <li title="已还总本金：<?php echo $paid_capital;?> 元">
+            <h4>已还总本金</h4>
+            <h6>已还总本金（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $paid_capital;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="已收本金总额：<?php echo $receivecapital;?> 元">
-            <h4>已收本金总额</h4>
-            <h6>已收本金总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receivecapital;?>" data-speed="1000"></h2>
+          <li title="已还总利息：<?php echo $paid_interest;?> 元">
+            <h4>已还总利息</h4>
+            <h6>已还总利息（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $paid_interest;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="已收利息总额：<?php echo $receiveinterest;?> 元">
-            <h4>已收利息总额</h4>
-            <h6>已收利息总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receiveinterest;?>" data-speed="1000" ></h2>
+          <li title="已还总管理费：<?php echo $paid_fee;?> 元">
+            <h4>已还总管理费</h4>
+            <h6>已还总管理费（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $paid_fee;?>" data-speed="1000"  data-decimals="2"></h2>
           </li>
-          <li title="提前还款罚息：<?php echo $receivefine;?> 元">
+          <li title="提前还款罚息：<?php echo $paid_fine;?> 元">
             <h4>提前还款罚息</h4>
-            <h6>提前还款罚息总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receivefine;?>" data-speed="1000"></h2>
+            <h6>提前还款罚息（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $paid_fine;?>" data-speed="1000" data-decimals="2"></h2>
           </li>
-          <li title="逾期还款罚金：<?php echo $receivepanalty;?> 元">
+          <li title="逾期还款罚金：<?php echo $paid_panalty;?> 元">
             <h4>逾期还款罚金</h4>
-            <h6>逾期还款罚金总额（元）</h6>
-            <h2 class="timer" id="count-number"  data-decimals="2" data-to="<?php echo $receivepanalty;?>" data-speed="1000" ></h2>
+            <h6>逾期还款罚金（元）</h6>
+            <h2 class="timer" id="count-number"  data-to="<?php echo $paid_panalty;?>" data-speed="1000"  data-decimals="2"></h2>
           </li>
         </ul>
       </dl>
 	</div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>借出汇总图表</h3>
+      <h3>借入汇总图表</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
@@ -156,10 +156,10 @@ $(function(){
             type: 'column'
         },
         title: {
-            text: '借出汇总'
+            text: '借入汇总'
         },
         subtitle: {
-            text: '借出汇总图表 '+datetext
+            text: '借入汇总图表 '+datetext
         },
         xAxis: {
             type: 'category',
@@ -186,17 +186,18 @@ $(function(){
         series: [{
             name: '总计金额',
             data: [
-                ['账户余额合计', <?php echo $balancetotal?$balancetotal:0;?>],
-                ['成功投资金额', <?php echo $investmoney?$investmoney:0;?>],
-                ['奖励总额', <?php echo $rebatetotal?$rebatetotal:0;?>],
-                ['待收总额', <?php echo $due?$due:0;?>],
-                ['待收本金总额', <?php echo $capital?$capital:0;?>],
-                ['待收利息总额', <?php echo $interest?$interest:0;?>],
-                ['已收总额', <?php echo $receivetatal?$receivetatal:0;?>],
-                ['已收本金总额', <?php echo $receivecapital?$receivecapital:0;?>],
-                ['已收利息总额', <?php echo $receiveinterest?$receiveinterest:0;?>],
-                ['提前还款罚息总额', <?php echo $receivefine?$receivefine:0;?>],
-                ['逾期还款罚金总额', <?php echo $receivepanalty?$receivepanalty:0;?>]
+                ['成功借入金额', <?php echo $suc_borrow_amount?$suc_borrow_amount:0;?>],
+                ['支出奖励', <?php echo $rebate_all?$rebate_all:0;?>],
+                ['待还总额', <?php echo $to_paid_amount?$to_paid_amount:0;?>],
+                ['待还本金总额', <?php echo $to_paid_capital?$to_paid_capital:0;?>],
+                ['待还利息总额', <?php echo $to_paid_interest?$to_paid_interest:0;?>],
+                ['待还管理费总额', <?php echo $to_paid_fee?$to_paid_fee:0;?>],
+                ['已还总额', <?php echo $paid_amount?$paid_amount:0;?>],
+                ['已还总本金', <?php echo $paid_capital?$paid_capital:0;?>],
+                ['已还总利息', <?php echo $paid_interest?$paid_interest:0;?>],
+                ['已还总管理费', <?php echo $paid_fee?$paid_fee:0;?>],
+                ['提前还款罚息', <?php echo $paid_fine?$paid_fine:0;?>],
+                ['逾期还款罚金', <?php echo $paid_panalty?$paid_panalty:0;?>]
             ],
             dataLabels: {
                 enabled: true,
@@ -238,7 +239,7 @@ $('#daterange').dateRangePicker({
 
 $('#syshelp').on("click",function(){
 	var d = dialog({
-        content: "<li>可以对图表进行相关格式的导出",
+        content: "<li>不选择日期则为统计全部借款信息<li>可以对图表进行相关格式的导出",
         quickClose: true
         });
        d.show(this);
