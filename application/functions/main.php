@@ -276,7 +276,7 @@ function ReplaceText($message, $param) {
  * @param int $length 切割长度
  * @param string $dot 尾缀
  */
-function str_cut($string, $length, $dot = '') {
+function strCut($string, $length, $dot = '') {
 	$string = str_replace(array('&nbsp;', '&amp;', '&quot;', '&#039;', '&ldquo;', '&rdquo;', '&mdash;', '&lt;', '&gt;', '&middot;', '&hellip;'), array(' ', '&', '"', "'", '“', '”', '—', '<', '>', '·', '…'), $string);
 	$strlen = strlen($string);
 	if ($strlen <= $length)
