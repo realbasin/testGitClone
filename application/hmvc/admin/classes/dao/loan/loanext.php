@@ -40,4 +40,22 @@ class dao_loan_loanext extends Dao {
 	public function getConfig($field='config_common') {
 		return $this->getDb()->from($this->getTable())->execute()->value($field);
 	}
+	/*
+	 * 获取合同id
+	 * */
+	public function getContract($id) {
+		return $this->getDb()->select('contract_id,scontract_id,tcontract_id')->from($this->getTable())->where(array('loan_id'=>$id))->execute()->row();
+	}
+	/*
+	 * 获取保证金配置
+	 * */
+	public function getAmtconfig($id) {
+		return $this->getDb()->from($this->getTable())->where(array('loan_id'=>$id))->execute()->value('config_amt');
+	}
+	/*
+	 * 获取普通配置
+	 * */
+	public function getCommonconfig($id) {
+		return $this->getDb()->from($this->getTable())->where(array('loan_id'=>$id))->execute()->value('config_common');
+	}
 }

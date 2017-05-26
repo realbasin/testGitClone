@@ -61,4 +61,11 @@ class dao_loan_loadrepay extends Dao {
 	public function getLkeys($id){
 		return $this->getDb()->from($this->getTable())->where(array('deal_id'=>$id))->execute()->values('l_key');
 	}
+	//获取投资人谋期回款情况
+	public function getLoadRepayByLkey($deal_id,$l_key,$fields='*'){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['l_key'] = $l_key;
+		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->rows();
+	}
 }

@@ -68,4 +68,8 @@ class dao_loan_loanbid extends Dao {
 	public function updateData($where,$data){
 		return $this->getDb()->where($where)->update($this->getTable(),$data)->execute();
 	}
+	//根据id条件获取字段数据
+	public function getOneLoanById($loanId,$fields) {
+		return $this->getDb()->select($fields) -> from($this -> getTable()) ->where(array('loan_id'=>$loanId)) -> execute() -> key('loan_id') -> row();
+	}
 }
