@@ -33,9 +33,14 @@ class  business_common extends Business {
 	//@excelName String 导出Excel的名称
 	//@head Array Excel头，需要对应查询的列
 	//@murl String 上一页返回的地址，缓存KEY依据该地址
-	public function exportExcel($sql, $excelName, $head, $murl,$page=0) {
+	//@format dataFormat.php中的数据格式化方法
+	public function exportExcel($sql, $excelName, $head, $murl,$format='',$page=0) {
 		if($page){
-			$data=$this->getPageList($page,C('export_perpage'),$sql);
+			$data=$this->getPageList($page,C('export_perpage'),$sql)->rows();
+			if(!$format){
+				$formatBusiness=\Core::business('dataFormat');
+				$data=$formatBusiness->format($format,$data);
+			}
 			exportExcel($excelName."[".$page."]", $head, $data['rows']);
 			exit;
 		}
@@ -61,7 +66,11 @@ class  business_common extends Business {
 			\Core::view()->load('excel');
 		} else {
 			//数据量不够直接下载
-			$data = \Core::db() -> execute($sql);
+			$data = \Core::db() -> execute($sql)->rows();
+			if(!$format){
+				$formatBusiness=\Core::business('dataFormat');
+				$data=$formatBusiness->format($format,$data);
+			}
 			exportExcel($excelName, $head, $data);
 		}
 	}

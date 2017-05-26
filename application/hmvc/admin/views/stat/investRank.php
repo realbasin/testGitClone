@@ -84,7 +84,7 @@ $(function(){
 			{display: '债权转让金额', name : 'stat_amount_bond', width : 90, sortable : false, align: 'center'}
             ],
         buttons : [
-            {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', title : '将选择的行或者全部数据导出为Excel', onpress : flexPress }
+            {display: '<i class="fa fa-file-excel-o"></i> 全部导出为Excel', name : 'csv', bclass : 'csv', title : '将选择的行或者全部数据导出为Excel', onpress : flexPress }
         ],
         sortname: "amount_total",
         sortorder: "desc",
@@ -98,19 +98,12 @@ $(function(){
 
 function flexPress(name, grid) {
 	if(name=='csv'){
-		var itemlist = new Array();
-        if($('.trSelected',grid).length>0){
-            $('.trSelected',grid).each(function(){
-            	itemlist.push($(this).attr('data-id'));
-            });
-        }
-        flexExport(itemlist);
+        flexExport();
 	}
 }
 
-function flexExport(id){
-	 var ids = id.join(',');
-	 var url= '<?php echo adminUrl('stat_loan','investRank_export');?>&'+$("#flexitable").flexSimpleSearchQueryString(true)+'&id=' + id;
+function flexExport(){
+	 var url= '<?php echo adminUrl('stat_loan','investRank_export');?>&'+$("#flexitable").flexSimpleSearchQueryString(true)+"&"+$("#form1").serialize();
      window.location.href =url;
 }
 
