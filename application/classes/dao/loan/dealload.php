@@ -92,6 +92,8 @@ class dao_loan_dealload extends Dao {
 		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$beginDate.$endDate);
 		return $this->getDb()->execute()->value('rebate_all');
 	}
-	
-
+	//根据条件获取投资人列表 add by zlz 201705261759
+	public function getList($where,$fields){
+		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->rows();
+	}
 }
