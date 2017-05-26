@@ -113,50 +113,48 @@ class  controller_loan_loan extends controller_sysBase {
 	public function do_loans(){
 		$nowtime = time();
 		$result = array();
-		$loan_info = array();
+		$loanbid_info = array();
+		$loanbase_info = array();
 		$result['code'] = '000';
 		$deal_id = \Core::get('id',0);
-		$loan_info['repay_start_time'] = \Core::get('repay_start_time','');
+		$loanbid_info['repay_start_time'] = \Core::get('repay_start_time','');
 		if(!$deal_id) {
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
 		}
-		if($loan_info['repay_start_time'] == '') {
+		if($loanbid_info['repay_start_time'] == '') {
 			$result['message'] = '放款失败，还款时间不能为空';
 			return @json_encode($result);
 		}else {
-			$loan_info['repay_start_time'] = strtotime($loan_info['repay_start_time']);
-		}
-		//验证时间格式
-		if($loan_info['repay_start_time']< $nowtime) {
-			$result['message'] = '放款失败，还款时间不能小于当前时间';
-			return @json_encode($result);
+			$loanbid_info['repay_start_time'] = strtotime($loanbid_info['repay_start_time']);
 		}
 		//获取标信息，确认是否符合放款条件
 		//要验证的字段
 		$fields = 'loan_id,deal_status,load_money';
 		//获取数据
-		$loanBid = \Core::dao('loan_loanbid')->getLoan($deal_id,$fields);
+		$loanBid = \Core::dao('loan_loanbid')->getOneLoanById($deal_id,$fields);
 		if(!$loanBid) {
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
 		}
-		if(!in_array($loanBid[$deal_id]['deal_status'],array(2, 4, 5))) {
+		if(!in_array($loanBid['deal_status'],array(2, 4, 5))) {
 			$result['message'] = "放款失败，借款不是满标状态";
 			return @json_encode($result);
 		}
-		$borrow_money = \Core::dao('loan_loanbase')->getLoan($deal_id,'id,borrow_amount');
-		if($borrow_money[$deal_id]['borrow_amount'] < $loanBid[$deal_id]['load_money']) {
+		$borrow_money = \Core::dao('loan_loanbase')->getOneLoanById($deal_id,'id,borrow_amount');
+		if($borrow_money['borrow_amount'] < $loanBid['load_money']) {
 			$result['message'] = "放款失败，问题标";
 			return @json_encode($result);
 		}
 		//放款给用户，放款时，将贷款设置为无效
-		$loanBid[$deal_id]['deal_status'] = $loan_info['deal_status'] = 4;
-		$loan_info['is_has_loans'] = 1;
-		$loan_info['loan_time'] = $loan_info['repay_start_time'];
+		$loanbase_info['is_effect'] = 0;
+		$loanBid['deal_status'] = $loanbid_info['deal_status'] = 4;
+		$loanbid_info['is_has_loans'] = 1;
+		$loanbid_info['loan_time'] = $loanbid_info['repay_start_time'];
 		//更新贷款状态
-		$effectNumbers = \Core::dao('loan_loanbid')->updateData(array('loan_id'=>$deal_id),$loan_info);
-		if($effectNumbers){
+		$effectBidNumbers = \Core::dao('loan_loanbid')->updateData(array('loan_id'=>$deal_id),$loanbid_info);
+		$effectBaseNumbers = \Core::dao('loan_loanbase')->updateData(array('id'=>$deal_id),$loanbase_info);
+		if($effectBidNumbers && $effectBaseNumbers){
 			$result['code'] = 200;
 			$result['message'] = "放款成功";
 			return @json_encode($result);
@@ -803,5 +801,38 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 		echo @json_encode($json);
 	}
-
+	//导出投资人列表
+	public function do_bidlist_export(){
+		$where = array();
+		$deal_id = \Core::get('loan_id');
+		if($deal_id != null) {
+			$where['deal_id'] = $deal_id;
+		}
+		//Excel头部
+		$header = array();
+		$header['贷款编号'] = 'integer';
+		$header['投标人'] = 'string';
+		$header['投标金额'] = 'string';
+		$header['投标时间'] = 'datetime';
+		$header['流标返还'] = 'string';
+		$header['是否转账'] = 'string';
+		$header['转账备注'] = 'string';
+		//获取数据
+		$fields = 'deal_id,user_name,money,create_time,is_has_loans,is_repay,msg';
+		$data = \Core::dao('loan_dealload')->getList($where,$fields);
+		if($data){
+			foreach ($data as $k=>$v) {
+				//是否转账
+				$data[$k]['is_has_loans'] = $v['is_has_loans']?'已转账':'未转账';
+				//流标返还
+				$data[$k]['is_repay'] = $v['is_repay']?'已返还':'无返还';
+				//投标时间
+				$data[$k]['create_time'] = date('Y-m-d H:i:s',$v['create_time']);
+			}
+		}
+		$this -> log('投标列表', 'export');
+		exportExcel('投标列表', $header, $data);
+		unset($where);
+		unset($data);
+	}
 }

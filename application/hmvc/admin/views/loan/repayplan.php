@@ -61,7 +61,7 @@
                 {display: '查看', name : 'buy_count', width : 40, sortable : false, align: 'center'},
             ],
             buttons : [
-                {display: '<i class="fa"></i> 手动还款', name : 'add',  title : '手动还款', bclass : 'csv',onpress : flexPress },
+                {display: '<i class="fa"></i> 手动还款', name : 'manual_repay',  title : '手动还款', bclass : 'csv',onpress : flexPress },
                 {display: '<i class="fa fa-file-excel-o"></i> 导出还款计划列表', name : 'cvs', bclass : 'csv', title : '导出还款计划列表', onpress : flexPress }
             ],
             sortname: "l_key",
@@ -85,6 +85,9 @@
     function flexPress(name, grid) {
         if(name=='cvs'){
             window.location.href = '<?php echo adminUrl('loan_loan','repayplan_export',array('deal_id'=>$loan_id));?>';
+        }
+        if(name=='manual_repay'){
+            manual_repay();
         }
     }
     //手动还款

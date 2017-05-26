@@ -32,7 +32,7 @@
     <i class="arrow"></i>
     <span><a href="<?php echo adminUrl('loan_loan','index');?>"><?php echo \Core::L('loan_all');?></a></span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('loan_add');?></span>
+    <span><?php echo $loanbase['name'];?></span>
 </div>
 <div class="line10"></div>
 <div class="page">

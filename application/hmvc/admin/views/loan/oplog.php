@@ -35,11 +35,11 @@
 <div class="location">
     <div  class="right"><a href="javascript:void(null);" id="syshelp"   onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
     <i class="home"></i>
-    <span><?php echo \Core::L('loan');?></span>
+    <span>贷款管理</span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('loan_all');?></span>
+    <span>全部贷款</span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('loan_op_log');?></span>
+    <span>审核日志列表</span>
 
 </div>
 <div class="line10"></div>
