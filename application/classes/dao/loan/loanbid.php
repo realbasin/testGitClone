@@ -56,6 +56,17 @@ class dao_loan_loanbid extends Dao {
 	public function getTable() {
 		return 'loan_bid';
 	}
+	//获取借款用户统计
+	public function getStatBorrower($datestart,$dateend){
+		$this->getDb()->select("FROM_UNIXTIME(loan_time,'%Y-%m-%d') as createdate,count(loan_id) as usertotal");
+		$this->getDb()->from($this->getTable());
+		if($datestart && $dateend){
+			$this->getDb()->where(array('loan_time >='=>$datestart,'loan_time <='=>$dateend));
+		}
+		$this->getDb()->groupBy("createdate");
+		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$datestart.$dateend);
+		return $this->getDb()->execute()->row();
+	}
 	//根据id条件获取字段数据
 	public function getLoan($loanIds,$fields) {
 		return $this->getDb()->select($fields) -> from($this -> getTable()) ->where(array('loan_id'=>$loanIds)) -> execute() -> key('loan_id') -> rows();
