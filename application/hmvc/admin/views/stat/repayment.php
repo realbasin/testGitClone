@@ -1,5 +1,5 @@
 <?php defined("IN_XIAOSHU") or exit("Access Invalid!"); ?>
-	
+	 
 <!DOCTYPE html>
 <html>
 <head>
