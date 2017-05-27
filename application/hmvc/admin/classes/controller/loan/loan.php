@@ -92,7 +92,6 @@ class  controller_loan_loan extends controller_sysBase {
 		$loan_bid_info = $loanbidDao->getLoan($loan_id,'loan_id,start_time,load_money,loan_time,repay_start_time,bad_time,deal_status,buy_count,is_has_loans,end_time,is_has_received');
 		$loan_base_info = $loanbaseDao->getLoan($loan_id,'id,name,borrow_amount,repay_time_type');
 		$loan = array_merge($loan_base_info[$loan_id],$loan_bid_info[$loan_id]);
-		//\Core::dump($loan);
 		if($loan['repay_time_type'] == 1) {
 			$loan['repay_time_type'] = '按月还款';
 		}else {
@@ -114,53 +113,82 @@ class  controller_loan_loan extends controller_sysBase {
 	public function do_loans(){
 		$nowtime = time();
 		$result = array();
-		$loan_info = array();
+		$loanbid_info = array();
+		$loanbase_info = array();
 		$result['code'] = '000';
 		$deal_id = \Core::get('id',0);
-		$loan_info['repay_start_time'] = \Core::get('repay_start_time','');
+		$loanbid_info['repay_start_time'] = \Core::get('repay_start_time','');
 		if(!$deal_id) {
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
 		}
-		if($loan_info['repay_start_time'] == '') {
+		if($loanbid_info['repay_start_time'] == '') {
 			$result['message'] = '放款失败，还款时间不能为空';
 			return @json_encode($result);
 		}else {
-			$loan_info['repay_start_time'] = strtotime($loan_info['repay_start_time']);
-		}
-		//验证时间格式
-		if($loan_info['repay_start_time']< $nowtime) {
-			$result['message'] = '放款失败，还款时间不能小于当前时间';
-			return @json_encode($result);
+			$loanbid_info['repay_start_time'] = strtotime($loanbid_info['repay_start_time']);
 		}
 		//获取标信息，确认是否符合放款条件
 		//要验证的字段
 		$fields = 'loan_id,deal_status,load_money';
 		//获取数据
-		$loanBid = \Core::dao('loan_loanbid')->getLoan($deal_id,$fields);
-		if(!$loanBid) {
+		$loanBid = \Core::dao('loan_loanbid')->getOneLoanById($deal_id,$fields);
+		$loanBase = \Core::dao('loan_loanbase')->getOneLoanById($deal_id,'id,user_id,borrow_amount');
+		if(!$loanBid || !$loanBase) {
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
 		}
-		if(!in_array($loanBid[$deal_id]['deal_status'],array(2, 4, 5))) {
+		if(!in_array($loanBid['deal_status'],array(2, 4, 5))) {
 			$result['message'] = "放款失败，借款不是满标状态";
 			return @json_encode($result);
 		}
-		$borrow_money = \Core::dao('loan_loanbase')->getLoan($deal_id,'id,borrow_amount');
-		if($borrow_money[$deal_id]['borrow_amount'] < $loanBid[$deal_id]['load_money']) {
+		$borrow_money = \Core::dao('loan_loanbase')->getOneLoanById($deal_id,'id,borrow_amount');
+		if($borrow_money['borrow_amount'] < $loanBid['load_money']) {
 			$result['message'] = "放款失败，问题标";
 			return @json_encode($result);
 		}
 		//放款给用户，放款时，将贷款设置为无效
-		$loanBid[$deal_id]['deal_status'] = $loan_info['deal_status'] = 4;
-		$loan_info['is_has_loans'] = 1;
-		$loan_info['loan_time'] = $loan_info['repay_start_time'];
+		$loanbase_info['is_effect'] = 0;
+		$loanBid['deal_status'] = $loanbid_info['deal_status'] = 4;
+		$loanbid_info['is_has_loans'] = 1;
+		$loanbid_info['loan_time'] = $loanbid_info['repay_start_time'];
+
 		//更新贷款状态
-		$effectNumbers = \Core::dao('loan_loanbid')->updateData(array('loan_id'=>$deal_id),$loan_info);
-		if($effectNumbers){
-			$result['code'] = 200;
-			$result['message'] = "放款成功";
-			return @json_encode($result);
+		$effectBidNumbers = \Core::dao('loan_loanbid')->updateData(array('loan_id'=>$deal_id),$loanbid_info);
+		$effectBaseNumbers = \Core::dao('loan_loanbase')->updateData(array('id'=>$deal_id),$loanbase_info);
+		if($effectBidNumbers && $effectBaseNumbers){
+			//放款，修改用户余额
+			$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],$loanBase['borrow_amount']);
+			if($editMoneyStatus === false) {
+				$result['message'] = "放款失败，修改余额出错";
+				return @json_encode($result);
+			}else {
+				$editMoneyStatus = false;
+			}
+			//收取服务费
+			//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
+			$loanextDao = \Core::dao('loan_loanext');
+			$config_common = $loanextDao->getCommonconfig($deal_id);
+			//$servicesfee = trim($config_common['services_fee']);
+			$servicesfee = 0.05;
+			$services_fee = $loanBase['borrow_amount'] * floatval($servicesfee) / 100;
+			//服务费，修改用户余额
+			$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],-$services_fee);
+			if($editMoneyStatus === false) {
+				$result['message'] = "放款失败，收取服务费出错";
+				return @json_encode($result);
+			}
+			//是否本地标，扣除本地标风险保证金
+			$amt_common = $loanextDao->getAmtconfig($deal_id);
+			$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($loanBase['user_id'],$amt_common['l_guarantees_amt']);
+			if($editLockMoneyStatus === false){
+				$result['message'] = "放款失败，扣除本地标风险保证金失败";
+				return @json_encode($result);
+			}
+			//积分变动
+
+			$money = \Core::dao('user_user')->getUserMoney($loanBase['user_id']);
+			\Core::dump($money);die();
 		}
 		//TODO 放款成功
 
@@ -188,33 +216,55 @@ class  controller_loan_loan extends controller_sysBase {
 	}
 	//贷款详细信息编辑
 	public function do_loan_show_edit(){
-		$loan_id = \Core::get('loan_id',0);
-		$loanBusiness=\Core::business('loan_loanenum');
-		//根据借款id，获取贷款基本信息
-		$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type';
-		$loanbase = \Core::dao('loan_loanbase')->getLoan($loan_id,$basefields);
-		//获取会员名称
-		$user_id = $loanbase[$loan_id]['user_id'];
-		$user = \Core::dao('user_user')->getUser($user_id,'id,user_name,real_name,pid');
-		$username = \Core::arrayKeyExists($user_id, $user)?\Core::arrayGet(\Core::arrayGet($user, $user_id),'user_name').'('.\Core::arrayGet(\Core::arrayGet($user, $user_id),'real_name').')':'';
-		if($username != '') {
-			$username = '<a href="#&user_id='.$user_id.'">'.$username.'</a>';
-		}
-		
+		if(chksubmit()) {
+			\Core::dump('test');die();
+			//提交保存
 
-		//\Core::dump($dealloantype);die();
-		//根据借款id，获取标基本信息
-		//$bidfields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type';
-		//$loanbid = \Core::dao('loan_loanbid')->getLoan($loan_id,$basefields);
-		\Core::view()->set('loantype',$loanBusiness->enumLoanType())
-			->set('dealcate',$loanBusiness->enumDealCate())
-			->set('dealusetype',$loanBusiness->enumDealUseType())
-			->set('dealloantype',$loanBusiness->enumDealLoanType())
-			->set('loanbase',$loanbase[$loan_id])
-			->set('username',$username)
-			->set('sorcode',$loanBusiness->enumSorCode());
-		\Core::view()->load('loan_showEdit');
-		//\Core::dump($loan_id);die();
+		}else {
+			$loan_id = \Core::get('loan_id',0);
+			$loanBusiness=\Core::business('loan_loanenum');
+			//根据借款id，获取贷款基本信息
+			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type';
+			$loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
+			//获取会员名称
+			$user_id = $loanbase['user_id'];
+			$user = \Core::dao('user_user')->getUser($user_id,'id,user_name,real_name,pid');
+			$username = \Core::arrayKeyExists($user_id, $user)?\Core::arrayGet(\Core::arrayGet($user, $user_id),'user_name').'('.\Core::arrayGet(\Core::arrayGet($user, $user_id),'real_name').')':'';
+			if($username != '') {
+				$username = '<a href="#&user_id='.$user_id.'">'.$username.'</a>';
+			}
+			//获取借款拓展字段
+			$loanextDao =  \Core::dao('loan_loanext');
+			$contractid = $loanextDao->getContract($loan_id);
+			$amtConfig = $loanextDao->getAmtconfig($loan_id);
+			$l_guarantees_amt = \Core::arrayKeyExists('l_guarantees_amt',$amtConfig)?\Core::arrayGet(\Core::arrayGet($amtConfig, 'l_guarantees_amt')):'';
+			$guarantees_amt = \Core::arrayKeyExists('guarantees_amt',$amtConfig)?\Core::arrayGet(\Core::arrayGet($amtConfig, 'guarantees_amt')):0;
+			if(!$l_guarantees_amt) {
+				$l_guarantees_amt = number_format($loanbase['borrow_amount'] * $guarantees_amt / 100,2);
+			}
+			//commconfig
+			$commonConfig = $loanextDao->getCommonconfig($loan_id);
+			//获取合同范本
+			$contract =  \Core::dao('loan_contract')->getContractList('id,title');
+			//根据借款id，获取标基本信息
+			$bidfields = 'loan_id,min_loan_money,max_loan_money,deal_status,start_time,end_time,uloadtype,portion,max_portion,use_ecv,risk_rank,risk_security';
+			$loanbid = \Core::dao('loan_loanbid')->getOneLoanById($loan_id,$bidfields);
+			\Core::view()->set('loantype',$loanBusiness->enumLoanType())
+				->set('dealcate',$loanBusiness->enumDealCate())
+				->set('dealusetype',$loanBusiness->enumDealUseType())
+				->set('dealloantype',$loanBusiness->enumDealLoanType())
+				->set('plathtml',$loanBusiness->userPlatRegVerified($loan_id,$user_id))
+				->set('loanbase',$loanbase)
+				->set('loanbid',$loanbid)
+				->set('username',$username)
+				->set('contract',$contract)
+				->set('contractid',$contractid)
+				->set('l_guarantees_amt',$l_guarantees_amt)
+				->set('commonConfig',$commonConfig)
+				->set('user_detail',$loanBusiness->userDetail($user_id))
+				->set('sorcode',$loanBusiness->enumSorCode());
+			\Core::view()->load('loan_showEdit');
+		}
 	}
 	//投资人列表
 	public function do_bidlist_json(){
@@ -236,6 +286,12 @@ class  controller_loan_loan extends controller_sysBase {
 			}
 		}
 		showJSON('200','',$data);
+	}
+	//投资人回款列表
+	public function do_viewloanitem(){
+		\Core::view()->set('id',\Core::get('loan_id'))
+			->set('lkey',\Core::get('l_key'))
+			->load('loan_viewloaditem');
 	}
 	//导出还款计划
 	public function do_repayplan_export(){
@@ -271,7 +327,7 @@ class  controller_loan_loan extends controller_sysBase {
 		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
 		$loanextDao = \Core::dao('loan_loanext');
 		$config_common = $loanextDao->getConfig('config_common');
-		$loadrepayDao = \Core::dao('loan_loadrepay');
+		$loadrepayDao = \Core::dao('loan_dealloadrepay');
 		$loanenumBusiness = \Core::business('loan_loanenum');
 		//Excel内容
 		foreach ($data as $v) {
@@ -560,7 +616,7 @@ class  controller_loan_loan extends controller_sysBase {
 		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
 		$loanextDao = \Core::dao('loan_loanext');
 		$config_common = $loanextDao->getConfig('config_common');
-		$loadrepayDao = \Core::dao('loan_loadrepay');
+		$loadrepayDao = \Core::dao('loan_dealloadrepay');
 		$loanenumBusiness = \Core::business('loan_loanenum');
 		foreach ($data as $v) {
 			$row = array();
@@ -572,6 +628,7 @@ class  controller_loan_loan extends controller_sysBase {
 				$isrepay = $v['true_repay_money'];
 				//待还总额
 				$repay_all_money = '0.00';
+				$need_repay_money = '0.00';
 				//待还本息
 				$repay_money = '0.00';
 				//管理费
@@ -612,12 +669,12 @@ class  controller_loan_loan extends controller_sysBase {
 					//罚管理费
 					$manage_impose_money = number_format($repay_money * $manage_impose_fee * $overdue_day / 100,2);
 					$impose_all_money = $impose_money + $manage_impose_money;
-					$repay_all_money = $repay_money + $manage_money + $impose_all_money;
+					$need_repay_money = $repay_all_money = $repay_money + $manage_money + $impose_all_money;
 					$repaydate = '';
 				}else {
 					//未逾期
 					$status = $v['status'];
-					$repay_money = $v['repay_money'];
+					$need_repay_money = $repay_money = $v['repay_money'];
 					$manage_money = $v['manage_money'];
 					//罚息
 					$impose_money = 0;
@@ -648,6 +705,8 @@ class  controller_loan_loan extends controller_sysBase {
 			$row['cell'][] = '￥'.$isrepay;
 			//待还总额
 			$row['cell'][] = '￥'.$repay_all_money;
+			//还需还金额
+			$row['cell'][] = '￥'.$need_repay_money;
 			//待还本息
 			$row['cell'][] = '￥'.$repay_money;
 			//管理费
@@ -662,7 +721,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$row['cell'][] = $repaydate;
 			//逾期天数
 			$row['cell'][] = $overdue_day?$overdue_day:0;
-			$row['cell'][] = '<a href="#">查看</a>';
+			$row['cell'][] = '<a href="javascript:viewloanitem('.$v['deal_id'].','.$v['l_key'].');" >查看</a>';
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
@@ -671,6 +730,141 @@ class  controller_loan_loan extends controller_sysBase {
 		unset($data);
 		echo @json_encode($json);
 
+	}
+	//投资人列表
+	public function do_all_loaditem_json(){
+		$json = array();
+		$id = \Core::get('id',0);
+		if(!$id){
+			echo @json_encode($json);
+			exit();
+		}
+		$lkey = \Core::get('lkey',0);
+		if($lkey == null){
+			echo @json_encode($json);
+			exit();
+		}
+		$fields = 'id,deal_id,l_key,user_id,status,is_site_repay,has_repay,impose_money,repay_money,repay_time,manage_money,reward_money,true_reward_money,t_user_id,true_manage_money,manage_interest_money,true_manage_interest_money,manage_interest_money_rebate,true_manage_interest_money_rebate,manage_early_interest_money';
+		//获取投资列表
+		$data = \Core::dao('loan_dealloadrepay')->getLoadRepayByLkey($id,$lkey,$fields);
+		if($data) {
+			//借款人是否还款
+			$realrepay = \Core::dao('loan_dealrepay')->getRepayStstus($id,$lkey);
+			//当前时间
+			$now_time = time();
+			//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
+			$config_common = \Core::dao('loan_loanext')->getConfig('config_common');
+			//用户名称
+			foreach ($data as $v) {
+				$userIds[]=$v['user_id'];
+				$tuserIds[]=$v['t_user_id'];
+			}
+			$userNames=\Core::dao('user_user')->getUser($userIds,'id,user_name,real_name,pid');
+			$tuserNames=\Core::dao('user_user')->getUser($tuserIds,'id,user_name,real_name,pid');
+			$loanenumBusiness=\Core::business('loan_loanenum');
+			//\Core::dump($tuserNames);die();
+			foreach ($data as $v) {
+				$row = array();
+				//TODO 1.未收到还款或借款用户未还款 2.已收到还款
+				if($v['has_repay'] == 0 || $realrepay == 0) {
+					$status = $v['status'] + 1;
+					$impose_money = 0;
+					$site_repay = "";
+					$realrepaymoney = 0;
+					//判断是否逾期
+					if($now_time > ($v['repay_time'] + 24 * 3600 - 1)) {
+
+						$time_span = strtotime(date("Y-m-d",$now_time));
+						$next_time_span = $v['repay_time'];
+						$impose_day = $day = ceil(($time_span - $next_time_span) / 24 / 3600);
+						//是否严重逾期
+						if($impose_day > C('YZ_IMPSE_DAY')) {
+							$status = 4;
+							$impose_fee = trim($config_common['impose_fee_day2']);
+						}else {
+							$status = 3;
+							$impose_fee = trim($config_common['impose_fee_day1']);
+						}
+						$impose_fee = floatval($impose_fee);
+						//罚息/违约金
+						$impose_money = number_format($v['repay_money'] * $impose_fee * $impose_day / 100,2);
+
+					}
+				}else {
+					$status = $v['status'] + 1;
+					$impose_money = $v['impose_money'];
+					if ($v['is_site_repay'] == 0) {
+						$site_repay = "会员";
+					} elseif ($v['is_site_repay'] == 1) {
+						$site_repay = "网站";
+					} elseif ($v['is_site_repay'] == 2) {
+						$site_repay = "机构";
+					}
+					$realrepaymoney =  $v['true_reward_money'];
+				}
+				//借款id
+				$row['cell'][] = $v['deal_id'];
+				//会员
+				$row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name'):'';
+				//承接人
+				$row['cell'][] = \Core::arrayKeyExists($v['t_user_id'], $tuserNames)?\Core::arrayGet(\Core::arrayGet($tuserNames, $v['t_user_id']),'user_name'):'';
+				//还款金额
+				$row['cell'][] = '￥'.$v['repay_money'];
+				//管理费
+				$row['cell'][] = '￥'.$v['manage_money'];
+				//利息管理费
+				$row['cell'][] = '￥'.$v['manage_interest_money'];
+				//提前还款利息管理费
+				$row['cell'][] = '￥'.$v['manage_early_interest_money'];
+				//逾期/违约金
+				$row['cell'][] = '￥'.$impose_money;
+				//预期收益
+				$row['cell'][] = '￥'.$v['reward_money'];
+				//实际收益
+				$row['cell'][] = '￥'.$realrepaymoney;
+				//还款状态
+				$row['cell'][] = $loanenumBusiness->enumLoanRepayType($status);
+				//还款人
+				$row['cell'][] = $site_repay;
+				$row['cell'][] = '';
+				$json['rows'][] = $row;
+			}
+		}
+		echo @json_encode($json);
+	}
+	//导出投资人列表
+	public function do_bidlist_export(){
+		$where = array();
+		$deal_id = \Core::get('loan_id');
+		if($deal_id != null) {
+			$where['deal_id'] = $deal_id;
+		}
+		//Excel头部
+		$header = array();
+		$header['贷款编号'] = 'integer';
+		$header['投标人'] = 'string';
+		$header['投标金额'] = 'string';
+		$header['投标时间'] = 'datetime';
+		$header['流标返还'] = 'string';
+		$header['是否转账'] = 'string';
+		$header['转账备注'] = 'string';
+		//获取数据
+		$fields = 'deal_id,user_name,money,create_time,is_has_loans,is_repay,msg';
+		$data = \Core::dao('loan_dealload')->getList($where,$fields);
+		if($data){
+			foreach ($data as $k=>$v) {
+				//是否转账
+				$data[$k]['is_has_loans'] = $v['is_has_loans']?'已转账':'未转账';
+				//流标返还
+				$data[$k]['is_repay'] = $v['is_repay']?'已返还':'无返还';
+				//投标时间
+				$data[$k]['create_time'] = date('Y-m-d H:i:s',$v['create_time']);
+			}
+		}
+		$this -> log('投标列表', 'export');
+		exportExcel('投标列表', $header, $data);
+		unset($where);
+		unset($data);
 	}
 
 	//审核日志
@@ -745,5 +939,4 @@ class  controller_loan_loan extends controller_sysBase {
 		//返回JSON
 		echo @json_encode($json);
 	}
-
 }

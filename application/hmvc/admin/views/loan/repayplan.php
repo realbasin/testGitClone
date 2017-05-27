@@ -50,6 +50,7 @@
                 {display: '还款日', name : 'name', width : 100, sortable : false, align : 'center'},
                 {display: '已还总额', name : 'user_id', width : 80, sortable : false, align: 'left'},
                 {display: '待还总额', name : 'pid', width : 80, sortable : false, align: 'left'},
+                {display: '还需还金额', name : 'pid', width : 80, sortable : false, align: 'left'},
                 {display: '待还本息', name : 'borrow_amount', width : 80, sortable : false, align: 'center'},
                 {display: '管理费', name : 'rate', width : 80, sortable : false, align: 'center'},
                 {display: '逾期/违约金', name : 'repay_time', width : 100, sortable : false, align: 'center'},
@@ -60,7 +61,7 @@
                 {display: '查看', name : 'buy_count', width : 40, sortable : false, align: 'center'},
             ],
             buttons : [
-                {display: '<i class="fa"></i> 手动还款', name : 'add',  title : '手动还款', bclass : 'csv',onpress : flexPress },
+                {display: '<i class="fa"></i> 手动还款', name : 'manual_repay',  title : '手动还款', bclass : 'csv',onpress : flexPress },
                 {display: '<i class="fa fa-file-excel-o"></i> 导出还款计划列表', name : 'cvs', bclass : 'csv', title : '导出还款计划列表', onpress : flexPress }
             ],
             sortname: "l_key",
@@ -84,6 +85,9 @@
     function flexPress(name, grid) {
         if(name=='cvs'){
             window.location.href = '<?php echo adminUrl('loan_loan','repayplan_export',array('deal_id'=>$loan_id));?>';
+        }
+        if(name=='manual_repay'){
+            manual_repay();
         }
     }
     //手动还款
@@ -121,8 +125,16 @@
     function repay_plan_export_load(id,lkey){
         location.href='<?php echo adminUrl('loan_loan','repayplan_export');?>'+'&deal_id='+id+'&l_key='+lkey;
     }
-    
 
+    //弹窗显示
+    function viewloanitem(deal_id,l_key){
+        var d=parent.dialog({
+            title: '投资人回款列表',
+            url: '<?php echo adminUrl('loan_loan','viewloanitem');?>'+'&loan_id='+deal_id+'&l_key='+l_key,
+        });
+        d.width(1000);
+        d.show();
+    }
     $('#syshelp').on("click",function(){
         var d = dialog({
             content: "<?php echo \Core::L('loan_all_help');?>",
@@ -130,7 +142,6 @@
         });
         d.show(this);
     });
-
 
 </script>
 </body>

@@ -274,5 +274,8 @@ class dao_user_user extends Dao {
 	public function getStatBalanceTotal(){
 		return $this->getDb()->select('SUM(AES_DECRYPT(money_encrypt,\''.AES_DECRYPT_KEY.'\')) as balancetotal')->from($this->getTable())->cache(C('stat_sql_cache_time'),'stat_user_balance_total')->execute()->value('balancetotal');
 	}
-
+	//获取用户余额
+	public function getUserMoney($user_id){
+		return $this->getDb()->select('AES_DECRYPT(money_encrypt,\''.AES_DECRYPT_KEY.'\') as aesmoney')->from($this->getTable())->where(array('id'=>$user_id))->execute()->value('aesmoney');
+	}
 }

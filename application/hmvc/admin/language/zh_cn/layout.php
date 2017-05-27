@@ -94,5 +94,5 @@ $lang['true_publish']='复审核列表';
 //add by zlz 20170518
 $lang['loan_op_log'] = '审核日志列表';
 $lang['loan_repay_plan'] = '还款计划';
-$lang['loan_detail'] = '投标详情'
+$lang['loan_detail'] = '投标详情';
 ?>

@@ -39,7 +39,7 @@ class  business_loan_loanenum extends Business {
 			$delStatusArr['15']='已垫付';
 			$delStatusArr['17']='满标(待放款)';
 			$delStatusArr['18']='满标(已放款)';
-			return ($status!='')?\Core::arrayGet($delStatusArr, $status,''):'';
+			return ($status!='')?\Core::arrayGet($delStatusArr, $status,''):$delStatusArr;
 		}
 		
 		/*
@@ -54,9 +54,7 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('sor_code',$sorcodeList);
 				}
 			}
-			//midify by zlz 201705181526 客户端来源为空时出现object对象字符串[object Object]
-			//return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):$sorcodeList;
-			return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):'';
+			return $sorcode?(\Core::arrayKeyExists($sorcode, $sorcodeList)?\Core::arrayGet(\Core::arrayGet($sorcodeList, $sorcode),'code_name'):''):$sorcodeList;
 		}
 		
 		//还款天/月
@@ -64,7 +62,7 @@ class  business_loan_loanenum extends Business {
 			$rTimeType=array();
 			$rTimeType['0']=\Core::L('repay_time_type_day');
 			$rTimeType['1']=\Core::L('repay_time_type_month');
-			return ($repaytimetype!='')?\Core::arrayGet($rTimeType, $repaytimetype,''):'';
+			return ($repaytimetype!='')?\Core::arrayGet($rTimeType, $repaytimetype,''):$rTimeType;
 		}
 		
 		//放标类型
@@ -77,7 +75,7 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('deal_cate',$dealCateList);
 				}
 			}
-			return $dealcate?\Core::arrayGet(\Core::arrayGet($dealCateList, $dealcate,''),'name',''):'';
+			return $dealcate?\Core::arrayGet(\Core::arrayGet($dealCateList, $dealcate,''),'name',''):$dealCateList;
 		}
 
 		//贷款用途
@@ -90,13 +88,12 @@ class  business_loan_loanenum extends Business {
 					\Core::cache()->set('deal_use_type',$useTypeList);
 				}
 			}
-			return $usetype?\Core::arrayGet(\Core::arrayGet($useTypeList, $usetype,''),'name',''):'';
+			return $usetype?\Core::arrayGet(\Core::arrayGet($useTypeList, $usetype,''),'name',''):$useTypeList;
 		}
 		
 		//贷款类型
 		public function enumDealLoanType($dealloantype=''){
 			$dealLoanTypeList=\Core::cache()->get('deal_loan_type');
-
 			if(!$dealLoanTypeList){
 				$dealLoanTypeDao=\Core::dao('loan_dealloantype');
 				$dealLoanTypeList=$dealLoanTypeDao->getDealLoanTypes('id,name');
@@ -105,19 +102,6 @@ class  business_loan_loanenum extends Business {
 				}
 			}
 			return $dealloantype?\Core::arrayGet(\Core::arrayGet($dealLoanTypeList, $dealloantype,''),'name',''):$dealLoanTypeList;
-		}
-
-		//当前使用的贷款类型List
-		public function enumDealLoanTypeActive(){
-			$dealLoanTypeList=\Core::cache()->get('deal_loan_type_active');
-			if(!$dealLoanTypeList){
-				$dealLoanTypeDao=\Core::dao('loan_dealloantype');
-				$dealLoanTypeList=$dealLoanTypeDao->getDealLoanTypes('id,name',array('is_effect'=>1,'is_delete'=>0));
-				if($dealLoanTypeList){
-					\Core::cache()->set('deal_loan_type_active',$dealLoanTypeList);
-				}
-			}
-			return $dealLoanTypeList;
 		}
 		//还款状态
 		public function enumLoanRepayType($status=''){
@@ -143,7 +127,7 @@ class  business_loan_loanenum extends Business {
 				return $root;
 			}
 			if($l_key < 0){
-				$lkeys = \Core::dao('loan_loadrepay')->getLkeys($id);
+				$lkeys = \Core::dao('loan_dealloadrepay')->getLkeys($id);
 				$ids = $lkeys;
 			}else {
 				$ids = explode(",", $l_key);
@@ -157,5 +141,49 @@ class  business_loan_loanenum extends Business {
 			}
 
 		}
+		//会员详情
+		public function userDetail($user_id){
+			$user_sta = \Core::dao('user_usersta')->getByUserId($user_id);
+			//会员详情
+			return "总的借款数: " . $user_sta['borrow_amount'] . " <br/>总借入笔数：" . $user_sta['deal_count'] . " <br/>成功借款：" . $user_sta['success_deal_count'] . " <br/>还清笔数：" . $user_sta['repay_deal_count'] . " <br/>提前还清：" . $user_sta['tq_repay_deal_count'] . " <br/>正常还清：" . $user_sta['zc_repay_deal_count'] . " <br/>未还清：" . $user_sta['wh_repay_deal_count'] . " <br/>逾期次数：" . $user_sta['yuqi_count'] . " <br/>严重逾期次数：" . $user_sta['yz_yuqi_count'] . " <br/>提前还款违约金：" . $user_sta['load_tq_impose'] . " <br/>逾期还款违约金：" . $user_sta['load_yq_impose'];
 
+		}
+		//用户其他平台注册情况
+		public function userPlatRegVerified($loan_id,$user_id){
+			//所有平台
+			$platfroms = \Core::dao('user_userregplatform')->getPlatforms('id,name');
+			//验证过的平台
+			$verified = \Core::dao('user_userregplatverified')->getVerified($loan_id,$user_id);
+			//\Core::dump($verified);die();
+			$has_html = '<span>已注册平台：</span> ';
+			$no_html = '<span>未注册平台：</span> ';
+			$fail_html = '<span>无法判断平台：</span> ';
+			foreach ($platfroms as $k=>$v) {
+				if(\Core::arrayKeyExists($k,$verified)) {
+					if($verified[$k]['is_register'] == 1) {
+						$has_html .= \Core::arrayGet($v,'name').'&nbsp;';
+					}else if($verified[$k]['is_register'] == 0) {
+						$no_html .= \Core::arrayGet($v,'name').'&nbsp;';
+					}else{
+						$fail_html .= \Core::arrayGet($v,'name').'&nbsp;';
+					}
+				}else{
+					$fail_html .= \Core::arrayGet($v,'name').'&nbsp;';
+				}
+			}
+			return $has_html.'<br>'.$no_html.'<br>'.$fail_html;
+		}
+		
+		//当前使用的贷款类型List
+		public function enumDealLoanTypeActive(){
+			$dealLoanTypeList=\Core::cache()->get('deal_loan_type_active');
+			if(!$dealLoanTypeList){
+				$dealLoanTypeDao=\Core::dao('loan_dealloantype');
+				$dealLoanTypeList=$dealLoanTypeDao->getDealLoanTypes('id,name',array('is_effect'=>1,'is_delete'=>0));
+				if($dealLoanTypeList){
+					\Core::cache()->set('deal_loan_type_active',$dealLoanTypeList);
+				}
+			}
+			return $dealLoanTypeList;
+		}
 }

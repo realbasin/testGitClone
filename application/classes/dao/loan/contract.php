@@ -24,5 +24,11 @@ class dao_loan_contract extends Dao {
 	public function getContract($id){
 		return $this->getDb()->select('*')->from($this->getTable())->where($id)->execute->row();
 	}
-
+	//获取有效合同范本列表
+	public function getContractList($fields){
+		$where = array();
+		$where['is_effect'] = 1;
+		$where['is_delete'] = 0;
+		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->rows();
+	}
 }

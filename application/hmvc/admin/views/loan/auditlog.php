@@ -12,21 +12,16 @@
     <link href="<?php echo RS_PATH?>admin/css/flexigrid.css?v=201705031531" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>css/font-awesome.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.css" rel="stylesheet" type="text/css" />
-    <link href="<?php echo RS_PATH?>jquery/jquery.daterangepicker.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/language_<?php echo strtolower(\Base::getConfig()->getLanguageTypeDirName());?>.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery-1.8.3.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.nicescroll.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>artdialog/dialog-plus-min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>moment.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/laymain.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js?v=201705041335"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/flexigrid.js"></script>
     <!--[if lt IE 9]>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5.js"></script>
-    <![endif]-->
-    <!--[if IE]>
-    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5shiv.min.js"></script>
     <![endif]-->
 
 </head>
@@ -34,12 +29,11 @@
 <div class="location">
     <div  class="right"><a href="javascript:void(null);" id="syshelp"   onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
     <i class="home"></i>
-    <span><?php echo \Core::L('loan');?></span>
+    <span>贷款管理</span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('loan_all');?></span>
+    <span>全部贷款</span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('loan_op_log');?></span>
-
+    <span>审核日志</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -48,12 +42,12 @@
 <script>
     $(function(){
         $("#flexitable").flexigrid({
-            url: '<?php echo adminUrl('loan_loan','audit_log_json',array('loan_id'=>$loan_id));?>',
+            url: '<?php echo adminUrl('loan_oplog','all_op_log_json',array('loan_id'=>$loan_id));?>',
             colModel : [
                 {display: '贷款编号', name : 'deal_id', width : 50, sortable : false, align: 'center'},
                 {display: '借款用户', name : 'user_id', width : 100, sortable : false, align : 'center'},
                 {display: '操作阶段', name : 'op_name', width : 80, sortable : false, align: 'left'},
-                {display: '日志信息', name : 'log', width : 300, sortable : false, align: 'left'},
+                {display: '日志信息', name : 'log', width : 500, sortable : false, align: 'left'},
                 {display: '结果', name : 'op_result', width : 80, sortable : false, align: 'center'},
                 {display: '操作人', name : 'admin_id', width : 150, sortable : false, align: 'center'},
                 {display: '操作时间', name : 'create_time', width : 150, sortable : false, align: 'center'},
@@ -69,15 +63,22 @@
             columnControl:false,
             reload:false,
         });
+        $('#reset').click(function(){
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_oplog','all_op_log_json');?>'}).flexReload();
+            $("#formSearch")[0].reset();
+        });
 
     });
+
     $('#syshelp').on("click",function(){
         var d = dialog({
-            content: "<?php echo \Core::L('loan_all_help');?>",
+            content: "<?php echo \Core::L('loan_op_log');?>",
             quickClose: true
         });
         d.show(this);
     });
+
+
 </script>
 </body>
 </html>
