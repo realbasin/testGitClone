@@ -1,6 +1,6 @@
 <?php
 defined('IN_XIAOSHU') or exit('Access Invalid!');
-
+ 
 class dao_loan_loanbid extends Dao {
 
 	public function getColumns() {
