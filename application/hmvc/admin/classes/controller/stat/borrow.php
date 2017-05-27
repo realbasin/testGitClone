@@ -80,7 +80,7 @@ class  controller_stat_borrow extends controller_sysBase {
 		$header['日期'] = 'date';
 		$header['借款人数量'] = 'integer';
 
-		$daoDeal = \Core::dao('loan_deal');
+		$daoDeal = \Core::dao('loan_loanbid');
 		$data = $daoDeal -> getStatBorrower(strtotime($datestart), strtotime($dateend));
 		//导出
 		$this -> log('导出已放款借款人次统计(' . $datestart . ' - ' . $dateend . ')', 'export');
