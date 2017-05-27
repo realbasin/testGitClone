@@ -83,7 +83,7 @@ class dao_loan_loanbase extends Dao {
 		$this->getDb()->where(array('create_time <='=>$dateStart,'create_time >='=>$dateEnd));
 		$this->getDb()->where(array('is_delete'=>0,'is_effect >='=>1));
 		$this->getDb()->join('loan_bid', $this->getTable().'.id=loan_bid.loan_id','left');
-		$this->getDb()->orderBy('createdate','desc');
+		$this->getDb()->orderBy('createdate','asc');
 		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$dateStart.$dateEnd);
 		return $this->getDb()->execute()->rows();
 	}
