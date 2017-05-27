@@ -225,7 +225,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$loanBusiness=\Core::business('loan_loanenum');
 			//根据借款id，获取贷款基本信息
 			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type';
-			$loanbase = \Core::dao('loan_loanbase')->getOneLoanById($loan_id,$basefields);
+			$loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
 			//获取会员名称
 			$user_id = $loanbase['user_id'];
 			$user = \Core::dao('user_user')->getUser($user_id,'id,user_name,real_name,pid');
