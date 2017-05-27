@@ -55,8 +55,8 @@ class  controller_stat_borrow extends controller_sysBase {
 		if (!$datestart || !$dateend) {
 			showJSON('100', '请选择日期范围');
 		}
-		$daoDeal = \Core::dao('loan_loanbid');
-		$data = $daoDeal -> getStatBorrower(strtotime($datestart), strtotime($dateend));
+		$daoBid = \Core::dao('loan_loanbid');
+		$data = $daoBid -> getStatBorrower(strtotime($datestart), strtotime($dateend));
 		if (!$data) {
 			$datarow = array();
 			$datarow['createdate'] = $datestart;
@@ -69,7 +69,7 @@ class  controller_stat_borrow extends controller_sysBase {
 		showJSON('200', '', $data);
 	}
 	
-	//借款人统计导出
+	//借款人统计导出 
 	public function do_borrower_export(){
 		$datestart = \Core::get('datestart');
 		$dateend = \Core::get('dateend');
@@ -80,8 +80,8 @@ class  controller_stat_borrow extends controller_sysBase {
 		$header['日期'] = 'date';
 		$header['借款人数量'] = 'integer';
 
-		$daoDeal = \Core::dao('loan_deal');
-		$data = $daoDeal -> getStatBorrower(strtotime($datestart), strtotime($dateend));
+		$daoBid = \Core::dao('loan_loanbid');
+		$data = $daoBid -> getStatBorrower(strtotime($datestart), strtotime($dateend));
 		//导出
 		$this -> log('导出已放款借款人次统计(' . $datestart . ' - ' . $dateend . ')', 'export');
 		exportExcel('已放款借款人次统计(' . $datestart . ' - ' . $dateend . ')', $header, $data);
