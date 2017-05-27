@@ -121,6 +121,22 @@ class dao_loan_dealloadrepay extends Dao {
 		return $this->getDb()->execute()->rows();
 	}
 	
+	//待还款统计
+	public function getStatNoPayment($beginDate,$endDate){
+		$field="FROM_UNIXTIME(repay_time,'%Y-%m-%d') as nopayment_date,
+		sum(repay_money) as	nopayment_amount,
+		sum(self_money) as	nopayment_capital,
+		sum(repay_money - self_money) as nopayment_interest,
+		count(DISTINCT if(has_repay = 0, repay_id, null)) as nopayment_number";
+		$this->getDb()->select($field,false);
+		$this->getDb()->from($this->getTable());
+		$this->getDb()->where(array('repay_time >='=>$beginDate,'repay_time <='=>$endDate,'has_repay'=>0));
+		$this->getDb()->groupBy('repay_time');
+		$this->getDb()->orderBy('nopayment_date','asc');
+		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$beginDate.$endDate);
+		return $this->getDb()->execute()->rows();
+	}
+	
 	public function getIsSiteRepay($where) {
 
 		return $this->getDb()->from($this->getTable())->where($where)->execute()->value('is_site_repay');

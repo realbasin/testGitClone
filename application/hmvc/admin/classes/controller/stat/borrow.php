@@ -270,7 +270,56 @@ class  controller_stat_borrow extends controller_sysBase {
 	
 	//待还统计
 	public function do_noRepayment(){
-		
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_noRepayment');
+	}
+	
+	public function do_noRepayment_json(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$daoRepay = \Core::dao('loan_dealloadrepay');
+		$data = $daoRepay->getStatNoPayment(strtotime($datestart), strtotime($dateend));
+		if (!$data) {
+			$datarow = array();
+			$datarow['nopayment_date'] = $datestart;
+			$datarow['nopayment_amount'] = "0";
+			$datarow['nopayment_capital'] = "0";
+			$datarow['nopayment_interest'] = "0";
+			$datarow['nopayment_number'] = "0";
+			$datarowend = $datarow;
+			$datarowend['nopayment_date'] = $dateend;
+			$data[] = $datarow;
+			$data[] = $datarowend;
+		}
+		showJSON('200', '', $data);
+	}
+	
+	public function do_noRepayment_export(){
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'date';
+		$header['待还总额'] = 'price';
+		$header['待还本金'] = 'price';
+		$header['待还利息'] = 'price';
+		$header['待还人次'] = 'integer';
+
+		$daoRepay = \Core::dao('loan_dealloadrepay');
+		$data = $daoRepay->getStatNoPayment(strtotime($datestart), strtotime($dateend));
+		//导出
+		$this -> log('导出待还统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('待还统计(' . $datestart . ' - ' . $dateend . ')', $header, $data);
 	}
 	
 	//逾期排名
