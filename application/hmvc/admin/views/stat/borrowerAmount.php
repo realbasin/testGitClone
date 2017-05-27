@@ -97,7 +97,7 @@ $('.flexigrid').flexigrid({
 	
 function btnPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_borrow','borrower_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
+        window.location.href = '<?php echo adminUrl('stat_borrow','borrowerAmount_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
     }
 };
 	
@@ -173,7 +173,12 @@ function fillFlexTable(data){
 		jsonhtml+='{"id":"'+key+'",';
 		jsonhtml+='"cell":[';
 		jsonhtml+='"'+val.createdate+'",';
-		jsonhtml+='"'+val.usertotal+'",';
+		jsonhtml+='"'+val.apply_borrow_amount+'",';
+		jsonhtml+='"'+val.apply_user_count+'",';
+		jsonhtml+='"'+val.real_borrow_amount+'",';
+		jsonhtml+='"'+val.fail_borrow_amount+'",';
+		jsonhtml+='"'+val.audit_borrow_amount+'",';
+		jsonhtml+='"'+val.audit_user_count+'",';
 		jsonhtml+='""]},';
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
@@ -185,14 +190,25 @@ function fillCharts(data){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	var createdateArr=[];
-	var usertotalArr=[];
+	var apply_borrow_amount_Arr=[];
+	var apply_user_count_Arr=[];
+	var real_borrow_amount_Arr=[];
+	var fail_borrow_amount_Arr=[];
+	var audit_borrow_amount_Arr=[];
+	var audit_user_count_Arr=[];
+	
 	$.each(data, function(key,val) {
 		createdateArr[key]=val.createdate;
-		usertotalArr[key]=parseInt(val.usertotal);
+		apply_borrow_amount_Arr[key]=parseFloat(val.apply_borrow_amount);
+		apply_user_count_Arr[key]=parseInt(val.apply_user_count);
+		real_borrow_amount_Arr[key]=parseFloat(val.real_borrow_amount);
+		fail_borrow_amount_Arr[key]=parseFloat(val.fail_borrow_amount);
+		audit_borrow_amount_Arr[key]=parseFloat(val.audit_borrow_amount);
+		audit_user_count_Arr[key]=parseInt(val.audit_user_count);
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '借款人数汇总图表',
+        text: '借款金额/人数汇总图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
@@ -202,7 +218,7 @@ function fillCharts(data){
     },
     yAxis: {
         title: {
-            text: '借款人数'
+            text: '借款金额/人数'
         },
         plotLines: [{
             value: 0,
@@ -220,8 +236,23 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '借款人数',
-        data: usertotalArr
+        name: '申请借款金额',
+        data: apply_borrow_amount_Arr
+    },{
+        name: '申请人数',
+        data: apply_user_count_Arr
+    },{
+        name: '满标放款金额',
+        data: real_borrow_amount_Arr
+    },{
+        name: '流标失败金额',
+        data: fail_borrow_amount_Arr
+    },{
+        name: '审核通过金额',
+        data: audit_borrow_amount_Arr
+    },{
+        name: '审核通过人数',
+        data: audit_user_count_Arr
     }]
 });
 }
