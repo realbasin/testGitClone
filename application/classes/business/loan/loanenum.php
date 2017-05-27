@@ -127,7 +127,7 @@ class  business_loan_loanenum extends Business {
 				return $root;
 			}
 			if($l_key < 0){
-				$lkeys = \Core::dao('loan_loadrepay')->getLkeys($id);
+				$lkeys = \Core::dao('loan_dealloadrepay')->getLkeys($id);
 				$ids = $lkeys;
 			}else {
 				$ids = explode(",", $l_key);

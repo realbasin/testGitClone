@@ -327,7 +327,7 @@ class  controller_loan_loan extends controller_sysBase {
 		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
 		$loanextDao = \Core::dao('loan_loanext');
 		$config_common = $loanextDao->getConfig('config_common');
-		$loadrepayDao = \Core::dao('loan_loadrepay');
+		$loadrepayDao = \Core::dao('loan_dealloadrepay');
 		$loanenumBusiness = \Core::business('loan_loanenum');
 		//Excel内容
 		foreach ($data as $v) {
@@ -616,7 +616,7 @@ class  controller_loan_loan extends controller_sysBase {
 		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
 		$loanextDao = \Core::dao('loan_loanext');
 		$config_common = $loanextDao->getConfig('config_common');
-		$loadrepayDao = \Core::dao('loan_loadrepay');
+		$loadrepayDao = \Core::dao('loan_dealloadrepay');
 		$loanenumBusiness = \Core::business('loan_loanenum');
 		foreach ($data as $v) {
 			$row = array();
@@ -746,7 +746,7 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 		$fields = 'id,deal_id,l_key,user_id,status,is_site_repay,has_repay,impose_money,repay_money,repay_time,manage_money,reward_money,true_reward_money,t_user_id,true_manage_money,manage_interest_money,true_manage_interest_money,manage_interest_money_rebate,true_manage_interest_money_rebate,manage_early_interest_money';
 		//获取投资列表
-		$data = \Core::dao('loan_loadrepay')->getLoadRepayByLkey($id,$lkey,$fields);
+		$data = \Core::dao('loan_dealloadrepay')->getLoadRepayByLkey($id,$lkey,$fields);
 		if($data) {
 			//借款人是否还款
 			$realrepay = \Core::dao('loan_dealrepay')->getRepayStstus($id,$lkey);

@@ -99,4 +99,18 @@ class dao_loan_dealloadrepay extends Dao {
 		$this->getDb()->select("IF(t_user_id=0,user_id,t_user_id) AS u_id,SUM(self_money) AS self_money")->from($this->getTable())->groupBy("IF(t_user_id=0,user_id,t_user_id)");
 		return $this->getDb()->execute()->rows();
 	}
+	public function getIsSiteRepay($where) {
+
+		return $this->getDb()->from($this->getTable())->where($where)->execute()->value('is_site_repay');
+	}
+	public function getLkeys($id){
+		return $this->getDb()->from($this->getTable())->where(array('deal_id'=>$id))->execute()->values('l_key');
+	}
+	//获取投资人谋期回款情况
+	public function getLoadRepayByLkey($deal_id,$l_key,$fields='*'){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['l_key'] = $l_key;
+		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->rows();
+	}
 }
