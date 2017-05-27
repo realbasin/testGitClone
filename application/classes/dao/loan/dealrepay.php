@@ -42,7 +42,6 @@ class dao_loan_dealrepay extends Dao {
 	public function getTable() {
 		return 'deal_repay';
 	}
-	
 	//借款统计
 	public function getStatBorrowAll($datestart=0,$dateend=0){
 		$fields="sum(self_money) as suc_borrow_amount, 
@@ -56,12 +55,27 @@ class dao_loan_dealrepay extends Dao {
 		sum(if(has_repay = 1, manage_money,0)) as paid_fee,
 		sum(if(has_repay = 1 and status = 0, impose_money,0)) as paid_fine,
 		sum(if(has_repay = 1 and (status = 2 or status = 3), impose_money,0)) as paid_panalty";
-		
+
 		$this->getDb()->select($fields,false)->from($this->getTable());
 		if($datestart && $dateend){
 			$this->getDb()->where(array('true_repay_time >='=>$datestart,'true_repay_time <='=>$dateend));
 		}
 		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$datestart.$dateend);
 		return $this->getDb()->execute()->row();
+	}
+	/*
+	 * 通过贷款id获取还款计划
+	 * @loan_id 贷款id
+	 * @field 查询字段
+	 */
+	public function getRepayPlan($where,$field) {
+		return $this->getDb()->select($field)->from($this->getTable())->where($where)->orderBy('l_key','asc')->execute()->rows();
+	}
+	//获取某一期贷款还款状态
+	public function getRepayStstus($deal_id,$l_key){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['l_key'] = $l_key;
+		return $this->getDb()->from($this->getTable())->where($where)->execute()->value('has_repay');
 	}
 }
