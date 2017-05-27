@@ -147,7 +147,61 @@ class  controller_stat_borrow extends controller_sysBase {
 	}
 	
 	public function do_borrowerAmount_export(){
-		
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'date';
+		$header['申请借款金额'] = 'price';
+		$header['申请人数'] = 'integer';
+		$header['满标放款金额'] = 'price';
+		$header['流标失败金额'] = 'price';
+		$header['审核通过金额'] = 'price';
+		$header['审核通过人数'] = 'integer';
+
+		$daoBase = \Core::dao('loan_loanbase');
+		$data = $daoBase->getStatApplyBorrow(strtotime($datestart), strtotime($dateend));
+		//执行运算
+		$output=array();
+		if ($data) {
+			foreach($data as $v){
+				$row=array();
+				$row['createdate']=$v['createdate'];
+				if(\Core::arrayKeyExists($v['createdate'], $output)){
+					$oldrow=$output[$v['createdate']];
+					$row['apply_borrow_amount']=$oldrow['apply_borrow_amount']+$v['apply_borrow_amount'];
+					$row['apply_user_count']=$oldrow['apply_user_count']+1;
+					$row['real_borrow_amount']=$v['is_has_loans']?$oldrow['real_borrow_amount']+$v['borrow_amount']:$oldrow['real_borrow_amount'];
+					$row['fail_borrow_amount']=($v['deal_status']==3)?$oldrow['fail_borrow_amount']+$v['borrow_amount']:$oldrow['fail_borrow_amount'];
+					$row['audit_borrow_amount']=$v['loan_id']?$oldrow['audit_borrow_amount']+$v['borrow_amount']:$oldrow['audit_borrow_amount'];
+					$row['audit_user_count']=$v['loan_id']?$oldrow['audit_user_count']+1:$oldrow['audit_user_count'];
+				}else{
+					$row['apply_borrow_amount']=$v['apply_borrow_amount'];
+					$row['apply_user_count']=1;
+					$row['real_borrow_amount']=$v['is_has_loans']?$v['borrow_amount']:0;
+					$row['fail_borrow_amount']=($v['deal_status']==3)?$v['borrow_amount']:0;
+					$row['audit_borrow_amount']=$v['loan_id']?$v['borrow_amount']:0;
+					$row['audit_user_count']=$v['loan_id']?1:0;
+				}
+				$output[$v['createdate']]=$row;
+			}
+		}else{
+			$datarow['createdate'] = $datestart;
+			$datarow['apply_borrow_amount']=0;
+			$datarow['apply_user_count']=0;
+			$datarow['real_borrow_amount']=0;
+			$datarow['fail_borrow_amount']=0;
+			$datarow['audit_borrow_amount']=0;
+			$datarow['audit_user_count']=0;
+			$datarowend = $datarow;
+			$datarowend['createdate'] = $dateend;
+			$output[] = $datarow;
+			$output[] = $datarowend;
+		}
+		$this -> log('导出借款金额/人次统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('借款金额/人次统计(' . $datestart . ' - ' . $dateend . ')', $header, $output);
 	}
 	
 	//已还统计
