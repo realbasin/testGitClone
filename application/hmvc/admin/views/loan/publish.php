@@ -31,7 +31,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('loan');?></span>
     <i class="arrow"></i>
-    <span><?php echo $menu;?></span>
+    <span><?php echo $title;?></span>
 
 </div>
 <div class="line10"></div>
@@ -217,11 +217,11 @@
                 {display: '贷款名称', name : 'name'}
             ],
             buttons : [
-                {display: '<i class=""></i> 新增贷款', name : 'add', bclass : 'add', title : '新增贷款', onpress : flexPress }
+                {display: '<i class=""></i>认领', name : 'add', bclass : 'add', title : '认领', onpress : flexPress }
             ],
             sortname: "id",
             sortorder: "desc",
-            title: '续借待审核列表'
+            title: '<?php echo $title;?>'
         });
 
         $('#submit').click(function(){
@@ -274,7 +274,7 @@
 
     //审核日志
     function loan_audit_log(id){
-        location.href='<?php echo adminUrl('loan_loan','audit_log');?>&loan_id='+id;
+        location.href='<?php echo adminUrl('loan_oplog','audit_log');?>'+'&loan_id='+id;
     }
 
     $('#syshelp').on("click",function(){
@@ -299,7 +299,7 @@
         }
         //alert(ids);
         $.ajax({
-            url	: "<?php echo adminUrl('loan_audit','publish_audit_owner');?>&way=1",
+            url	: "<?php echo adminUrl('loan_audit','publish_audit_owner').'&way='.$way;?>",
             dataType: "json",
             async	: false,
             data	: {id: id, ids: ids},

@@ -22,7 +22,8 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('sorcode',$loanBusiness->enumSorCode())
             ->set('dealstatus',$loanBusiness->enumDealStatus())
             ->set('action','first_publish_json')
-            ->set('menu',\Core::L('first_publish'));
+            ->set('way',1)
+            ->set('title',\Core::L('first_publish'));
         \Core::view() -> load('loan_publish');
     }
 
@@ -159,7 +160,8 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
             ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('menu',\Core::L('my_publish'))
+            ->set('title',\Core::L('my_publish'))
+            ->set('way',2)
             ->set('action','my_publish_json');
         \Core::view() -> load('loan_publish');
     }
@@ -293,7 +295,8 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
             ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('menu',\Core::L('publish'))
+            ->set('title',\Core::L('publish'))
+            ->set('way',1)
             ->set('action','publish_json');
         \Core::view() -> load('loan_publish');
     }
@@ -522,6 +525,7 @@ class  controller_loan_audit extends controller_sysBase {
         }
         $userDao=\Core::dao('user_user');
         $adminDao=\Core::dao('sys_admin_admin');
+        $dealRepayDao=\Core::dao('loan_dealrepay');
 
         $userNames=$userDao->getUser($userIds,'id,user_name,real_name');
         $firstAdminNames=$adminDao->getAdmin($adminFirstIds,'admin_id,admin_name,admin_real_name,admin_mobile');
@@ -539,6 +543,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row['cell'][] = $v['name'];
             $row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
             $row['cell'][] = "￥".$v['borrow_amount'];
+            $row['cell'][] = $dealRepayDao->getOverdueTimes($v['user_id']);
             $row['cell'][] = $v['rate']."%";
             $row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
             $row['cell'][] = $loanBusiness->enumDealUseType($v['use_type']);
@@ -592,7 +597,7 @@ class  controller_loan_audit extends controller_sysBase {
             exit;
         }
 
-        $deal_op_log = Core::dao('loan_oplog');
+        $deal_op_log = Core::dao('loan_loanoplog');
         $loanbase = Core::dao('loan_loanbase');
         $admin_id = $this->admininfo['id'];
 

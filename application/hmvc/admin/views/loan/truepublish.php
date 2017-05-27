@@ -202,13 +202,13 @@
                 {display: '贷款名称', name : 'name', width : 60, sortable : true, align : 'center'},
                 {display: '借款人', name : 'user_id', width : 100, sortable : true, align: 'left'},
                 {display: '贷款金额', name : 'borrow_amount', width : 80, sortable : true, align: 'center'},
+                {display: '借款次数', name : 'sor_code', width : 100, sortable : true, align: 'center'},
+                {display: '逾期记录', name : 'sor_code', width : 100, sortable : true, align: 'center'},
                 {display: '利率(%)', name : 'rate', width : 50, sortable : true, align: 'center'},
                 {display: '期数', name : 'repay_time', width : 40, sortable : true, align: 'center'},
                 {display: '借款用途', name : 'use_type', width : 60, sortable : true, align: 'center'},
                 {display: '还款方式', name : 'loantype', width : 60, sortable : true, align: 'center'},
                 {display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
-                {display: '审核状态', name : 'publish_status', width : 60, sortable : true, align: 'center'},
-                {display: '认领操作', name : 'first_audit_admin_id', width : 80, sortable : true, align: 'center'},
             ],
 
             searchitems : [
