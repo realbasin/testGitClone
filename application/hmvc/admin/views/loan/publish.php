@@ -31,7 +31,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('loan');?></span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('first_publish');?></span>
+    <span><?php echo $menu;?></span>
 
 </div>
 <div class="line10"></div>
@@ -206,6 +206,7 @@
                 {display: '期数', name : 'repay_time', width : 40, sortable : true, align: 'center'},
                 {display: '借款用途', name : 'use_type', width : 60, sortable : true, align: 'center'},
                 {display: '还款方式', name : 'loantype', width : 60, sortable : true, align: 'center'},
+                {display: '最近操作时间', name : 'update_time', width : 120, sortable : true, align: 'center'},
                 {display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
                 {display: '审核状态', name : 'publish_status', width : 60, sortable : true, align: 'center'},
                 {display: '认领操作', name : 'first_audit_admin_id', width : 80, sortable : true, align: 'center'},
@@ -215,9 +216,12 @@
                 {display: '编号', name : 'id'},
                 {display: '贷款名称', name : 'name'}
             ],
+            buttons : [
+                {display: '<i class=""></i> 新增贷款', name : 'add', bclass : 'add', title : '新增贷款', onpress : flexPress }
+            ],
             sortname: "id",
             sortorder: "desc",
-            title: '首单待审核列表'
+            title: '续借待审核列表'
         });
 
         $('#submit').click(function(){
@@ -231,6 +235,17 @@
 
     });
 
+    function flexPress(name, grid) {
+        if(name=='csv'){
+            var itemlist = new Array();
+            if($('.trSelected',grid).length>0){
+                $('.trSelected',grid).each(function(){
+                    itemlist.push($(this).attr('data-id'));
+                });
+            }
+            flexExport(itemlist);
+        }
+    }
 
     //编辑
     function loan_edit(id){
@@ -259,7 +274,7 @@
 
     //审核日志
     function loan_audit_log(id){
-        location.href='<?php echo adminUrl('loan_loan','audit_log');?>';
+        location.href='<?php echo adminUrl('loan_loan','audit_log');?>&loan_id='+id;
     }
 
     $('#syshelp').on("click",function(){

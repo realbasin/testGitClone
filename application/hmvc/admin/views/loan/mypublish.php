@@ -206,18 +206,20 @@
                 {display: '期数', name : 'repay_time', width : 40, sortable : true, align: 'center'},
                 {display: '借款用途', name : 'use_type', width : 60, sortable : true, align: 'center'},
                 {display: '还款方式', name : 'loantype', width : 60, sortable : true, align: 'center'},
+                {display: '最近操作时间', name : 'create_time', width : 120, sortable : true, align: 'center'},
                 {display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
                 {display: '审核状态', name : 'publish_status', width : 60, sortable : true, align: 'center'},
                 {display: '认领操作', name : 'first_audit_admin_id', width : 80, sortable : true, align: 'center'},
             ],
-
+            buttons : [
+                {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', title : '将选择的行或者全部数据导出为Excel', onpress : flexPress }
             searchitems : [
                 {display: '编号', name : 'id'},
                 {display: '贷款名称', name : 'name'}
             ],
             sortname: "id",
             sortorder: "desc",
-            title: '首单待审核列表'
+            title: '我的待审核列表'
         });
 
         $('#submit').click(function(){

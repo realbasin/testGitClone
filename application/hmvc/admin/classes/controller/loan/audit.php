@@ -4,14 +4,14 @@ defined('IN_XIAOSHU') or exit('Access Invalid!');
 class  controller_loan_audit extends controller_sysBase {
 
     public function before($method, $args) {
-        \Language::read('');
+        \Language::read('loan');
     }
 
     public function do_index() {
         $this -> do_first_publish();
     }
 
-    //全部贷款
+    //首单待审核列表
     public function do_first_publish(){
         $loanBusiness=\Core::business('loan_loanenum');
         //贷款类型数据
@@ -21,8 +21,9 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
             ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('action','first_publish_json');
-        \Core::view() -> load('loan_firstpublish');
+            ->set('action','first_publish_json')
+            ->set('menu',\Core::L('first_publish'));
+        \Core::view() -> load('loan_publish');
     }
 
 
@@ -34,7 +35,7 @@ class  controller_loan_audit extends controller_sysBase {
         //当前页
         $page = \Core::postGet('curpage');
         //需要获取的字段
-        $fields = 'id,name,user_id,borrow_amount,rate,repay_time,use_type,loantype,update_time,sor_code,first_audit_admin_id,repay_time_type';
+        $fields = 'id,name,user_id,borrow_amount,rate,repay_time,use_type,loantype,update_time,sor_code,first_audit_admin_id,repay_time_type,FROM_UNIXTIME(create_time+8*3600) AS create_time';
 
         //排序
         $orderby = array();
@@ -123,7 +124,8 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>编辑</a></li>";
+            $opration.="<li><a href='javascript:loan_preview(".$v['id'].")'>预览</a></li>";
+            $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
             $row['cell'][] = $opration;
@@ -135,6 +137,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
             $row['cell'][] = $loanBusiness->enumDealUseType($v['use_type']);
             $row['cell'][] = $loanBusiness->enumLoanType($v['loantype']);
+            $row['cell'][] = $v['create_time'];
             $row['cell'][] = $loanBusiness->enumSorCode($v['sor_code']);
             $row['cell'][] = $v['first_audit_admin_id'] == 0 ? '待认领' : '初审中';
             $row['cell'][] = \Core::arrayKeyExists($v['first_audit_admin_id'], $firstAdminNames)?\Core::arrayGet(\Core::arrayGet($firstAdminNames, $v['first_audit_admin_id'],''),'admin_real_name'):'<a href="javascript:;" onclick="get_owners('.$v['id'].');">认领</a>';
@@ -145,6 +148,7 @@ class  controller_loan_audit extends controller_sysBase {
         return @json_encode($json);
     }
 
+    //我的待审核列表
     public function do_my_publish()
     {
         $loanBusiness=\Core::business('loan_loanenum');
@@ -158,7 +162,7 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('action','my_publish_json');
         \Core::view() -> load('loan_mypublish');
     }
-    //我的待审核列表
+    //我的待审核列表分页的JSON数据
     public function do_my_publish_json()
     {
         //每页显示行数
@@ -166,7 +170,7 @@ class  controller_loan_audit extends controller_sysBase {
         //当前页
         $page = \Core::postGet('curpage');
         //需要获取的字段
-        $fields = 'id,name,user_id,borrow_amount,rate,repay_time,use_type,loantype,update_time,sor_code,first_audit_admin_id,repay_time_type';
+        $fields = 'id,name,user_id,borrow_amount,rate,repay_time,use_type,loantype,FROM_UNIXTIME(create_time+8*3600) AS create_time,sor_code,first_audit_admin_id,repay_time_type';
 
         //排序
         $orderby = array();
@@ -253,6 +257,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
+            $opration.="<li><a href='javascript:loan_preview(".$v['id'].")'>预览</a></li>";
             $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
@@ -265,6 +270,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
             $row['cell'][] = $loanBusiness->enumDealUseType($v['use_type']);
             $row['cell'][] = $loanBusiness->enumLoanType($v['loantype']);
+            $row['cell'][] = $v['create_time'];
             $row['cell'][] = $loanBusiness->enumSorCode($v['sor_code']);
             $row['cell'][] = $v['first_audit_admin_id'] == 0 ? '待认领' : '初审中';
             $row['cell'][] = '<a href="javascript:;" onclick="get_owners('.$v['id'].');">取消认领</a>';
@@ -286,6 +292,7 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
             ->set('dealstatus',$loanBusiness->enumDealStatus())
+            ->set('menu',\Core::L('publish'))
             ->set('action','publish_json');
         \Core::view() -> load('loan_publish');
     }
@@ -298,7 +305,7 @@ class  controller_loan_audit extends controller_sysBase {
         //当前页
         $page = \Core::postGet('curpage');
         //需要获取的字段
-        $fields = 'id,name,user_id,borrow_amount,rate,repay_time,use_type,loantype,update_time,sor_code,first_audit_admin_id,repay_time_type';
+        $fields = 'id,name,user_id,borrow_amount,rate,repay_time,use_type,loantype,FROM_UNIXTIME(create_time+8*3600) as create_time,sor_code,first_audit_admin_id,repay_time_type';
 
         //排序
         $orderby = array();
@@ -387,6 +394,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
+            $opration.="<li><a href='javascript:loan_preview(".$v['id'].")'>预览</a></li>";
             $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
@@ -399,6 +407,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
             $row['cell'][] = $loanBusiness->enumDealUseType($v['use_type']);
             $row['cell'][] = $loanBusiness->enumLoanType($v['loantype']);
+            $row['cell'][] = $v['create_time'];
             $row['cell'][] = $loanBusiness->enumSorCode($v['sor_code']);
             $row['cell'][] = $v['first_audit_admin_id'] == 0 ? '待认领' : '初审中';
             $row['cell'][] = \Core::arrayKeyExists($v['first_audit_admin_id'], $firstAdminNames)?\Core::arrayGet(\Core::arrayGet($firstAdminNames, $v['first_audit_admin_id'],''),'admin_real_name'):'<a href="javascript:;" onclick="get_owners('.$v['id'].');">认领</a>';
@@ -520,6 +529,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
+            $opration.="<li><a href='javascript:loan_preview(".$v['id'].")'>预览</a></li>";
             $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
@@ -573,7 +583,8 @@ class  controller_loan_audit extends controller_sysBase {
         if ($id > 0) {
             $ids[] = $id;
         } else {
-            $ids = Core::post('ids');
+            $ids = trim(Core::post('ids'),',');
+            $ids = explode($ids,',');
         }
         if ($ids == '' || !is_array($ids) || count($ids) == 0) {
             echo @json_encode($root);
@@ -587,7 +598,6 @@ class  controller_loan_audit extends controller_sysBase {
         $where = array();
         $way = intval($_REQUEST['way']);
         if ($way == 1) { //认领
-
             $data['first_audit_admin_id'] = $admin_id;
             $data['claim_time'] = time(); //认领时间
             $where['first_audit_admin_id'] = 0;
@@ -640,98 +650,6 @@ class  controller_loan_audit extends controller_sysBase {
 
         }
         echo @json_encode($root);
-    }
-
-    //审核日志
-    public function do_publish_log()
-    {
-        $loanBusiness=\Core::business('loan_loanenum');
-        //贷款类型数据
-        \Core::view()->set('repaytimetype',$loanBusiness->enumRepayTimeType())
-            ->set('loantype',$loanBusiness->enumLoanType())
-            ->set('dealcate',$loanBusiness->enumDealCate())
-            ->set('dealusetype',$loanBusiness->enumDealUseType())
-            ->set('sorcode',$loanBusiness->enumSorCode())
-            ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('action','my_publish_json');
-        \Core::view() -> load('loan_mypublish');
-    }
-
-    public function do_publish_log_json()
-    {
-        //每页显示行数
-        $pagesize = \Core::postGet('rp');
-        //当前页
-        $page = \Core::postGet('curpage');
-        //需要获取的字段
-        $fields = 'id,name,user_id,borrow_amount,rate,repay_time,use_type,loantype,update_time,sor_code,first_audit_admin_id,repay_time_type';
-
-        //排序
-        $orderby = array();
-        if (!$page || !is_numeric($page))
-            $page = 1;
-        if (!$pagesize || !is_numeric($pagesize))
-            $pagesize = 15;
-
-        //固定查询条件
-        $where['first_audit_admin_id'] = $this->admininfo['id'];
-        $where['is_delete'] = 0;
-        $where['publish_wait'] = 1;
-        $where['b_status'] = 0;
-
-        //简易查询条件
-        if (\Core::get('query')) {
-            $where[\Core::postGet('qtype') . " like"] = "%" . \Core::postGet('query') . "%";
-        }
-
-        //简易排序条件
-        if (\Core::postGet('sortorder')) {
-            $orderby[\Core::postGet('sortname')] = \Core::postGet('sortorder');
-        }
-
-        $data = \Core::dao('sys_deal_dealoplog') -> getFlexPage($page, $pagesize, $fields, $where, $orderby,'id');
-        //处理返回结果
-        $json = array();
-        $json['page'] = $page;
-        $json['total'] = $data['total'];
-
-        $loanBusiness=\Core::business('loan_loanenum');
-
-        //查询用户名称与管理员名称
-        $userIds=array();
-        $adminFirstIds=array();
-        foreach ($data['rows'] as $v) {
-            $userIds[]=$v['user_id'];
-            $adminFirstIds[]=$v['first_audit_admin_id'];
-        }
-        $userDao=\Core::dao('user_user');
-
-        $userNames=$userDao->getUser($userIds,'id,user_name,real_name');
-
-        foreach ($data['rows'] as $v) {
-            $row = array();
-            $row['id'] = $v['id'];
-            $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>编辑</a></li>";
-            $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
-            $opration.="</ul></span>";
-            $row['cell'][] = $opration;
-            $row['cell'][] = $v['id'];
-            $row['cell'][] = $v['name'];
-            $row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
-            $row['cell'][] = "￥".$v['borrow_amount'];
-            $row['cell'][] = $v['rate']."%";
-            $row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
-            $row['cell'][] = $loanBusiness->enumDealUseType($v['use_type']);
-            $row['cell'][] = $loanBusiness->enumLoanType($v['loantype']);
-            $row['cell'][] = $loanBusiness->enumSorCode($v['sor_code']);
-            $row['cell'][] = $v['first_audit_admin_id'] == 0 ? '待认领' : '初审中';
-            $row['cell'][] = '<a href="javascript:;" onclick="get_owners('.$v['id'].');">取消认领</a>';
-            $row['cell'][] = '';
-            $json['rows'][] = $row;
-        }
-        //返回JSON
-        return @json_encode($json);
     }
 
 

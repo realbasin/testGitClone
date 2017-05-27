@@ -690,7 +690,9 @@ class  controller_loan_loan extends controller_sysBase {
 		$fields = 'id,deal_id,user_id,op_id,op_name,op_result,log,admin_id,create_time,ip';
 		//查询条件
 		$where = array();
-		$bidwhere = array();
+		if(\Core::postGet('loan_id')) {
+			$where['deal_id'] = \Core::postGet('loan_id');
+		}
 		//排序
 		$orderby = array();
 		if (!$page || !is_numeric($page))
@@ -701,19 +703,6 @@ class  controller_loan_loan extends controller_sysBase {
 		if (\Core::postGet('query')) {
 			$where[\Core::postGet('qtype') . " like"] = "%" . \Core::postGet('query') . "%";
 		}
-		//高级查询条件
-		if(\Core::get('deal_id')!=null && is_numeric(\Core::get('deal_id'))){
-			$where['deal_id ']=\Core::get('deal_id');
-		}
-		if(\Core::get('op_type')!=-1 && is_numeric(\Core::get('op_type'))){
-			$where['op_id ']=\Core::get('op_type');
-		}
-		if(\Core::get('datestart')!=null || \Core::get('dateend')!=null){
-
-			$where['create_time >'] = strtotime(\Core::get('datestart'));
-			$where['create_time <'] = strtotime(\Core::get('dateend').' 23:59:59');
-		}
-		$userDao=\Core::dao('user_user');
 		//简易排序条件
 		if (\Core::postGet('sortorder')) {
 			$orderby[\Core::postGet('sortname')] = \Core::postGet('sortorder');
@@ -726,8 +715,6 @@ class  controller_loan_loan extends controller_sysBase {
 		$json['total'] = $data['total'];
 		//查询用户名称与管理员名称
 		$userIds=array();
-		$adminFirstIds=array();
-		$adminSecondIds=array();
 		if(!($data['rows'])) {
 			echo @json_encode($json);
 			exit;
@@ -737,6 +724,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$adminIds[]=$v['admin_id'];
 		}
 		$adminDao=\Core::dao('sys_admin_admin');
+		$userDao=\Core::dao('user_user');
 		$userNames=$userDao->getUser($userIds,'id,user_name,real_name,pid');
 		$AdminNames=$adminDao->getAdmin($adminIds,'admin_id,admin_name,admin_real_name,admin_mobile');
 
