@@ -159,8 +159,9 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
             ->set('dealstatus',$loanBusiness->enumDealStatus())
+            ->set('menu',\Core::L('my_publish'))
             ->set('action','my_publish_json');
-        \Core::view() -> load('loan_mypublish');
+        \Core::view() -> load('loan_publish');
     }
     //我的待审核列表分页的JSON数据
     public function do_my_publish_json()
@@ -591,7 +592,7 @@ class  controller_loan_audit extends controller_sysBase {
             exit;
         }
 
-        $deal_op_log = Core::dao('sys_deal_dealoplog');
+        $deal_op_log = Core::dao('loan_oplog');
         $loanbase = Core::dao('loan_loanbase');
         $admin_id = $this->admininfo['id'];
 
