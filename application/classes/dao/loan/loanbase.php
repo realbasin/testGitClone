@@ -74,4 +74,17 @@ class dao_loan_loanbase extends Dao {
 	public function getName($loanid){
 		return $this->getDb() -> from($this -> getTable()) ->where(array('id'=>$loanid)) -> execute() -> value('name');
 	}
+
+	//获取申请借款统计
+	//联合loan_bid表
+	public function getStatApplyBorrow($dateStart,$dateEnd){
+		$this->getDb()->select(" FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,apply_borrow_amount,borrow_amount,loan_id,deal_status,is_has_loans");
+		$this->getDb()->from($this->getTable());
+		$this->getDb()->where(array('create_time <='=>$dateStart,'create_time >='=>$dateEnd));
+		$this->getDb()->where(array('is_delete'=>0,'is_effect >='=>1));
+		$this->getDb()->join('loan_bid', $this->getTable().'.id=loan_bid.loan_id','left');
+		$this->getDb()->orderBy('createdate','desc');
+		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$dateStart.$dateEnd);
+		return $this->getDb()->execute()->rows();
+	}
 }

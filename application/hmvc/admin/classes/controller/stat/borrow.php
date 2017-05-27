@@ -56,7 +56,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			showJSON('100', '请选择日期范围');
 		}
 		$daoBid = \Core::dao('loan_loanbid');
-		$data = $daoBid -> getStatBorrower(strtotime($datestart), strtotime($dateend));
+		$data = $daoBid->getStatBorrower(strtotime($datestart), strtotime($dateend));
 		if (!$data) {
 			$datarow = array();
 			$datarow['createdate'] = $datestart;
@@ -89,11 +89,61 @@ class  controller_stat_borrow extends controller_sysBase {
 	
 	//借款额统计
 	public function do_borrowerAmount(){
-		
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_borrowerAmount');
 	}
 	
 	public function do_borrowerAmount_json(){
-		
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$daoBase = \Core::dao('loan_loanbase');
+		$data = $daoBase->getStatApplyBorrow(strtotime($datestart), strtotime($dateend));
+		//执行运算
+		$output=array();
+		if ($data) {
+			foreach($data as $v){
+				$row=array();
+				$row['createdate']=$v['createdate'];
+				if(\Core::arrayKeyExists($v['createdate'], $output)){
+					$oldrow=$output[$v['createdate']];
+					$row['apply_borrow_amount']=$oldrow['apply_borrow_amount']+$v['apply_borrow_amount'];
+					$row['apply_user_count']=$oldrow['apply_user_count']+1;
+					$row['real_borrow_amount']=$v['is_has_loans']?$oldrow['real_borrow_amount']+$v['borrow_amount']:$oldrow['real_borrow_amount'];
+					$row['fail_borrow_amount']=($v['deal_status']==3)?$oldrow['fail_borrow_amount']+$v['borrow_amount']:$oldrow['fail_borrow_amount'];
+					$row['audit_borrow_amount']=$v['loan_id']?$oldrow['audit_borrow_amount']+$v['borrow_amount']:$oldrow['audit_borrow_amount'];
+					$row['audit_user_count']=$v['loan_id']?$oldrow['audit_user_count']+1:$oldrow['audit_user_count'];
+				}else{
+					$row['apply_borrow_amount']=$v['apply_borrow_amount'];
+					$row['apply_user_count']=1;
+					$row['real_borrow_amount']=$v['is_has_loans']?$v['borrow_amount']:0;
+					$row['fail_borrow_amount']=($v['deal_status']==3)?$v['borrow_amount']:0;
+					$row['audit_borrow_amount']=$v['loan_id']?$v['borrow_amount']:0;
+					$row['audit_user_count']=$v['loan_id']?1:0;
+				}
+				$output[$v['createdate']]=$row;
+			}
+		}else{
+			$datarow['createdate'] = $datestart;
+			$datarow['apply_borrow_amount']=0;
+			$datarow['apply_user_count']=0;
+			$datarow['real_borrow_amount']=0;
+			$datarow['fail_borrow_amount']=0;
+			$datarow['audit_borrow_amount']=0;
+			$datarow['audit_user_count']=0;
+			$datarowend = $datarow;
+			$datarowend['createdate'] = $dateend;
+			$output[] = $datarow;
+			$output[] = $datarowend;
+		}
+		showJSON('200', '', $output);
 	}
 	
 	public function do_borrowerAmount_export(){
