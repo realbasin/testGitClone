@@ -206,7 +206,66 @@ class  controller_stat_borrow extends controller_sysBase {
 	
 	//已还统计
 	public function do_repayment(){
-		
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_repayment');
+	}
+	
+	public function do_repayment_json(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$daoRepay = \Core::dao('loan_dealloadrepay');
+		$data = $daoRepay->getStatHasPayment(strtotime($datestart), strtotime($dateend));
+		if (!$data) {
+			$datarow = array();
+			$datarow['payment_date'] = $datestart;
+			$datarow['payment_amount'] = "0";
+			$datarow['payment_capital'] = "0";
+			$datarow['payment_interest'] = "0";
+			$datarow['payment_fine'] = "0";
+			$datarow['payment_penalty'] = "0";
+			$datarow['invest_fee'] = "0";
+			$datarow['loan_fee'] = "0";
+			$datarow['platform_income'] = "0";
+			$datarow['payment_number'] = "0";
+			$datarowend = $datarow;
+			$datarowend['payment_date'] = $dateend;
+			$data[] = $datarow;
+			$data[] = $datarowend;
+		}
+		showJSON('200', '', $data);
+	}
+	
+	public function do_repayment_export(){
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'date';
+		$header['已还总额'] = 'price';
+		$header['已还本金'] = 'price';
+		$header['已还利息'] = 'price';
+		$header['提前还款罚息'] = 'price';
+		$header['逾期还款罚金'] = 'price';
+		$header['投资者管理费'] = 'price';
+		$header['借款者管理费'] = 'price';
+		$header['平台收入'] = 'price';
+		$header['还款人次'] = 'integer';
+
+		$daoRepay = \Core::dao('loan_dealloadrepay');
+		$data = $daoRepay->getStatHasPayment(strtotime($datestart), strtotime($dateend));
+		//导出
+		$this -> log('导出已还统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('已还统计(' . $datestart . ' - ' . $dateend . ')', $header, $data);
 	}
 	
 	//待还统计
