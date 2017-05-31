@@ -58,4 +58,8 @@ class dao_loan_loanext extends Dao {
 	public function getCommonconfig($id) {
 		return $this->getDb()->from($this->getTable())->where(array('loan_id'=>$id))->execute()->value('config_common');
 	}
+	//根据id获取一条数据
+	public function getExtByLoanId($loan_id,$field='*'){
+		return $this->getDb()->select($field)->from($this->getTable())->where(array('loan_id'=>$loan_id))->execute()->row();
+	}
 }
