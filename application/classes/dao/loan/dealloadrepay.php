@@ -99,6 +99,44 @@ class dao_loan_dealloadrepay extends Dao {
 		$this->getDb()->select("IF(t_user_id=0,user_id,t_user_id) AS u_id,SUM(self_money) AS self_money")->from($this->getTable())->groupBy("IF(t_user_id=0,user_id,t_user_id)");
 		return $this->getDb()->execute()->rows();
 	}
+	
+	//已还款统计
+	public function getStatHasPayment($beginDate,$endDate){
+		$field="FROM_UNIXTIME(true_repay_time,'%Y-%m-%d') as payment_date,
+		sum(repay_money) as	payment_amount,
+		sum(self_money) as	payment_capital,
+		sum(repay_money - self_money) as payment_interest,
+		sum(if(status = 0, impose_money,0)) as payment_fine,
+		sum(if(status = 2 or status = 3, impose_money,0)) as payment_penalty,
+		sum(manage_money) as invest_fee,
+		sum(repay_manage_money + repay_manage_impose_money) as loan_fee,
+		sum(manage_money + repay_manage_money + repay_manage_impose_money) as platform_income,
+		count(DISTINCT repay_id) as payment_number";
+		$this->getDb()->select($field,false);
+		$this->getDb()->from($this->getTable());
+		$this->getDb()->where(array('true_repay_time >='=>$beginDate,'true_repay_time <='=>$endDate,'has_repay'=>1));
+		$this->getDb()->groupBy('payment_date');
+		$this->getDb()->orderBy('payment_date','asc');
+		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$beginDate.$endDate);
+		return $this->getDb()->execute()->rows();
+	}
+	
+	//待还款统计
+	public function getStatNoPayment($beginDate,$endDate){
+		$field="FROM_UNIXTIME(repay_time,'%Y-%m-%d') as nopayment_date,
+		sum(repay_money) as	nopayment_amount,
+		sum(self_money) as	nopayment_capital,
+		sum(repay_money - self_money) as nopayment_interest,
+		count(DISTINCT if(has_repay = 0, repay_id, null)) as nopayment_number";
+		$this->getDb()->select($field,false);
+		$this->getDb()->from($this->getTable());
+		$this->getDb()->where(array('repay_time >='=>$beginDate,'repay_time <='=>$endDate,'has_repay'=>0));
+		$this->getDb()->groupBy('repay_time');
+		$this->getDb()->orderBy('nopayment_date','asc');
+		$this->getDb()->cache(C('stat_sql_cache_time'),__METHOD__.$beginDate.$endDate);
+		return $this->getDb()->execute()->rows();
+	}
+	
 	public function getIsSiteRepay($where) {
 
 		return $this->getDb()->from($this->getTable())->where($where)->execute()->value('is_site_repay');

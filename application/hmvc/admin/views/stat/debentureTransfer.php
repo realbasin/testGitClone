@@ -35,9 +35,9 @@
 <div class="location">
   <div  class="right"><a href="javascript:void(null);" id="syshelp"   onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
   <i class="home"></i>
-  <span>借入统计</span>
+  <span>债券转让统计</span>
   <i class="arrow"></i>
-  <span>借款金额</span>
+  <span>债券转让</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -57,7 +57,7 @@
    </div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>借款金额汇总表</h3>
+      <h3>债券转让汇总表</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
@@ -66,13 +66,12 @@
       <thead>
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
-          <th width="150" style="width: 150px;" align="center">时间</th>
-          <th width="150" style="width: 150px;" align="center">申请借款金额</th>
-          <th width="100" style="width: 100px;" align="center">申请人数</th>
-          <th width="150" style="width: 150px;" align="center">满标放款金额</th>
-          <th width="150" style="width: 150px;" align="center">流标失败金额</th>
-          <th width="150" style="width: 150px;" align="center">审核通过金额</th>
-          <th width="150" style="width: 150px;" align="center">审核通过人数</th>
+          <th width="120" style="width: 120px;" align="center">日期</th>
+          <th width="120" style="width: 120px;" align="center">债券转让笔数</th>
+          <th width="120" style="width: 120px;" align="center">债券转让金额</th>
+          <th width="120" style="width: 120px;" align="center">成功转让笔数</th>
+          <th width="120" style="width: 120px;" align="center">成功转让金额</th>
+          <th width="120" style="width: 120px;" align="center">债券转让管理费</th>
           <th></th>
         </tr>
       </thead>
@@ -89,15 +88,15 @@ $('.flexigrid').flexigrid({
 	usepager: false,
 	reload: false,
 	columnControl: false,
-	title: '借款金额',
+	title: '债券转让',
 	buttons : [
-               {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
+               {display: '<i class="fa fa-file-excel-o"></i> 全部数据导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
            ]
 	});	
 	
 function btnPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_borrow','borrowerAmount_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
+        window.location.href = '<?php echo adminUrl('stat_debenture','debentureTransfer_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
     }
 };
 	
@@ -136,7 +135,7 @@ $('#syshelp').on("click",function(){
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var url='<?php echo adminUrl('stat_borrow','borrowerAmount');?>';
+	var url='<?php echo adminUrl('stat_debenture','debentureTransfer');?>';
 	url+='&datestart='+datestart+'&dateend='+dateend;
 	location.href=url;
 });
@@ -146,7 +145,7 @@ function initSearch(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	$.ajax({
-		url:'<?php echo adminUrl('stat_borrow','borrowerAmount_json');?>',
+		url:'<?php echo adminUrl('stat_debenture','debentureTransfer_json');?>',
   		type:'get',
   		data:{
   			datestart:datestart,
@@ -168,57 +167,57 @@ function initSearch(){
 }
 
 function fillFlexTable(data){
+	var total=0;
 	var jsonhtml='{"rows":[';
 	$.each(data, function(key,val) {
 		jsonhtml+='{"id":"'+key+'",';
 		jsonhtml+='"cell":[';
-		jsonhtml+='"'+val.createdate+'",';
-		jsonhtml+='"'+val.apply_borrow_amount+'",';
-		jsonhtml+='"'+val.apply_user_count+'",';
-		jsonhtml+='"'+val.real_borrow_amount+'",';
-		jsonhtml+='"'+val.fail_borrow_amount+'",';
-		jsonhtml+='"'+val.audit_borrow_amount+'",';
-		jsonhtml+='"'+val.audit_user_count+'",';
+		jsonhtml+='"'+val.date+'",';
+		jsonhtml+='"'+(val.transfernum==undefined?"0":val.transfernum)+'",';
+		jsonhtml+='"￥'+(val.transfermoney==undefined?"0":val.transfermoney)+'",';
+		jsonhtml+='"'+(val.successnum==undefined?"0":val.successnum)+'",';
+		jsonhtml+='"￥'+(val.successmoney==undefined?"0":val.successmoney)+'",';
+		jsonhtml+='"￥'+(val.transferfeemoney==undefined?"0":val.transferfeemoney)+'",';
 		jsonhtml+='""]},';
+		total+=1;
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
-	jsonhtml+='],"total":"'+data.length+'"}';
+	jsonhtml+='],"total":"'+total+'"}';
 	$('.flexigrid').flexAddData(JSON.parse(jsonhtml));
 }
 
 function fillCharts(data){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var createdateArr=[];
-	var apply_borrow_amount_Arr=[];
-	var apply_user_count_Arr=[];
-	var real_borrow_amount_Arr=[];
-	var fail_borrow_amount_Arr=[];
-	var audit_borrow_amount_Arr=[];
-	var audit_user_count_Arr=[];
-	
+	var dateArr=[];
+	var transfernumArr=[];
+	var transfermoneyArr=[];
+	var successnumArr=[];
+	var successmoneyArr=[];
+	var transferfeemoneyArr=[];
+	var i=0;
 	$.each(data, function(key,val) {
-		createdateArr[key]=val.createdate;
-		apply_borrow_amount_Arr[key]=parseFloat(val.apply_borrow_amount);
-		apply_user_count_Arr[key]=parseInt(val.apply_user_count);
-		real_borrow_amount_Arr[key]=parseFloat(val.real_borrow_amount);
-		fail_borrow_amount_Arr[key]=parseFloat(val.fail_borrow_amount);
-		audit_borrow_amount_Arr[key]=parseFloat(val.audit_borrow_amount);
-		audit_user_count_Arr[key]=parseInt(val.audit_user_count);
+		dateArr[i]=val.date;
+		transfernumArr[i]=parseInt(val.transfernum==undefined?0:val.transfernum);
+		transfermoneyArr[i]=parseFloat(val.transfermoney==undefined?0:val.transfermoney);
+		successnumArr[i]=parseInt(val.successnum==undefined?0:val.successnum);
+		successmoneyArr[i]=parseFloat(val.successmoney==undefined?0:val.successmoney);
+		transferfeemoneyArr[i]=parseFloat(val.transferfeemoney==undefined?0:val.transferfeemoney);
+		i+=1;
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '借款金额/人数汇总图表',
+        text: '债券转让汇总图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
     },
     xAxis: {
-        categories: createdateArr
+        categories: dateArr
     },
     yAxis: {
         title: {
-            text: '借款金额/人数'
+            text: '笔数/金额'
         },
         plotLines: [{
             value: 0,
@@ -236,23 +235,20 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '申请借款金额',
-        data: apply_borrow_amount_Arr
+        name: '债权转让笔数',
+        data: transfernumArr
     },{
-        name: '申请人数',
-        data: apply_user_count_Arr
+        name: '债权转让金额',
+        data: transfermoneyArr
     },{
-        name: '满标放款金额',
-        data: real_borrow_amount_Arr
+        name: '成功转让笔数',
+        data: successnumArr
     },{
-        name: '流标失败金额',
-        data: fail_borrow_amount_Arr
+        name: '成功转让笔数',
+        data: successmoneyArr
     },{
-        name: '审核通过金额',
-        data: audit_borrow_amount_Arr
-    },{
-        name: '审核通过人数',
-        data: audit_user_count_Arr
+        name: '债权转让管理费',
+        data: transferfeemoneyArr
     }]
 });
 }

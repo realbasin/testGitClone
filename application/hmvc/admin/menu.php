@@ -51,7 +51,13 @@ $menu = array(
 				'subtext'=>'会员管理',
 				'img'=>'user',
 				'list' => array(
-					
+					array('link'=>'','text'=>'优惠券管理',
+						'sub'=>array(
+							array('link'=>'user_bonus,all_type','text'=>'优惠券类型'),
+							array('link'=>'user_bonus,manual','text'=>'手动发放优惠券'),
+							array('link'=>'user_bonus,use_log','text'=>'优惠券使用情况'),
+						),
+					),
 				)
 			),
 			4 => array(
@@ -108,7 +114,7 @@ $menu = array(
 						'sub'=>array(
 							array('link'=>'stat_platform,recharge','text'=>'充值统计'),
 							array('link'=>'stat_platform,withdraw','text'=>'提现统计'),
-							array('link'=>'stat_platform,user','text'=>'用户统计'),
+							array('link'=>'stat_platform,userRegist','text'=>'用户注册统计'),
 							array('link'=>'stat_platform,platformPayment','text'=>'垫付统计'),
 							array('link'=>'stat_platform,check','text'=>'审核汇总'),
 							array('link'=>'stat_platform,autoBid','text'=>'自动投标'),

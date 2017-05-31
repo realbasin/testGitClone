@@ -355,8 +355,7 @@ function getRandString($prefix = '') {
 }
 
 //设置流水号
-function setTransactionId()
-{
+function setTransactionId() {
     list($usec, $sec) = explode(" ", microtime());
 
     $msec = round($usec*1000);
@@ -366,5 +365,65 @@ function setTransactionId()
     $transaction_id = date("YmdHis").$millisecond.mt_rand(100, 999);
 
     return $transaction_id;
+}
+
+/**
+ * 获取指定日期段内每一天的日期
+ * @param  Date  $startdate 开始日期
+ * @param  Date  $enddate   结束日期
+ * @param  Blean $unixdate  是否是unix时间
+ * @return Array
+ */
+function getDateFromRange($startdate, $enddate,$unixdate=false){
+	if(!$unixdate){
+		$stimestamp = strtotime($startdate);
+    	$etimestamp = strtotime($enddate);
+	}else{
+		$stimestamp=$startdate;
+		$etimestamp=$enddate;
+	}
+    // 计算日期段内有多少天
+    $days = ($etimestamp-$stimestamp)/86400+1;
+
+    // 保存每天日期
+    $date = array();
+
+    for($i=0; $i<$days; $i++){
+        $date[] = date('Y-m-d', $stimestamp+(86400*$i));
+    }
+    return $date;
+}
+
+//获取GMTime
+function getGmtime() {
+    return (time() - date('Z'));
+}
+
+/**
+ * 日期格式化
+ * @param $utc_time
+ * @param string $format
+ * @return bool|string
+ */
+function toDate($utc_time, $format = 'Y-m-d H:i:s') {
+    if (empty ($utc_time)) {
+        return '';
+    }
+    $timezone = intval(C('time_zone'));
+    $time = $utc_time + $timezone * 3600;
+    return date($format, $time);
+}
+
+/**
+ * 进行时间戳格式化
+ * @param $str
+ * @return int
+ */
+function toTimeSpan($str) {
+    $timezone = intval(C('time_zone'));
+    $time = intval(strtotime($str));
+    if ($time != 0)
+        $time = $time - $timezone * 3600;
+    return $time;
 }
 ?>

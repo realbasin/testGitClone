@@ -14,6 +14,7 @@
 <script type="text/javascript" src="<?php echo RS_PATH?>jquery/Validform_v5.3.2_min.js"></script>
 <script type="text/javascript" src="<?php echo RS_PATH?>artdialog/dialog-plus-min.js"></script>
 <script type="text/javascript" src="<?php echo RS_PATH?>admin/js/common.js"></script>
+<script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.js"></script>
 <style>
 	.jq-dropdown .jq-dropdown-panel{min-width: 1px;}
 </style>

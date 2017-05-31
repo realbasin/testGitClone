@@ -35,9 +35,9 @@
 <div class="location">
   <div  class="right"><a href="javascript:void(null);" id="syshelp"   onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
   <i class="home"></i>
-  <span>借入统计</span>
+  <span>平台统计</span>
   <i class="arrow"></i>
-  <span>借款金额</span>
+  <span>网站垫付统计</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -57,7 +57,7 @@
    </div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>借款金额汇总表</h3>
+      <h3>网站垫付统计</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
@@ -66,13 +66,11 @@
       <thead>
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
-          <th width="150" style="width: 150px;" align="center">时间</th>
-          <th width="150" style="width: 150px;" align="center">申请借款金额</th>
-          <th width="100" style="width: 100px;" align="center">申请人数</th>
-          <th width="150" style="width: 150px;" align="center">满标放款金额</th>
-          <th width="150" style="width: 150px;" align="center">流标失败金额</th>
-          <th width="150" style="width: 150px;" align="center">审核通过金额</th>
-          <th width="150" style="width: 150px;" align="center">审核通过人数</th>
+          <th width="200" style="width: 200px;" align="center">日期</th>
+          <th width="200" style="width: 200px;" align="center">代还本息总额</th>
+          <th width="200" style="width: 200px;" align="center">代还管理费总额</th>
+          <th width="200" style="width: 200px;" align="center">代还罚息总额</th>
+          <th width="200" style="width: 200px;" align="center">代还逾期管理费总额</th>
           <th></th>
         </tr>
       </thead>
@@ -89,15 +87,15 @@ $('.flexigrid').flexigrid({
 	usepager: false,
 	reload: false,
 	columnControl: false,
-	title: '借款金额',
+	title: '网站垫付统计',
 	buttons : [
-               {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
+               {display: '<i class="fa fa-file-excel-o"></i> 全部数据导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
            ]
 	});	
 	
 function btnPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_borrow','borrowerAmount_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
+        window.location.href = '<?php echo adminUrl('stat_platform','platformPayment_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
     }
 };
 	
@@ -107,8 +105,7 @@ $('#daterange').dateRangePicker({
 				'prev-days': [1,3,5,7,30,60],
 				'prev' : null,
 			},
-	maxDays:60,
-	//startDate:'<?php echo date('Y-m-d',strtotime("-60 day"));?>',
+	maxDays:<?php echo C('stat_date_range_max');?>,
 	endDate:'<?php echo date('Y-m-d',time());?>',
 	getValue: function()
 	{
@@ -136,7 +133,7 @@ $('#syshelp').on("click",function(){
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var url='<?php echo adminUrl('stat_borrow','borrowerAmount');?>';
+	var url='<?php echo adminUrl('stat_platform','platformPayment');?>';
 	url+='&datestart='+datestart+'&dateend='+dateend;
 	location.href=url;
 });
@@ -146,7 +143,7 @@ function initSearch(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	$.ajax({
-		url:'<?php echo adminUrl('stat_borrow','borrowerAmount_json');?>',
+		url:'<?php echo adminUrl('stat_platform','platformPayment_json');?>',
   		type:'get',
   		data:{
   			datestart:datestart,
@@ -173,12 +170,10 @@ function fillFlexTable(data){
 		jsonhtml+='{"id":"'+key+'",';
 		jsonhtml+='"cell":[';
 		jsonhtml+='"'+val.createdate+'",';
-		jsonhtml+='"'+val.apply_borrow_amount+'",';
-		jsonhtml+='"'+val.apply_user_count+'",';
-		jsonhtml+='"'+val.real_borrow_amount+'",';
-		jsonhtml+='"'+val.fail_borrow_amount+'",';
-		jsonhtml+='"'+val.audit_borrow_amount+'",';
-		jsonhtml+='"'+val.audit_user_count+'",';
+		jsonhtml+='"'+val.paymenttotal+'",';
+		jsonhtml+='"'+val.feetotal+'",';
+		jsonhtml+='"'+val.imposetotal+'",';
+		jsonhtml+='"'+val.managetotal+'",';
 		jsonhtml+='""]},';
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
@@ -189,36 +184,32 @@ function fillFlexTable(data){
 function fillCharts(data){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var createdateArr=[];
-	var apply_borrow_amount_Arr=[];
-	var apply_user_count_Arr=[];
-	var real_borrow_amount_Arr=[];
-	var fail_borrow_amount_Arr=[];
-	var audit_borrow_amount_Arr=[];
-	var audit_user_count_Arr=[];
-	
+	var dateArr=[];
+	var paymenttotalArr=[];
+	var feetotalArr=[];
+	var imposetotalArr=[];
+	var managetotalArr=[];
+	var i=0;
 	$.each(data, function(key,val) {
-		createdateArr[key]=val.createdate;
-		apply_borrow_amount_Arr[key]=parseFloat(val.apply_borrow_amount);
-		apply_user_count_Arr[key]=parseInt(val.apply_user_count);
-		real_borrow_amount_Arr[key]=parseFloat(val.real_borrow_amount);
-		fail_borrow_amount_Arr[key]=parseFloat(val.fail_borrow_amount);
-		audit_borrow_amount_Arr[key]=parseFloat(val.audit_borrow_amount);
-		audit_user_count_Arr[key]=parseInt(val.audit_user_count);
+		dateArr[key]=val.createdate;
+		paymenttotalArr[key]=parseFloat(val.paymenttotal);
+		feetotalArr[key]=parseFloat(val.feetotal);
+		imposetotalArr[key]=parseFloat(val.imposetotal);
+		managetotalArr[key]=parseFloat(val.managetotal);
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '借款金额/人数汇总图表',
+        text: '网站垫付统计图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
     },
     xAxis: {
-        categories: createdateArr
+        categories: dateArr
     },
     yAxis: {
         title: {
-            text: '借款金额/人数'
+            text: '垫付金额'
         },
         plotLines: [{
             value: 0,
@@ -236,23 +227,17 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '申请借款金额',
-        data: apply_borrow_amount_Arr
+        name: '代还本息总额',
+        data: paymenttotalArr
     },{
-        name: '申请人数',
-        data: apply_user_count_Arr
+        name: '代还管理费总额',
+        data: feetotalArr
     },{
-        name: '满标放款金额',
-        data: real_borrow_amount_Arr
+        name: '代还罚息总额',
+        data: imposetotalArr
     },{
-        name: '流标失败金额',
-        data: fail_borrow_amount_Arr
-    },{
-        name: '审核通过金额',
-        data: audit_borrow_amount_Arr
-    },{
-        name: '审核通过人数',
-        data: audit_user_count_Arr
+        name: '代还逾期管理费总额',
+        data: managetotalArr
     }]
 });
 }
