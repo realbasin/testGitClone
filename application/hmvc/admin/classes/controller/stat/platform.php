@@ -126,9 +126,61 @@ class  controller_stat_platform extends controller_sysBase {
 		exportExcel('提现汇总(' . $datestart . ' - ' . $dateend . ')', $header, $datas);
 	}
 	
-	//用户统计
-	public function do_user(){
-		
+	//用户注册人数统计
+	public function do_userRegist(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_userRegist');
+	}
+	
+	public function do_userRegist_json(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			showJSON('101', '开始日期不能大于结束日期');
+		}
+		if((($endStamp-$startStamp)/86400+1)>C('stat_date_range_max')){
+			showJSON('102', '日期范围不能大于'.C('stat_date_range_max').'天');
+		}
+		$daoUser = \Core::dao('user_user');
+		$datas = $daoUser->getStatUserRegist($startStamp, $endStamp);
+		if(!$datas){
+			$row=array();
+			$row['createdate']=$datestart;
+			$row['usercount']=0;
+			$datas[]=$row;
+			$row['createdate']=$dateend;
+			$datas[]=$row;
+		}
+		showJSON('200', '', $datas);
+	}
+	
+	public function do_userRegist_export(){
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'date';
+		$header['注册人数'] = 'integer';
+
+		$daoUser = \Core::dao('user_user');
+		$datas = $daoUser->getStatUserRegist(strtotime($datestart), strtotime($dateend));
+		//导出
+		$this -> log('导出用户注册统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('用户注册统计(' . $datestart . ' - ' . $dateend . ')', $header, $datas);
 	}
 	
 	//垫付统计

@@ -278,4 +278,9 @@ class dao_user_user extends Dao {
 	public function getUserMoney($user_id){
 		return $this->getDb()->select('AES_DECRYPT(money_encrypt,\''.AES_DECRYPT_KEY.'\') as aesmoney')->from($this->getTable())->where(array('id'=>$user_id))->execute()->value('aesmoney');
 	}
+	
+	//获取用户注册统计
+	public function getStatUserRegist($startDate,$endDate){
+		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(*) as usercount")->from($this->getTable())->where(array('create_time >='=>$startDate,'create_time <='=>$endDate))->groupBy('createdate')->cache(C('stat_sql_cache_time'),__METHOD__.$startDate.$endDate)->execute()->rows();
+	}
 }
