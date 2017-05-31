@@ -355,8 +355,7 @@ function getRandString($prefix = '') {
 }
 
 //设置流水号
-function setTransactionId()
-{
+function setTransactionId() {
     list($usec, $sec) = explode(" ", microtime());
 
     $msec = round($usec*1000);
@@ -366,5 +365,38 @@ function setTransactionId()
     $transaction_id = date("YmdHis").$millisecond.mt_rand(100, 999);
 
     return $transaction_id;
+}
+
+//获取GMTime
+function get_gmtime() {
+    return (time() - date('Z'));
+}
+
+/**
+ * 日期格式化
+ * @param $utc_time
+ * @param string $format
+ * @return bool|string
+ */
+function to_date($utc_time, $format = 'Y-m-d H:i:s') {
+    if (empty ($utc_time)) {
+        return '';
+    }
+    $timezone = intval(C('time_zone'));
+    $time = $utc_time + $timezone * 3600;
+    return date($format, $time);
+}
+
+/**
+ * 进行时间戳格式化
+ * @param $str
+ * @return int
+ */
+function to_timespan($str) {
+    $timezone = intval(C('time_zone'));
+    $time = intval(strtotime($str));
+    if ($time != 0)
+        $time = $time - $timezone * 3600;
+    return $time;
 }
 ?>
