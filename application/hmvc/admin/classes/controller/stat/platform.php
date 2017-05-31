@@ -67,7 +67,63 @@ class  controller_stat_platform extends controller_sysBase {
 	
 	//提现统计
 	public function do_withdraw(){
-		
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_withdraw');
+	}
+	
+	public function do_withdraw_json(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			showJSON('101', '开始日期不能大于结束日期');
+		}
+		if((($endStamp-$startStamp)/86400+1)>C('stat_date_range_max')){
+			showJSON('102', '日期范围不能大于'.C('stat_date_range_max').'天');
+		}
+		$daoCarry = \Core::dao('loan_usercarry');
+		$datas = $daoCarry->getStatWithdraw($startStamp, $endStamp);
+		if(!$datas){
+			$row=array();
+			$row['createdate']=$datestart;
+			$row['moneytotal']=0;
+			$row['moneytotalsuc']=0;
+			$row['usertimes']=0;
+			$datas[]=$row;
+			$row['createdate']=$dateend;
+			$datas[]=$row;
+		}
+		showJSON('200', '', $datas);
+	}
+	
+	public function do_withdraw_export(){
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		//Excel头部
+		$header = array();
+		$header['日期'] = 'date';
+		$header['申请提现总额'] = 'price';
+		$header['成功提现总额'] = 'price';
+		$header['申请人次'] = 'integer';
+
+		$daoCarry = \Core::dao('loan_usercarry');
+		$datas = $daoCarry->getStatWithdraw(strtotime($datestart), strtotime($dateend));
+		//导出
+		$this -> log('导出提现汇总(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('提现汇总(' . $datestart . ' - ' . $dateend . ')', $header, $datas);
 	}
 	
 	//用户统计

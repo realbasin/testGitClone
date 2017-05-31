@@ -37,7 +37,7 @@
   <i class="home"></i>
   <span>平台统计</span>
   <i class="arrow"></i>
-  <span>充值汇总</span>
+  <span>提现汇总</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -57,7 +57,7 @@
    </div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>充值汇总表</h3>
+      <h3>提现汇总表</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
@@ -67,7 +67,9 @@
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
           <th width="200" style="width: 200px;" align="center">日期</th>
-          <th width="200" style="width: 200px;" align="center">成功充值总额</th>
+          <th width="200" style="width: 200px;" align="center">申请提现总额</th>
+          <th width="200" style="width: 200px;" align="center">成功提现总额</th>
+          <th width="200" style="width: 200px;" align="center">申请人次</th>
           <th></th>
         </tr>
       </thead>
@@ -84,7 +86,7 @@ $('.flexigrid').flexigrid({
 	usepager: false,
 	reload: false,
 	columnControl: false,
-	title: '充值汇总',
+	title: '提现汇总',
 	buttons : [
                {display: '<i class="fa fa-file-excel-o"></i> 全部数据导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
            ]
@@ -92,7 +94,7 @@ $('.flexigrid').flexigrid({
 	
 function btnPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_platform','recharge_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
+        window.location.href = '<?php echo adminUrl('stat_platform','withdraw_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
     }
 };
 	
@@ -130,7 +132,7 @@ $('#syshelp').on("click",function(){
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var url='<?php echo adminUrl('stat_platform','recharge');?>';
+	var url='<?php echo adminUrl('stat_platform','withdraw');?>';
 	url+='&datestart='+datestart+'&dateend='+dateend;
 	location.href=url;
 });
@@ -140,7 +142,7 @@ function initSearch(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	$.ajax({
-		url:'<?php echo adminUrl('stat_platform','recharge_json');?>',
+		url:'<?php echo adminUrl('stat_platform','withdraw_json');?>',
   		type:'get',
   		data:{
   			datestart:datestart,
@@ -166,8 +168,10 @@ function fillFlexTable(data){
 	$.each(data, function(key,val) {
 		jsonhtml+='{"id":"'+key+'",';
 		jsonhtml+='"cell":[';
-		jsonhtml+='"'+val.paydate+'",';
-		jsonhtml+='"'+val.paytotal+'",';
+		jsonhtml+='"'+val.createdate+'",';
+		jsonhtml+='"'+val.moneytotal+'",';
+		jsonhtml+='"'+val.moneytotalsuc+'",';
+		jsonhtml+='"'+val.usertimes+'",';
 		jsonhtml+='""]},';
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
@@ -179,15 +183,19 @@ function fillCharts(data){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	var dateArr=[];
-	var totalArr=[];
+	var moneytotalArr=[];
+	var moneytotalsucArr=[];
+	var usertimesArr=[];
 	var i=0;
 	$.each(data, function(key,val) {
-		dateArr[key]=val.paydate;
-		totalArr[key]=parseFloat(val.paytotal);
+		dateArr[key]=val.createdate;
+		moneytotalArr[key]=parseFloat(val.moneytotal);
+		moneytotalsucArr[key]=parseFloat(val.moneytotalsuc);
+		usertimesArr[key]=parseInt(val.usertimes);
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '充值金额汇总图表',
+        text: '提现汇总图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
@@ -197,7 +205,7 @@ function fillCharts(data){
     },
     yAxis: {
         title: {
-            text: '充值金额'
+            text: '提现金额/人次'
         },
         plotLines: [{
             value: 0,
@@ -215,8 +223,14 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '成功充值金额',
-        data: totalArr
+        name: '申请提现金额',
+        data: moneytotalArr
+    },{
+        name: '成功提现金额',
+        data: moneytotalsucArr
+    },{
+        name: '申请人次',
+        data: usertimesArr
     }]
 });
 }
