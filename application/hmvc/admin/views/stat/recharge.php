@@ -35,9 +35,9 @@
 <div class="location">
   <div  class="right"><a href="javascript:void(null);" id="syshelp"   onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
   <i class="home"></i>
-  <span>债券转让统计</span>
+  <span>平台统计</span>
   <i class="arrow"></i>
-  <span>债券转让</span>
+  <span>充值汇总</span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -57,7 +57,7 @@
    </div>
 	<div class="stat-chart">
     <div class="title">
-      <h3>债券转让汇总表</h3>
+      <h3>充值汇总表</h3>
     </div>
     <div id="container" class=" " style="height:400px"></div>
   </div>
@@ -66,12 +66,8 @@
       <thead>
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
-          <th width="120" style="width: 120px;" align="center">日期</th>
-          <th width="120" style="width: 120px;" align="center">债券转让笔数</th>
-          <th width="120" style="width: 120px;" align="center">债券转让金额</th>
-          <th width="120" style="width: 120px;" align="center">成功转让笔数</th>
-          <th width="120" style="width: 120px;" align="center">成功转让金额</th>
-          <th width="120" style="width: 120px;" align="center">债券转让管理费</th>
+          <th width="200" style="width: 200px;" align="center">日期</th>
+          <th width="200" style="width: 200px;" align="center">成功充值总额</th>
           <th></th>
         </tr>
       </thead>
@@ -88,7 +84,7 @@ $('.flexigrid').flexigrid({
 	usepager: false,
 	reload: false,
 	columnControl: false,
-	title: '债券转让',
+	title: '充值汇总',
 	buttons : [
                {display: '<i class="fa fa-file-excel-o"></i> 全部数据导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
            ]
@@ -96,7 +92,7 @@ $('.flexigrid').flexigrid({
 	
 function btnPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_debenture','debentureTransfer_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
+        window.location.href = '<?php echo adminUrl('stat_platform','recharge_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
     }
 };
 	
@@ -106,8 +102,7 @@ $('#daterange').dateRangePicker({
 				'prev-days': [1,3,5,7,30,60],
 				'prev' : null,
 			},
-	maxDays:60,
-	//startDate:'<?php echo date('Y-m-d',strtotime("-60 day"));?>',
+	maxDays:<?php echo C('stat_date_range_max');?>,
 	endDate:'<?php echo date('Y-m-d',time());?>',
 	getValue: function()
 	{
@@ -135,7 +130,7 @@ $('#syshelp').on("click",function(){
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var url='<?php echo adminUrl('stat_debenture','debentureTransfer');?>';
+	var url='<?php echo adminUrl('stat_platform','recharge');?>';
 	url+='&datestart='+datestart+'&dateend='+dateend;
 	location.href=url;
 });
@@ -145,7 +140,7 @@ function initSearch(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	$.ajax({
-		url:'<?php echo adminUrl('stat_debenture','debentureTransfer_json');?>',
+		url:'<?php echo adminUrl('stat_platform','recharge_json');?>',
   		type:'get',
   		data:{
   			datestart:datestart,
@@ -167,22 +162,16 @@ function initSearch(){
 }
 
 function fillFlexTable(data){
-	var total=0;
 	var jsonhtml='{"rows":[';
 	$.each(data, function(key,val) {
 		jsonhtml+='{"id":"'+key+'",';
 		jsonhtml+='"cell":[';
-		jsonhtml+='"'+val.date+'",';
-		jsonhtml+='"'+(val.transfernum==undefined?"0":val.transfernum)+'",';
-		jsonhtml+='"￥'+(val.transfermoney==undefined?"0":val.transfermoney)+'",';
-		jsonhtml+='"'+(val.successnum==undefined?"0":val.successnum)+'",';
-		jsonhtml+='"￥'+(val.successmoney==undefined?"0":val.successmoney)+'",';
-		jsonhtml+='"￥'+(val.transferfeemoney==undefined?"0":val.transferfeemoney)+'",';
+		jsonhtml+='"'+val.paydate+'",';
+		jsonhtml+='"'+val.paytotal+'",';
 		jsonhtml+='""]},';
-		total+=1;
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
-	jsonhtml+='],"total":"'+total+'"}';
+	jsonhtml+='],"total":"'+data.length+'"}';
 	$('.flexigrid').flexAddData(JSON.parse(jsonhtml));
 }
 
@@ -190,24 +179,15 @@ function fillCharts(data){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
 	var dateArr=[];
-	var transfernumArr=[];
-	var transfermoneyArr=[];
-	var successnumArr=[];
-	var successmoneyArr=[];
-	var transferfeemoneyArr=[];
+	var totalArr=[];
 	var i=0;
 	$.each(data, function(key,val) {
-		dateArr[i]=val.date;
-		transfernumArr[i]=parseInt(val.transfernum==undefined?0:val.transfernum);
-		transfermoneyArr[i]=parseFloat(val.transfermoney==undefined?0:val.transfermoney);
-		successnumArr[i]=parseInt(val.successnum==undefined?0:val.successnum);
-		successmoneyArr[i]=parseFloat(val.successmoney==undefined?0:val.successmoney);
-		transferfeemoneyArr[i]=parseFloat(val.transferfeemoney==undefined?0:val.transferfeemoney);
-		i+=1;
+		dateArr[key]=val.paydate;
+		totalArr[key]=parseFloat(val.paytotal);
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
-        text: '债券转让汇总图表',
+        text: '充值金额汇总图表',
     },
     subtitle: {
         text: '数据时间:('+datestart+" 至 "+dateend+")",
@@ -217,7 +197,7 @@ function fillCharts(data){
     },
     yAxis: {
         title: {
-            text: '笔数/金额'
+            text: '充值金额'
         },
         plotLines: [{
             value: 0,
@@ -235,20 +215,8 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '债权转让笔数',
-        data: transfernumArr
-    },{
-        name: '债权转让金额',
-        data: transfermoneyArr
-    },{
-        name: '成功转让笔数',
-        data: successnumArr
-    },{
-        name: '成功转让笔数',
-        data: successmoneyArr
-    },{
-        name: '债权转让管理费',
-        data: transferfeemoneyArr
+        name: '成功充值金额',
+        data: totalArr
     }]
 });
 }

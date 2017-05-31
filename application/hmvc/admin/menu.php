@@ -114,7 +114,7 @@ $menu = array(
 						'sub'=>array(
 							array('link'=>'stat_platform,recharge','text'=>'充值统计'),
 							array('link'=>'stat_platform,withdraw','text'=>'提现统计'),
-							array('link'=>'stat_platform,user','text'=>'用户统计'),
+							array('link'=>'stat_platform,userRegist','text'=>'用户注册统计'),
 							array('link'=>'stat_platform,platformPayment','text'=>'垫付统计'),
 							array('link'=>'stat_platform,check','text'=>'审核汇总'),
 							array('link'=>'stat_platform,autoBid','text'=>'自动投标'),

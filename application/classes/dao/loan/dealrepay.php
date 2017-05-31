@@ -78,4 +78,12 @@ class dao_loan_dealrepay extends Dao {
 		$where['l_key'] = $l_key;
 		return $this->getDb()->from($this->getTable())->where($where)->execute()->value('has_repay');
 	}
+	//通过贷款id和贷款期数来获取还款计划数据
+
+	public function getOneRepayPlan($deal_id,$l_key,$field='*'){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['l_key'] = $l_key;
+		return $this->getDb()->select($field)->from($this->getTable())->where($where)->execute()->row();
+	}
 }

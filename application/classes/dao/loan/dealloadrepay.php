@@ -151,4 +151,12 @@ class dao_loan_dealloadrepay extends Dao {
 		$where['l_key'] = $l_key;
 		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->rows();
 	}
+	//add by zlz 获取某人某个标某一期回款计划
+	public function getSomeOneLkeyPlan($deal_id,$l_key,$user_id,$field='*'){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['l_key'] = $l_key;
+		$where['user_id'] = $user_id;
+		return $this->getDb()->select($field)->from($this->getTable())->where($where)->execute()->row();
+	}
 }

@@ -60,7 +60,14 @@ class  business_loan_stat extends Business {
 		return $sql;
 	}
 	
+	//债券转让统计
 	public function getStatTransferData($startDate,$endDate){
+		$reDatas=\Core::cache()->get(__METHOD__.$startDate.$endDate);
+		if($reDatas) {
+			return $reDatas;
+		}
+			
+		
 		$daoTransfer=\Core::dao('loan_dealloadtransfer');
 		$daoLog=\Core::dao('loan_sitemoneylog');
 		//获取债权转让
@@ -71,14 +78,17 @@ class  business_loan_stat extends Business {
 		$dataFee=$daoLog->getStatTransferFee($startDate,$endDate);
 		//数据处理
 		$datas=array();
-		foreach($dataAll as $k=>$v){
+		$dateList=getDateFromRange($startDate,$endDate,true);
+		foreach($dateList as $v){
 			$row=array();
-			$row['date']=$k;
-			$row['transfernum']=0;
-			$row['transfermoney']=0;
-			$row['successnum']=0;
-			$row['successmoney']=0;
-			$row['transferfeemoney']=0;
+			$row['date']=$v;
+			$datas[$v]=$row;
 		}
+		$reDatas=array_merge_recursive($datas,$dataAll,$dataSuc,$dataFee);
+		
+		
+		//缓存
+		\Core::cache()->set(__METHOD__.$startDate.$endDate,$reDatas,C('stat_sql_cache_time'));
+		return $reDatas;
 	}
 }
