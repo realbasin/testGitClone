@@ -395,7 +395,7 @@ function getDateFromRange($startdate, $enddate,$unixdate=false){
 }
 
 //获取GMTime
-function get_gmtime() {
+function getGmtime() {
     return (time() - date('Z'));
 }
 
@@ -405,7 +405,7 @@ function get_gmtime() {
  * @param string $format
  * @return bool|string
  */
-function to_date($utc_time, $format = 'Y-m-d H:i:s') {
+function toDate($utc_time, $format = 'Y-m-d H:i:s') {
     if (empty ($utc_time)) {
         return '';
     }
@@ -419,7 +419,7 @@ function to_date($utc_time, $format = 'Y-m-d H:i:s') {
  * @param $str
  * @return int
  */
-function to_timespan($str) {
+function toTimeSpan($str) {
     $timezone = intval(C('time_zone'));
     $time = intval(strtotime($str));
     if ($time != 0)

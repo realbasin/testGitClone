@@ -28,15 +28,15 @@ class  controller_user_bonus extends controller_sysBase {
                 'bonus_type_name' => $bonus_type_name,
                 'use_type' => \Core::post('use_type'),
                 'is_limited' => \Core::post('is_limited'),
-                'start_time' => to_timespan(\Core::post('start_time')),
-                'end_time' => to_timespan($end_time),
-                'use_start_time' => to_timespan(\Core::post('use_start_time')),
+                'start_time' => toTimeSpan(\Core::post('start_time')),
+                'end_time' => toTimeSpan($end_time),
+                'use_start_time' => toTimeSpan(\Core::post('use_start_time')),
                 'use_end_time_type' => \Core::post('use_end_time_type'),
-                'use_end_time' => to_timespan($use_end_time),
+                'use_end_time' => toTimeSpan($use_end_time),
                 'use_end_day' => intval($use_end_day),
                 'send_type' => \Core::post('send_type'),
                 'is_effect' => intval(\Core::post('is_effect')),
-                'create_time' => get_gmtime(),
+                'create_time' => getGmtime(),
             );
             $num = \Core::dao('user_bonusType')->insert($insertData);
             if ($num > 0) {
@@ -74,15 +74,15 @@ class  controller_user_bonus extends controller_sysBase {
                 'bonus_type_name' => $bonus_type_name,
                 'use_type' => \Core::post('use_type'),
                 'is_limited' => \Core::post('is_limited'),
-                'start_time' => to_timespan(\Core::post('start_time')),
-                'end_time' => to_timespan($end_time),
-                'use_start_time' => to_timespan(\Core::post('use_start_time')),
+                'start_time' => toTimeSpan(\Core::post('start_time')),
+                'end_time' => toTimeSpan($end_time),
+                'use_start_time' => toTimeSpan(\Core::post('use_start_time')),
                 'use_end_time_type' => \Core::post('use_end_time_type'),
-                'use_end_time' => to_timespan($use_end_time),
+                'use_end_time' => toTimeSpan($use_end_time),
                 'use_end_day' => intval($use_end_day),
                 'send_type' => \Core::post('send_type'),
                 'is_effect' => intval(\Core::post('is_effect')),
-                'update_time' => get_gmtime(),
+                'update_time' => getGmtime(),
             );
 
             $num = \Core::dao('user_bonusType')->update($updateData, array('id'=>$type_id));
@@ -96,8 +96,8 @@ class  controller_user_bonus extends controller_sysBase {
         }
 
         $bonusType = \Core::dao('user_bonustype')->getBonusTypeById($type_id);
-        $bonusType['start_time'] = !empty($bonusType['start_time']) ? to_date($bonusType['start_time']) : to_date($bonusType['create_time']);
-        $bonusType['use_start_time'] = !empty($bonusType['use_start_time']) ? to_date($bonusType['use_start_time']) : to_date($bonusType['create_time']);
+        $bonusType['start_time'] = !empty($bonusType['start_time']) ? toDate($bonusType['start_time']) : toDate($bonusType['create_time']);
+        $bonusType['use_start_time'] = !empty($bonusType['use_start_time']) ? toDate($bonusType['use_start_time']) : toDate($bonusType['create_time']);
 
         \Core::view()->set('func_name', __FUNCTION__);
         \Core::view()->set('bonusType', $bonusType);

@@ -84,7 +84,7 @@
                     <label>发放/领取结束时间</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" class="input-txt" name="end_time" id="end_time" value="<?php if(!empty($bonusType)) echo to_date($bonusType['end_time']);?>">
+                    <input type="text" class="input-txt" name="end_time" id="end_time" value="<?php if(!empty($bonusType)) echo toDate($bonusType['end_time']);?>">
                 </dd>
             </dl>
             <dl class="row">
@@ -105,7 +105,7 @@
                         <option value="1" <?php if(empty($bonusType) || $bonusType['use_end_time_type']==1) echo 'selected';?>>设定固定日期</option>
                         <option value="2" <?php if(!empty($bonusType) || $bonusType['use_end_time_type']==2) echo 'selected';?>>激活后有效期</option>
                     </select>
-                    <input type="text" class="input-txt" name="use_end_time" id="use_end_time" value="<?php if(!empty($bonusType)) echo to_date($bonusType['use_end_time']);?>" />
+                    <input type="text" class="input-txt" name="use_end_time" id="use_end_time" value="<?php if(!empty($bonusType)) echo toDate($bonusType['use_end_time']);?>" />
                     <input type="text" name="use_end_day" id="use_end_day" style="width: 130px;" value="<?php if(!empty($bonusType)) echo $bonusType['use_end_day'];?>"/>
                     <p class="notic">（类型为"激活后有效期"，直接输入天数即可）</p>
                 </dd>
