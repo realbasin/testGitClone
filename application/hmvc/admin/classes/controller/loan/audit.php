@@ -125,13 +125,12 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration.="<li><a href='javascript:loan_preview(".$v['id'].")'>预览</a></li>";
             $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
             $row['cell'][] = $opration;
             $row['cell'][] = $v['id'];
-            $row['cell'][] = $v['name'];
+            $row['cell'][] = "<a href='javascript:loan_preview(".$v['id'].")'>".$v['name']."</a>";
             $row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
             $row['cell'][] = "￥".$v['borrow_amount'];
             $row['cell'][] = $v['rate']."%";
@@ -163,7 +162,7 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('title',\Core::L('my_publish'))
             ->set('way',2)
             ->set('action','my_publish_json');
-        \Core::view() -> load('loan_publish');
+        \Core::view() -> load('loan_mypublish');
     }
     //我的待审核列表分页的JSON数据
     public function do_my_publish_json()
@@ -260,13 +259,12 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration.="<li><a href='javascript:loan_preview(".$v['id'].")'>预览</a></li>";
             $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
             $row['cell'][] = $opration;
             $row['cell'][] = $v['id'];
-            $row['cell'][] = $v['name'];
+            $row['cell'][] = "<a href='javascript:loan_preview(".$v['id'].")'>".$v['name']."</a>";
             $row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
             $row['cell'][] = "￥".$v['borrow_amount'];
             $row['cell'][] = $v['rate']."%";
@@ -398,13 +396,12 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration.="<li><a href='javascript:loan_preview(".$v['id'].")'>预览</a></li>";
-            $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
+            $opration.="<li><a href='javascript:publish_edit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
             $row['cell'][] = $opration;
             $row['cell'][] = $v['id'];
-            $row['cell'][] = $v['name'];
+            $row['cell'][] = "<a href='javascript:loan_preview(".$v['id'].")'>".$v['name']."</a></li>";
             $row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
             $row['cell'][] = "￥".$v['borrow_amount'];
             $row['cell'][] = $v['rate']."%";
@@ -658,5 +655,94 @@ class  controller_loan_audit extends controller_sysBase {
         echo @json_encode($root);
     }
 
+    //预览页面
+    public function do_publish_preview()
+    {
+        $this->publish_edit();
+        \Core::view()->load('loan_preview');
+    }
 
+    //初审阶段贷款类型修改
+    public function do_edit_loan_type()
+    {
+        $this->publish_edit();
+        \Core::view() -> load('loan_publish');
+    }
+
+
+    //初审操作页面
+    public function do_first_publish_edit()
+    {
+        $this->publish_edit();
+    }
+
+    //初审操作
+    public function do_first_publish_update()
+    {
+    }
+
+    //复审操作页面
+    public function do_true_publish_edit()
+    {
+        $this->publish_edit();
+    }
+
+    //复审操作
+    public function do_true_publish_update()
+    {
+
+    }
+
+
+    public function publish_edit()
+    {
+        if(chksubmit()) {
+            \Core::dump('test');die();
+            //提交保存
+
+        }else {
+            $loan_id = \Core::get('loan_id',0);
+            $loanBusiness=\Core::business('loan_loanenum');
+            //根据借款id，获取贷款基本信息
+            $basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type';
+            $loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
+            //获取会员名称
+            $user_id = $loanbase['user_id'];
+            $user = \Core::dao('user_user')->getUser($user_id,'id,user_name,real_name,pid');
+            $username = \Core::arrayKeyExists($user_id, $user)?\Core::arrayGet(\Core::arrayGet($user, $user_id),'user_name').'('.\Core::arrayGet(\Core::arrayGet($user, $user_id),'real_name').')':'';
+            if($username != '') {
+                $username = '<a href="#&user_id='.$user_id.'">'.$username.'</a>';
+            }
+            //获取借款拓展字段
+            $loanextDao =  \Core::dao('loan_loanext');
+            $contractid = $loanextDao->getContract($loan_id);
+            $amtConfig = $loanextDao->getAmtconfig($loan_id);
+            $l_guarantees_amt = \Core::arrayKeyExists('l_guarantees_amt',$amtConfig)?\Core::arrayGet(\Core::arrayGet($amtConfig, 'l_guarantees_amt')):'';
+            $guarantees_amt = \Core::arrayKeyExists('guarantees_amt',$amtConfig)?\Core::arrayGet(\Core::arrayGet($amtConfig, 'guarantees_amt')):0;
+            if(!$l_guarantees_amt) {
+                $l_guarantees_amt = number_format($loanbase['borrow_amount'] * $guarantees_amt / 100,2);
+            }
+            //commconfig
+            $commonConfig = $loanextDao->getCommonconfig($loan_id);
+            //获取合同范本
+            $contract =  \Core::dao('loan_contract')->getContractList('id,title');
+            //根据借款id，获取标基本信息
+            $bidfields = 'loan_id,min_loan_money,max_loan_money,deal_status,start_time,end_time,uloadtype,portion,max_portion,use_ecv,risk_rank,risk_security';
+            $loanbid = \Core::dao('loan_loanbid')->getOneLoanById($loan_id,$bidfields);
+            \Core::view()->set('loantype',$loanBusiness->enumLoanType())
+                ->set('dealcate',$loanBusiness->enumDealCate())
+                ->set('dealusetype',$loanBusiness->enumDealUseType())
+                ->set('dealloantype',$loanBusiness->enumDealLoanType())
+                ->set('plathtml',$loanBusiness->userPlatRegVerified($loan_id,$user_id))
+                ->set('loanbase',$loanbase)
+                ->set('loanbid',$loanbid)
+                ->set('username',$username)
+                ->set('contract',$contract)
+                ->set('contractid',$contractid)
+                ->set('l_guarantees_amt',$l_guarantees_amt)
+                ->set('commonConfig',$commonConfig)
+                ->set('user_detail',$loanBusiness->userDetail($user_id))
+                ->set('sorcode',$loanBusiness->enumSorCode());
+        }
+    }
 }

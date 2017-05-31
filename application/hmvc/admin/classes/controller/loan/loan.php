@@ -939,4 +939,5 @@ class  controller_loan_loan extends controller_sysBase {
 		//返回JSON
 		echo @json_encode($json);
 	}
+	
 }

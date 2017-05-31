@@ -217,7 +217,7 @@
                 {display: '贷款名称', name : 'name'}
             ],
             buttons : [
-                {display: '<i class=""></i>认领', name : 'do_claim', bclass : 'do_claim', title : '认领', onpress : flexPress }
+                {display: '<i class=""></i>取消认领', name : 'unclaimed', bclass : 'unclaimed', title : '取消认领', onpress : flexPress }
             ],
             sortname: "id",
             sortorder: "desc",
@@ -269,7 +269,7 @@
 
     //预览
     function loan_preview(id){
-        location.href='<?php echo adminUrl('loan_audit','preview');?>&loan_id='+id;
+        //window
     }
 
     //审核日志

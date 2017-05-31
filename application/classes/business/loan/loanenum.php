@@ -145,7 +145,7 @@ class  business_loan_loanenum extends Business {
 		public function userDetail($user_id){
 			$user_sta = \Core::dao('user_usersta')->getByUserId($user_id);
 			//会员详情
-			return "总的借款数: " . $user_sta['borrow_amount'] . " <br/>总借入笔数：" . $user_sta['deal_count'] . " <br/>成功借款：" . $user_sta['success_deal_count'] . " <br/>还清笔数：" . $user_sta['repay_deal_count'] . " <br/>提前还清：" . $user_sta['tq_repay_deal_count'] . " <br/>正常还清：" . $user_sta['zc_repay_deal_count'] . " <br/>未还清：" . $user_sta['wh_repay_deal_count'] . " <br/>逾期次数：" . $user_sta['yuqi_count'] . " <br/>严重逾期次数：" . $user_sta['yz_yuqi_count'] . " <br/>提前还款违约金：" . $user_sta['load_tq_impose'] . " <br/>逾期还款违约金：" . $user_sta['load_yq_impose'];
+			return "总的借款数: " . \Core::arrayGet($user_sta,'borrow_amount',0) . " <br/>总借入笔数：" . \Core::arrayGet($user_sta,'deal_count',0) . " <br/>成功借款：" . \Core::arrayGet($user_sta,'success_deal_count',0) . " <br/>还清笔数：" . \Core::arrayGet($user_sta,'repay_deal_count',0) . " <br/>提前还清：" . \Core::arrayGet($user_sta,'tq_repay_deal_count',0) . " <br/>正常还清：" . \Core::arrayGet($user_sta,'zc_repay_deal_count',0) . " <br/>未还清：" . \Core::arrayGet($user_sta,'wh_repay_deal_count',0) . " <br/>逾期次数：" . \Core::arrayGet($user_sta,'yuqi_count',0) . " <br/>严重逾期次数：" . \Core::arrayGet($user_sta,'yz_yuqi_count',0) . " <br/>提前还款违约金：" . \Core::arrayGet($user_sta,'load_tq_impose',0) . " <br/>逾期还款违约金：" . \Core::arrayGet($user_sta,'load_yq_impose',0);
 
 		}
 		//用户其他平台注册情况
