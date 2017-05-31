@@ -1,6 +1,20 @@
 <?php
 defined('IN_XIAOSHU') or exit('Access Invalid!');
 class  controller_stat_borrow extends controller_sysBase {
+	
+	//逾期排名顶部tab
+	private $overDueTaps = array(
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_saleman', 'text' => '归属业务员'), 
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_saleman1', 'text' => '归属行长'), 
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_referrer', 'text' => '推荐人'), 
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_checker', 'text' => '初审人'), 
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_month', 'text' => '月排行'), 
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_day', 'text' => '日排行'), 
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_area', 'text' => '地区'),
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_college', 'text' => '学校'),  
+	array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_age', 'text' => '年龄'),  
+	);
+	
 	public function before() {
 		
 	}
@@ -324,7 +338,62 @@ class  controller_stat_borrow extends controller_sysBase {
 	
 	//逾期排名
 	public function do_overdueDetail(){
-		
+		$this->do_overdueDetail_saleman();
+	}
+	
+	//逾期排名 - 归属业务员
+	public function do_overdueDetail_saleman(){
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_saleman');
+		\Core::view()->set('datestart',$datestart);
+		\Core::view()->set('dateend',$dateend);
+		\Core::view()->load('stat_overdueDetailSaleman',$pagetabs);
+	}
+	
+	public function do_overdueDetail_saleman_json(){
+	}
+	
+	//逾期排名 - 归属行长
+	public function do_overdueDetail_saleman1(){
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_saleman1');
+	}
+	
+	//逾期排名 - 推荐人
+	public function do_overdueDetail_referrer(){
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_referrer');
+	}
+	
+	//逾期排名 - 初审人
+	public function do_overdueDetail_checker(){
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_checker');
+	}
+	
+	//逾期排名 - 月排行
+	public function do_overdueDetail_month(){
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_month');
+	}
+	
+	//逾期排名 - 日排行
+	public function do_overdueDetail_day(){
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_day');
+	}
+	
+	//逾期排名 - 地区
+	public function do_overdueDetail_area(){
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_area');
+	}
+	
+	//逾期排名 - 学校
+	public function do_overdueDetail_college(){
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_college');
+	}
+	
+	//逾期排名 - 年龄
+	public function do_overdueDetail_age(){
+		$pagetabs=$this -> createTaps($this -> overDueTaps, 'overdueDetail_age');
 	}
 	
 	//逾期分析

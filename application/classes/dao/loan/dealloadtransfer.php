@@ -41,4 +41,14 @@ class dao_loan_dealloadtransfer extends Dao {
 	public function getTable() {
 		return 'deal_load_transfer';
 	}
+	
+	//获取债权转让统计
+	public function getStatTransferAll($startDate,$endDate){
+		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(*) as transfernum,sum(transfer_amount) as transfermoney")->from($this->getTable())->where(array('create_time >='=>$startDate,'create_time <='=>$endDate))->groupBy('createdate')->execute()->key('createdate')->rows();
+	}
+
+	//获取债权成功转让统计
+	public function getStatTransferSuc($startDate,$endDate){
+		return $this->getDb()->select("FROM_UNIXTIME(transfer_time,'%Y-%m-%d') as transferdate,count(*) as successnum,sum(transfer_amount) as successmoney")->from($this->getTable())->where(array('transfer_time >='=>$startDate,'transfer_time <='=>$endDate))->groupBy('transferdate')->execute()->key('transferdate')->rows();
+	}
 }

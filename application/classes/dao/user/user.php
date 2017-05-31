@@ -141,7 +141,7 @@ class dao_user_user extends Dao {
 				,'view_info'//view_info
 				,'ips_acct_no'//pIpsAcctNo 30 IPS托管平台账 户号
 				,'referral_rate'//返利抽成比
-				,'user_type'//用户类型 0普通用户 1 企业用户
+				,'user_type'//用户类型 0普通用户 1 企业用户 3行长 4普惠用户
 				,'create_date'//记录注册日期，方便统计使用
 				,'register_ip'//注册IP
 				,'admin_id'//所属管理员

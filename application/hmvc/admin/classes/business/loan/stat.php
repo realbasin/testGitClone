@@ -59,4 +59,26 @@ class  business_loan_stat extends Business {
 		}
 		return $sql;
 	}
+	
+	public function getStatTransferData($startDate,$endDate){
+		$daoTransfer=\Core::dao('loan_dealloadtransfer');
+		$daoLog=\Core::dao('loan_sitemoneylog');
+		//获取债权转让
+		$dataAll=$daoTransfer->getStatTransferAll($startDate,$endDate);
+		//获取成功债权转让
+		$dataSuc=$daoTransfer->getStatTransferSuc($startDate,$endDate);
+		//获取债权转让管理费
+		$dataFee=$daoLog->getStatTransferFee($startDate,$endDate);
+		//数据处理
+		$datas=array();
+		foreach($dataAll as $k=>$v){
+			$row=array();
+			$row['date']=$k;
+			$row['transfernum']=0;
+			$row['transfermoney']=0;
+			$row['successnum']=0;
+			$row['successmoney']=0;
+			$row['transferfeemoney']=0;
+		}
+	}
 }
