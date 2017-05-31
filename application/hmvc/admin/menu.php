@@ -51,7 +51,13 @@ $menu = array(
 				'subtext'=>'会员管理',
 				'img'=>'user',
 				'list' => array(
-					
+					array('link'=>'','text'=>'优惠券管理',
+						'sub'=>array(
+							array('link'=>'user_bonus,all_type','text'=>'优惠券类型'),
+							array('link'=>'user_bonus,manual','text'=>'手动发放优惠券'),
+							array('link'=>'user_bonus,use_log','text'=>'优惠券使用情况'),
+						),
+					),
 				)
 			),
 			4 => array(
