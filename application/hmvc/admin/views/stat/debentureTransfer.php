@@ -66,12 +66,12 @@
       <thead>
         <tr>
           <th width="24" style="width: 24px;" align="center" class="sign"><i class="ico-check"></i></th>
-          <th width="200" style="width: 120px;" align="center">时间</th>
-          <th width="200" style="width: 120px;" align="center">债券转让笔数</th>
-          <th width="200" style="width: 120px;" align="center">债券转让金额</th>
-          <th width="200" style="width: 120px;" align="center">债券转让管理费</th>
-          <th width="200" style="width: 120px;" align="center">成功转让笔数</th>
-          <th width="200" style="width: 120px;" align="center">成功转让金额</th>
+          <th width="120" style="width: 120px;" align="center">时间</th>
+          <th width="120" style="width: 120px;" align="center">债券转让笔数</th>
+          <th width="120" style="width: 120px;" align="center">债券转让金额</th>
+          <th width="120" style="width: 120px;" align="center">成功转让笔数</th>
+          <th width="120" style="width: 120px;" align="center">成功转让金额</th>
+          <th width="120" style="width: 120px;" align="center">债券转让管理费</th>
           <th></th>
         </tr>
       </thead>
@@ -88,7 +88,7 @@ $('.flexigrid').flexigrid({
 	usepager: false,
 	reload: false,
 	columnControl: false,
-	title: '借款用户数量',
+	title: '债券转让',
 	buttons : [
                {display: '<i class="fa fa-file-excel-o"></i> 全部数据导出Excel', name : 'csv', bclass : 'csv', onpress : btnPress }
            ]
@@ -167,27 +167,43 @@ function initSearch(){
 }
 
 function fillFlexTable(data){
+	var total=0;
 	var jsonhtml='{"rows":[';
 	$.each(data, function(key,val) {
 		jsonhtml+='{"id":"'+key+'",';
 		jsonhtml+='"cell":[';
-		jsonhtml+='"'+val.createdate+'",';
-		jsonhtml+='"'+val.usertotal+'",';
+		jsonhtml+='"'+val.date+'",';
+		jsonhtml+='"'+(val.transfernum==undefined?"0":val.transfernum)+'",';
+		jsonhtml+='"￥'+(val.transfermoney==undefined?"0":val.transfermoney)+'",';
+		jsonhtml+='"'+(val.successnum==undefined?"0":val.successnum)+'",';
+		jsonhtml+='"￥'+(val.successmoney==undefined?"0":val.successmoney)+'",';
+		jsonhtml+='"￥'+(val.transferfeemoney==undefined?"0":val.transferfeemoney)+'",';
 		jsonhtml+='""]},';
+		total+=1;
 	});
 	jsonhtml = jsonhtml.substring(0, jsonhtml.length - 1);
-	jsonhtml+='],"total":"'+data.length+'"}';
+	jsonhtml+='],"total":"'+total+'"}';
 	$('.flexigrid').flexAddData(JSON.parse(jsonhtml));
 }
 
 function fillCharts(data){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	var createdateArr=[];
-	var usertotalArr=[];
+	var dateArr=[];
+	var transfernumArr=[];
+	var transfermoneyArr=[];
+	var successnumArr=[];
+	var successmoneyArr=[];
+	var transferfeemoneyArr=[];
+	var i=0;
 	$.each(data, function(key,val) {
-		createdateArr[key]=val.createdate;
-		usertotalArr[key]=parseInt(val.usertotal);
+		dateArr[i]=val.date;
+		transfernumArr[i]=parseInt(val.transfernum==undefined?0:val.transfernum);
+		transfermoneyArr[i]=parseFloat(val.transfermoney==undefined?0:val.transfermoney);
+		successnumArr[i]=parseInt(val.successnum==undefined?0:val.successnum);
+		successmoneyArr[i]=parseFloat(val.successmoney==undefined?0:val.successmoney);
+		transferfeemoneyArr[i]=parseFloat(val.transferfeemoney==undefined?0:val.transferfeemoney);
+		i+=1;
 	});
 	var chart = new Highcharts.Chart('container', {
     title: {
@@ -197,11 +213,11 @@ function fillCharts(data){
         text: '数据时间:('+datestart+" 至 "+dateend+")",
     },
     xAxis: {
-        categories: createdateArr
+        categories: dateArr
     },
     yAxis: {
         title: {
-            text: '借款人数'
+            text: '笔数/金额'
         },
         plotLines: [{
             value: 0,
@@ -219,8 +235,20 @@ function fillCharts(data){
         borderWidth: 0
     },
     series: [{
-        name: '借款人次',
-        data: usertotalArr
+        name: '债权转让笔数',
+        data: transfernumArr
+    },{
+        name: '债权转让金额',
+        data: transfermoneyArr
+    },{
+        name: '成功转让笔数',
+        data: successnumArr
+    },{
+        name: '成功转让笔数',
+        data: successmoneyArr
+    },{
+        name: '债权转让管理费',
+        data: transferfeemoneyArr
     }]
 });
 }
