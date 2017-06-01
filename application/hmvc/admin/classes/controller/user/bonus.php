@@ -83,7 +83,7 @@ class  controller_user_bonus extends controller_sysBase {
                 'update_time' => getGmtime(),
             );
 
-            $num = \Core::dao('user_bonusType')->update($updateData, array('id'=>$type_id));
+            $num = \Core::dao('user_bonustype')->update($updateData, array('id'=>$type_id));
 
             if ($num > 0) {
                 $this -> log('更新优惠券类型【ID:'.$type_id.' '.$bonus_type_name.'】', 'update');
