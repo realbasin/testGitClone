@@ -107,14 +107,7 @@
         </dd>
       </dl>
         <from class="bid_full">
-        <dl class="row fullbid" style="display: none;">
-            <dt class="tit">
-                <label>上传凭证：</label>
-            </dt>
-            <dd class="opt">
-                <input type="file" name="upload" />
-            </dd>
-        </dl>
+       
         <dl class="row fullbid" style="display: none;">
             <dt class="tit">
                 <label>确认时间：</label>

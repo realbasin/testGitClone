@@ -149,6 +149,7 @@ class  controller_loan_loan extends controller_sysBase {
 			return @json_encode($result);
 		}
 		$borrow_money = $loanBaseDao->getloanbase($deal_id,'id,borrow_amount');
+
 		if($borrow_money['borrow_amount'] < $loanBid['load_money']) {
 			$result['message'] = "放款失败，问题标";
 			return @json_encode($result);
@@ -161,6 +162,7 @@ class  controller_loan_loan extends controller_sysBase {
 		$effectBidNumbers =$loanBidDao->updateData(array('loan_id'=>$deal_id),$loanbid_info);
 		$effectBaseNumbers = $loanBaseDao->update($loanbase_info,array('id'=>$deal_id));
 		if($effectBidNumbers && $effectBaseNumbers){
+
 			//放款，修改用户余额
 			$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],$loanBase['borrow_amount']);
 			if($editMoneyStatus === false) {
@@ -168,6 +170,11 @@ class  controller_loan_loan extends controller_sysBase {
 				return @json_encode($result);
 			}else {
 				$editMoneyStatus = false;
+				//记录用户金钱日志和用户日志
+				$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
+				$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],招标成功";
+				$loginfoid = \Core::business('user_userlog')->addUserLog($loanBase['user_id'],$log_msg,array('money'=>$borrow_money['borrow_amount']));
+				$moneyloginfoid = \Core::business('user_userlog')->addUserMoneyLog($loanBase['user_id'],$log_msg,$borrow_money['borrow_amount'],3);
 			}
 			//收取服务费
 			//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
@@ -179,23 +186,40 @@ class  controller_loan_loan extends controller_sysBase {
 				if($editMoneyStatus === false) {
 					$result['message'] = "放款失败，收取服务费出错";
 					return @json_encode($result);
+				}else {
+					//记录用户金钱日志和用户日志
+					$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
+					$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],服务费";
+					$loginfoid = \Core::business('user_userlog')->addUserLog($loanBase['user_id'],$log_msg,array('money'=>-$services_fee));
+					$moneyloginfoid = \Core::business('user_userlog')->addUserMoneyLog($loanBase['user_id'],$log_msg,-$services_fee,14);
 				}
 			}
 			//是否本地标，扣除本地标风险保证金
 			$amt_common = $loanextDao->getAmtconfig($deal_id);
-			$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($loanBase['user_id'],$amt_common['l_guarantees_amt']);
-			if($editLockMoneyStatus === false){
-				$result['message'] = "放款失败，扣除本地标风险保证金失败";
-				return @json_encode($result);
+			if($amt_common['l_guarantees_amt'] != 0){
+				$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($loanBase['user_id'],-$amt_common['l_guarantees_amt']);
+				if($editLockMoneyStatus === false){
+					$result['message'] = "放款失败，扣除本地标风险保证金失败";
+					return @json_encode($result);
+				}else {
+					$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
+					$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],咨询服务费";
+					$lockmoneyloginfoid = \Core::business('user_userlog')->addUserLockMoneyLog($loanBase['user_id'],$log_msg,-$amt_common['l_guarantees_amt'],120);
+				}
 			}
 			//TODO 积分变动
-
 			//扣除投资人金额
 			$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
 			if($load_list) {
 				$yott_users = array();
+				$userDao = \Core::dao('user_user');
 				foreach ($load_list as $v) {
 					//扣除投资人的冻结金额，金额为投标金额 - 红包金额 - 优惠券金额
+					//实际扣款金额
+					$realmoney = 0;
+					//获取用户冻结金额
+					$lockmoney = 0;
+					$lockmoney = $userDao->getUserLockMoneyById($v['user_id']);
 					if($v['is_old_loan'] == 0) {
 						$ecv_money = 0;
 						if ($v['ecv_id'] > 0) {
@@ -205,12 +229,14 @@ class  controller_loan_loan extends controller_sysBase {
 						$bonus_money = 0;
 						if ($v['bonus_user_id'] > 0) {
 							//优惠券金额
-							$bonus_rule_id = \Core::dao('loan_bonususer')->getBonusRuleIdByUserId($v['bonus_user_id']);
-							$bonus_money = \Core::dao('loan_bonusrule')->getMoneyById($bonus_rule_id);
+							$bonus_rule_id = \Core::dao('user_bonususer')->getBonusRuleIdByUserId($v['bonus_user_id']);
+							$bonus_money = \Core::dao('user_bonusrule')->getMoneyById($bonus_rule_id);
 						}
-						if ($v['money'] - $ecv_money > 0) {
+						//实际扣款金额
+						$realmoney = $v['money'] - $ecv_money - $bonus_money;
+						if (($v['money'] - $ecv_money > 0) && ($lockmoney > $realmoney)) {
 							$editLockMoneyStatus = false;
-							$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($v['user_id'],-($v['money'] - $ecv_money - $bonus_money));
+							$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($v['user_id'],-$realmoney);
 							if($editLockMoneyStatus === false){
 								$result['message'] = "放款失败，扣除投资金额失败";
 								return @json_encode($result);
@@ -227,6 +253,10 @@ class  controller_loan_loan extends controller_sysBase {
 									$result['message'] = "放款失败，修改放款状态失败";
 									return @json_encode($result);
 								}
+								//记录日志
+								$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
+								$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],投标成功";
+								$lockmoneyloginfoid = \Core::business('user_userlog')->addUserLockMoneyLog($v['user_id'],$log_msg,-$realmoney,120);
 							}
 						}
 					}
@@ -249,35 +279,45 @@ class  controller_loan_loan extends controller_sysBase {
 					//返利给用户
 					if(floatval($v['rebate_money']) != 0 || intval($v['bid_score']) != 0) {
 						//修改is_rebate状态
-						$rebateStatus = \Core::dao('loan_dealload')->update(array('is_rebate'=>1),array('is_rebate'=>0,id=>$v['id'],'user_id'=>$v['user_id']));
+						$rebateStatus = \Core::dao('loan_dealload')->update(array('is_rebate'=>1),array('is_rebate'=>0,'id'=>$v['id'],'user_id'=>$v['user_id']));
 						if($rebateStatus !== false) {
 							//返利
 							if(floatval($v['rebate_money']) != 0) {
-								$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],floatval($v['rebate_money']));
+								$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($v['user_id'],floatval($v['rebate_money']));
 								if($editMoneyStatus === false) {
-									$result['message'] = "放款失败，收取服务费出错";
+									$result['message'] = "放款失败，投资返利出错";
 									return @json_encode($result);
+								}else{
+									//记录日志
+									$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
+									$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],投资返利";
+									$loginfoid = \Core::business('user_userlog')->addUserLog($v['user_id'],$log_msg,array('money'=>floatval($v['rebate_money'])));
+									$moneyloginfoid = \Core::business('user_userlog')->addUserMoneyLog($v['user_id'],$log_msg,floatval($v['rebate_money']),24);
 								}
 							}
 							//返积分
 							if(intval($v['bid_score']) != 0) {
-								$editScoreStatus = \Core::business('user_userinfo')->editUserScore($loanBase['user_id'],intval($v['bid_score']));
+								$editScoreStatus = false;
+								$editScoreStatus = \Core::business('user_userinfo')->editUserScore($v['user_id'],intval($v['bid_score']));
 								if($editScoreStatus === false) {
-									$result['message'] = "放款失败，收取服务费出错";
+									$result['message'] = "放款失败，积分返还出错";
 									return @json_encode($result);
+								}else{
+									//记录积分日志
+									$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
+									$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],投资返积分";
+									$scoreloginfoid = \Core::business('user_userlog')->addUserScoreLog($v['user_id'],$log_msg,intval($v['bid_score']),2);
+									$loginfoid = \Core::business('user_userlog')->addUserLog($loanBase['user_id'],$log_msg,array('score'=>intval($v['bid_score'])));
 								}
 							}
 							//TODO VIP奖励 暂时没用到
 						}
 					}
-
 				}
-
 			}else {
 				$result['message'] = "放款失败，投资不存在";
 				return @json_encode($result);
 			}
-
 		}
 		//更新贷款状态为已放款
 		$load_loan = \Core::dao('loan_dealload')->update(array('is_has_loans'=>1),array('deal_id'=>$deal_id));
@@ -287,6 +327,8 @@ class  controller_loan_loan extends controller_sysBase {
 		if($repayplan){
 			//放款成功
 			$loanBaseDao->update(array('is_effect'=>1,'loan_status'=>1),array('id'=>$deal_id));
+			//发送短信发送邮件
+
 			//是否存在优投用户，存在发送推送
 			if($yott_users) {
 				$result['code'] = 200;
