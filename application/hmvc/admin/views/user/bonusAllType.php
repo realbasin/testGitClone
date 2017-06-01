@@ -64,7 +64,7 @@
 <script type="text/javascript">
 $(function(){
     $("#flexitable").flexigrid({
-        url: '<?php echo adminUrl('user_bonus','use_log_json');?>',
+        url: '<?php echo adminUrl('user_bonus','all_type_json');?>',
         colModel : [
             {display: '操作', name : 'operation', width : 50, sortable : false, align: 'center', className: 'handle-m'},
             {display: '编号', name : 'id', width : 50, sortable : false, align: 'center', className: 'center'},

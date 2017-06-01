@@ -5,10 +5,6 @@ class  controller_user_bonus extends controller_sysBase {
         \Language::read('common,layout');
     }
 
-	public function do_index() {
-		
-	}
-
 	//优惠券类型新增
 	public function do_type_add() {
         if (chksubmit()) {
@@ -39,9 +35,9 @@ class  controller_user_bonus extends controller_sysBase {
                 'is_effect' => intval(\Core::post('is_effect')),
                 'create_time' => getGmtime(),
             );
-            $num = \Core::dao('user_bonusType')->insert($insertData);
-            if ($num > 0) {
-                $this -> log('新增优惠券类型【'.$bonus_type_name.'】', 'add');
+            $insertId = \Core::dao('user_bonustype')->insert($insertData);
+            if ($insertId > 0) {
+                $this -> log('新增优惠券类型【ID:'.$insertId.' '.$bonus_type_name.'】', 'add');
                 \Core::message('新增优惠券类型成功', \Core::getUrl('user_bonus', 'type_add', \Core::config() -> getAdminModule()), 'suc', 3, 'message');
             } else {
                 \Core::message('新增优惠券类型失败', \Core::getUrl('user_bonus', 'type_add', \Core::config() -> getAdminModule()), 'fail', 3, 'message');
@@ -113,7 +109,7 @@ class  controller_user_bonus extends controller_sysBase {
     }
 
     //优惠券类型列表
-    public function do_use_log_json() {
+    public function do_all_type_json() {
         $use_type = \Core::postGet('use_type', 1);
         $is_effect = intval(\Core::postGet('is_effect', -1));
         $pagesize = \Core::postGet('rp');
@@ -186,12 +182,12 @@ class  controller_user_bonus extends controller_sysBase {
     //优惠券列表页面
     public function do_type_bonus() {
         $type_id = \Core::get('type_id',0);
-        $bonusType = \Core::dao('user_bonustype')->find(array('id'=>$type_id));
+        $bonusTypeName = \Core::dao('user_bonustype')->getBonusTypeName($type_id);
 
         $bonusRuleList = \Core::dao('user_bonusrule')->getBonusRuleByTypeId($type_id);
 
         \Core::view()->set('type_id', $type_id);
-        \Core::view()->set('bonusType', $bonusType);
+        \Core::view()->set('bonusTypeName', $bonusTypeName);
         \Core::view()->set('datalist', $bonusRuleList);
         \Core::view()->load('user_bonusRule');
     }
@@ -212,7 +208,7 @@ class  controller_user_bonus extends controller_sysBase {
                 'is_effect' =>  intval(\Core::postGet('is_effect')),
                 'create_time' =>  getGmtime(),
             );
-            $insertId = \Core::dao('user_bonusrule')->insert($insertData, true);
+            $insertId = \Core::dao('user_bonusrule')->insert($insertData);
             if ($insertId > 0) {
                 $this -> log('新增【ID:'.$type_id.' '.$bonusType['bonus_type_name'].'】优惠券规则成功', 'add');
                 \Core::message('新增优惠券规则成功', \Core::getUrl('user_bonus', 'bonus_add', \Core::config() -> getAdminModule(), array('type_id'=>$type_id)), 'suc', 3, 'message');
@@ -226,7 +222,7 @@ class  controller_user_bonus extends controller_sysBase {
     public function do_bonus_edit() {
         $rule_id = intval(\Core::get('rule_id'));
         $bonusRule = \Core::dao('user_bonusrule')->find(array('id'=>$rule_id));
-        $bonusType = \Core::dao('user_bonustype')->find(array('id'=>$bonusRule['bonus_type_id']));
+        $bonusTypeName = \Core::dao('user_bonustype')->getBonusTypeName($bonusRule['bonus_type_id']);
 
         if (chksubmit()) {
             $updateData = array(
@@ -235,14 +231,14 @@ class  controller_user_bonus extends controller_sysBase {
             );
             $insertId = \Core::dao('user_bonusrule')->update($updateData, array('id'=>$rule_id));
             if ($insertId > 0) {
-                $this -> log('修改【'.$bonusType['bonus_type_name'].'】优惠券[ID:'.$rule_id.']规则成功', 'add');
+                $this -> log('修改【'.$bonusTypeName.'】优惠券[ID:'.$rule_id.']规则成功', 'add');
                 \Core::message('修改优惠券成功', \Core::getUrl('user_bonus', 'bonus_edit', \Core::config() -> getAdminModule(), array('rule_id'=>$rule_id)), 'suc', 3, 'message');
             }
             \Core::message('修改优惠券失败', \Core::getUrl('user_bonus', 'bonus_edit', \Core::config() -> getAdminModule(), array('rule_id'=>$rule_id)), 'fail', 3, 'message');
         }
 
         \Core::view()->set('bonusRule', $bonusRule);
-        \Core::view()->set('bonusType', $bonusType);
+        \Core::view()->set('bonusTypeName', $bonusTypeName);
         \Core::view()->load('user_bonusEdit');
     }
 
@@ -257,7 +253,7 @@ class  controller_user_bonus extends controller_sysBase {
         foreach ($ids as $v) {
             \Core::dao('user_bonusrule')->update(array('is_delete'=>1), array('id'=>$v));
         }
-        //$this -> log('删除优惠券类型【'.$bonus_type_name.'】中优惠券编号[ID:' . $id . ']', 'delete');
+        $this -> log('删除优惠券类型【'.$bonus_type_name.'】中优惠券编号[ID:' . $id . ']', 'delete');
         showJSON(200, \Core::L('delete,success'));
     }
 
@@ -271,5 +267,35 @@ class  controller_user_bonus extends controller_sysBase {
         \Core::view()->load('user_bonusUseLog');
     }
 
+    //优惠券使用情况列表
+    public function do_use_log_json() {
+        /*$use_type = \Core::postGet('use_type', 1);
+        $is_effect = intval(\Core::postGet('is_effect', -1));
+        $pagesize = \Core::postGet('rp');
+        $page = \Core::postGet('curpage');
+        if (!$page || !is_numeric($page))
+            $page = 1;
+        if (!$pagesize || !is_numeric($pagesize))
+            $pagesize = 15;
 
+        $where = array();
+        $data = \Core::dao('user_bonususer') -> getFlexPage($page, $pagesize, '*', $where, array('id'=>'desc'));
+
+        $outputJson = array(
+            'page' => $page,
+            'total' => $data['total'],
+        );
+        foreach ($data['rows'] as $v) {
+            $row = array();
+            $row['cell'][] = $v['id'];
+            $row['cell'][] = $v['bonus_sn'];
+            $row['cell'][] = \Core::dao('user_bonustype')->getBonusTypeName($v['bonus_type_id']);
+//            $row['cell'][] = $v['use_type']==1 ? "理财端" : "借款端";
+
+            $row['cell'][] = '';
+
+            $outputJson['rows'][] = $row;
+        }*/
+        echo @json_encode(array());
+    }
 }

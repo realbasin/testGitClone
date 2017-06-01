@@ -37,7 +37,7 @@
                     <label>优惠券类型名称</label>
                 </dt>
                 <dd class="opt">
-                    <label><?php echo $bonusType['bonus_type_name'];?></label>
+                    <label><?php echo $bonusTypeName;?></label>
                 </dd>
             </dl>
             <dl class="row">

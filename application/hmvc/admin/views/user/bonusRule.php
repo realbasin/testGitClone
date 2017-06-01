@@ -34,7 +34,7 @@
     <i class="home"></i>
     <span>优惠券管理</span>
     <i class="arrow"></i>
-    <span><?php echo '编号:'.$type_id.' - '.$bonusType['bonus_type_name'];?></span>
+    <span><?php echo '编号:'.$type_id.' - '.$bonusTypeName;?></span>
     <i class="arrow"></i>
     <span>优惠券列表</span>
 </div>
@@ -120,7 +120,7 @@
                     type: "GET",
                     dataType: "json",
                     url: "<?php echo adminUrl('user_bonus','bonus_delete');?>",
-                    data: "bonus_type_name=<?php echo $bonusType['bonus_type_name'];?>&id="+ids,
+                    data: "bonus_type_name=<?php echo $bonusTypeName;?>&id="+ids,
                     success: function(data){
                         if (data.code==200){
                             window.location.href = '<?php echo adminUrl('user_bonus','type_bonus');?>'+'&type_id=<?php echo $type_id;?>';
