@@ -529,7 +529,7 @@ class  controller_sys_setting extends controller_sysBase {
 
 	//管理员列表
 	public function do_admin_list() {
-		$admin = \Core::db() -> select('*') -> from('admin') -> join('admin_auth', 'admin.admin_gid=admin_auth.gid', 'left') -> execute() -> rows();
+		$admin = \Core::db() -> select('*') -> from('adminuser') -> join('admin_auth', 'adminuser.admin_gid=admin_auth.gid', 'left') -> execute() -> rows();
 		\Core::view() -> set('datalist', $admin) -> load('sys_adminList');
 	}
 
@@ -1055,8 +1055,8 @@ class  controller_sys_setting extends controller_sysBase {
 			if (\Core::arrayKeyExists('link', $v) && $v['link']) {
 				$list[] = $v;
 			}
-			if (\Core::arrayKeyExists('list', $v)) {
-				$this -> get_nav_list($v['list'], $list);
+			if (\Core::arrayKeyExists('sub', $v)) {
+				$this -> get_nav_list($v['sub'], $list);
 			}
 		}
 	}
