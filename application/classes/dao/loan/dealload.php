@@ -96,4 +96,5 @@ class dao_loan_dealload extends Dao {
 	public function getList($where,$fields){
 		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->rows();
 	}
+	
 }
