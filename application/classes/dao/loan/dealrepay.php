@@ -80,7 +80,16 @@ class dao_loan_dealrepay extends Dao {
 	}
 
 	//获取逾期次数
-	public function getOverdueTimes($userId) {
-		return $this->getDb()->select('SUM(IF((has_repay = 0 AND (UNIX_TIMESTAMP(NOW()) - 8 * 3600 - (repay_time + 24 * 3600) > 0)) OR (true_repay_time - (repay_time + 24 * 3600) > 0),1,0)) > 0')->from($this->getTable())->where(array('user_id'=>$userId))->execute()->row();
+	public function getOverdueTimes($userId)
+	{
+		return $this->getDb()->select('SUM(IF((has_repay = 0 AND (UNIX_TIMESTAMP(NOW()) - 8 * 3600 - (repay_time + 24 * 3600) > 0)) OR (true_repay_time - (repay_time + 24 * 3600) > 0),1,0)) > 0')->from($this->getTable())->where(array('user_id' => $userId))->execute()->row();
+		//通过贷款id和贷款期数来获取还款计划数据
+	}
+
+	public function getOneRepayPlan($deal_id,$l_key,$field='*'){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['l_key'] = $l_key;
+		return $this->getDb()->select($field)->from($this->getTable())->where($where)->execute()->row();
 	}
 }

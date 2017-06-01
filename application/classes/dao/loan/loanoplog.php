@@ -17,7 +17,6 @@ class dao_loan_loanoplog extends Dao {
 				,'ip'//操作ip
 				);
 	}
-
 	public function getPrimaryKey() {
 		return 'id';
 	}

@@ -141,7 +141,7 @@ class dao_user_user extends Dao {
 				,'view_info'//view_info
 				,'ips_acct_no'//pIpsAcctNo 30 IPS托管平台账 户号
 				,'referral_rate'//返利抽成比
-				,'user_type'//用户类型 0普通用户 1 企业用户
+				,'user_type'//用户类型 0普通用户 1 企业用户 3行长 4普惠用户
 				,'create_date'//记录注册日期，方便统计使用
 				,'register_ip'//注册IP
 				,'admin_id'//所属管理员
@@ -237,7 +237,7 @@ class dao_user_user extends Dao {
 	 * @field 要查询的字段
 	 * @limit 限制取多少条，默认20条
 	 */
-	public function getUsersByName($userName,$field='id,user_name,AES_DECRYPT(real_name_encrypt) as real_name,AES_DECRYPT(mobile_encrypt) as mobile',$limit=10){
+	public function getUsersByName($userName,$field='id,user_name,real_name',$limit=10){
 		return $this->getDb()->select($field)->from($this->getTable())->where(array('user_name like'=>'%'.$userName.'%'))->limit(0,$limit)->execute()->rows();
 	}
 	/*
@@ -277,5 +277,10 @@ class dao_user_user extends Dao {
 	//获取用户余额
 	public function getUserMoney($user_id){
 		return $this->getDb()->select('AES_DECRYPT(money_encrypt,\''.AES_DECRYPT_KEY.'\') as aesmoney')->from($this->getTable())->where(array('id'=>$user_id))->execute()->value('aesmoney');
+	}
+	
+	//获取用户注册统计
+	public function getStatUserRegist($startDate,$endDate){
+		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(*) as usercount")->from($this->getTable())->where(array('create_time >='=>$startDate,'create_time <='=>$endDate))->groupBy('createdate')->cache(C('stat_sql_cache_time'),__METHOD__.$startDate.$endDate)->execute()->rows();
 	}
 }
