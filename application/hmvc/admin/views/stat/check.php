@@ -64,27 +64,29 @@
 <script>
 $(function(){
 	$("#flexitable").flexigrid({
-        url: '<?php echo adminUrl('stat_platform','check_json');?>',
+        url: '<?php echo adminUrl('stat_platform','check_json');?>'+'&'+$("#form1").serialize(),
         colModel : [
-			{display: '姓名', name : 'user', width : 60, sortable : true, align: 'center'},
+			{display: '姓名', name : 'admin_name', width : 60, sortable : true, align: 'center'},
 			{display: '审核笔数', name : 'total_deals', width : 80, sortable : true, align: 'center'},
-			{display: '审核成功笔数', name : 'a', width : 80, sortable : true, align: 'center'},
-			{display: '审核成功率', name : 'b', width : 60, sortable : true, align: 'center'},
-			{display: '首借审核笔数', name : 'c', width : 80, sortable : true, align: 'center'},
-			{display: '首借审核成功笔数', name : 'd', width : 100, sortable : true, align: 'center'},
-			{display: '首借审核成功率', name : 'e', width : 90, sortable : true, align: 'center'},
-			{display: '续借审核笔数', name : 'f', width : 80, sortable : true, align: 'center'},
-			{display: '续借审核成功笔数', name : 'g', width : 100, sortable : true, align: 'center'},
-			{display: '续借审核成功率', name : 'h', width : 90, sortable : true, align: 'center'},
-			{display: '复审总笔数', name : 'i', width : 60, sortable : true, align: 'center'},
-			{display: '复审成功笔数', name : 'j', width : 80, sortable : true, align: 'center'}
+			{display: '审核成功数', name : 'success_deals', width : 70, sortable : true, align: 'center'},
+			{display: '审核成功率', name : 'success_percent', width : 60, sortable : true, align: 'center'},
+			{display: '首借审核数', name : 'first_check_deals', width : 70, sortable : true, align: 'center'},
+			{display: '首借审核成功数', name : 'first_success_deals', width : 90, sortable : true, align: 'center'},
+			{display: '首借审核成功率', name : 'first_success_percent', width : 90, sortable : true, align: 'center'},
+			{display: '续借审核数', name : 'renew_check_deals', width : 70, sortable : true, align: 'center'},
+			{display: '续借审核成功数', name : 'renew_success_deals', width : 90, sortable : true, align: 'center'},
+			{display: '续借审核成功率', name : 'renew_success_percent', width : 90, sortable : true, align: 'center'},
+			{display: '复审总数', name : 'true_deals', width : 50, sortable : true, align: 'center'},
+			{display: '复审成功数', name : 'true_success_deals', width : 70, sortable : true, align: 'center'}
             ],
         buttons : [
             {display: '<i class="fa fa-file-excel-o"></i> 全部导出为Excel', name : 'csv', bclass : 'csv', title : '将选择的行或者全部数据导出为Excel', onpress : flexPress }
         ],
         sortname: "total_deals",
         sortorder: "desc",
-        title: '审核业绩统计'
+        title: '审核业绩统计',
+        usepager:false,
+        columnControl:false
     });
     
     $('#btnsearch').click(function(){

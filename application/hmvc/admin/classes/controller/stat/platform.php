@@ -262,11 +262,231 @@ class  controller_stat_platform extends controller_sysBase {
 	
 	//从统计库中获取数据
 	public function do_check_json(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			showJSON('101', '开始日期不能大于结束日期');
+		}
+		//排序
+		$ordername='';
+		$ordersort='desc';
+		if (\Core::postGet('sortorder')) {
+			$ordername=\Core::postGet('sortname');
+			$ordersort=\Core::postGet('sortorder');
+		}
+		$daoAudit = \Core::dao('stat_dealaudit','stat');
+		$datas = $daoAudit->getStatCheck($startStamp, $endStamp,$ordername,$ordersort);
+		$total=count($datas);
+		$json = array();
+		$json['page'] = 1;
+		$json['total'] = $total;
+		//获取管理员姓名
+		$ids=array_keys($datas);
+		$daoAdmin=\Core::dao('sys_admin_admin');
+		$admins=$daoAdmin->getAdmin($ids,'admin_id,admin_name,admin_real_name');
+		//整理数据
+		$s_total_deals=0;
+		$s_success_deals=0;
+		$s_success_percent=0;
+		$s_first_check_deals=0;
+		$s_first_success_deals=0;
+		$s_first_success_percent=0;
+		$s_renew_check_deals=0;
+		$s_renew_success_deals=0;
+		$s_renew_success_percent=0;
+		$s_true_deals=0;
+		$s_true_success_deals=0;
 		
+		foreach($datas as $k=>$v){
+			$row = array();
+			$id=$v['admin_id'];
+			$adminName='';
+			if(\Core::arrayKeyExists($id, $admins)){
+				$adminRow=$admins[$id];
+				$adminName=$adminRow['admin_real_name']?$adminRow['admin_real_name']:$adminRow['admin_name'];
+			}else{
+				$adminName=$id.'(已删除)';
+			}
+			$row['id'] = $v['admin_id'];
+			$row['cell'][] = '<a href=\''.adminUrl('stat_platform','check_detail').'\'>'.$adminName.'</a>';
+			$row['cell'][] = $v['total_deals'];
+			$row['cell'][] = $v['success_deals'];
+			$row['cell'][] = $v['success_percent']?($v['success_percent']*100).'%':'0%';
+			$row['cell'][] = $v['first_check_deals'];
+			$row['cell'][] = $v['first_success_deals'];
+			$row['cell'][] = $v['first_success_percent']?($v['first_success_percent']*100).'%':'0%';
+			$row['cell'][] = $v['renew_check_deals'];
+			$row['cell'][] = $v['renew_success_deals'];
+			$row['cell'][] = $v['renew_success_percent']?($v['renew_success_percent']*100).'%':'0%';
+			$row['cell'][] = $v['true_deals'];
+			$row['cell'][] = $v['true_success_deals'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+			
+			$s_total_deals+=$v['total_deals'];
+			$s_success_deals+=$v['success_deals'];
+			$s_success_percent += $v['success_percent']?$v['success_percent']:0;
+			$s_first_check_deals+= $v['first_check_deals'];
+			$s_first_success_deals+= $v['first_success_deals'];
+			$s_first_success_percent+= $v['first_success_percent']?$v['first_success_percent']:0;
+			$s_renew_check_deals += $v['renew_check_deals'];
+			$s_renew_success_deals+= $v['renew_success_deals'];
+			$s_renew_success_percent+= $v['renew_success_percent']?$v['renew_success_percent']:0;
+			$s_true_deals+= $v['true_deals'];
+			$s_true_success_deals+= $v['true_success_deals'];
+		}
+		//合计数据
+		$s_success_percent=(($s_success_percent*100)/$total).'%';
+		$s_first_success_percent=(($s_first_success_percent*100)/$total).'%';
+		$s_renew_success_percent=(($s_renew_success_percent*100)/$total).'%';
+		$row=array();
+		$row['id'] = 0;
+		$row['cell'][] = '合计';
+		$row['cell'][] = $s_total_deals;
+		$row['cell'][] = $s_success_deals;
+		$row['cell'][] = $s_success_percent;
+		$row['cell'][] = $s_first_check_deals;
+		$row['cell'][] = $s_first_success_deals;
+		$row['cell'][] = $s_first_success_percent;
+		$row['cell'][] = $s_renew_check_deals;
+		$row['cell'][] = $s_renew_success_deals;
+		$row['cell'][] = $s_renew_success_percent;
+		$row['cell'][] = $s_true_deals;
+		$row['cell'][] = $s_true_success_deals;
+		$row['cell'][] = '';
+		$json['rows'][] = $row;
+		
+		echo @json_encode($json);
 	}
 	
 	public function do_check_export(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			\Core::message('请选择日期范围', adminUrl('stat_platform', 'check_json'), 'fail', 3, 'message');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			\Core::message('开始日期不能大于结束日期', adminUrl('stat_platform', 'check_json'), 'fail', 3, 'message');
+		}
+		//排序
+		$ordername='';
+		$ordersort='desc';
+		if (\Core::postGet('sortorder')) {
+			$ordername=\Core::postGet('sortname');
+			$ordersort=\Core::postGet('sortorder');
+		}
+		$daoAudit = \Core::dao('stat_dealaudit','stat');
+		$datas = $daoAudit->getStatCheck($startStamp, $endStamp,$ordername,$ordersort);
+		$total=count($datas);
+		//获取管理员姓名
+		$ids=array_keys($datas);
+		$daoAdmin=\Core::dao('sys_admin_admin');
+		$admins=$daoAdmin->getAdmin($ids,'admin_id,admin_name,admin_real_name');
+		//整理数据
+		$s_total_deals=0;
+		$s_success_deals=0;
+		$s_success_percent=0;
+		$s_first_check_deals=0;
+		$s_first_success_deals=0;
+		$s_first_success_percent=0;
+		$s_renew_check_deals=0;
+		$s_renew_success_deals=0;
+		$s_renew_success_percent=0;
+		$s_true_deals=0;
+		$s_true_success_deals=0;
 		
+		foreach($datas as $k=>$v){
+			$row = array();
+			$id=$v['admin_id'];
+			$adminName='';
+			if(\Core::arrayKeyExists($id, $admins)){
+				$adminRow=$admins[$id];
+				$adminName=$adminRow['admin_real_name']?$adminRow['admin_real_name']:$adminRow['admin_name'];
+			}else{
+				$adminName=$id.'(已删除)';
+			}
+			$row[] = $adminName;
+			$row[] = $v['total_deals'];
+			$row[] = $v['success_deals'];
+			$row[] = $v['success_percent']?($v['success_percent']*100).'%':'0%';
+			$row[] = $v['first_check_deals'];
+			$row[] = $v['first_success_deals'];
+			$row[] = $v['first_success_percent']?($v['first_success_percent']*100).'%':'0%';
+			$row[] = $v['renew_check_deals'];
+			$row[] = $v['renew_success_deals'];
+			$row[] = $v['renew_success_percent']?($v['renew_success_percent']*100).'%':'0%';
+			$row[] = $v['true_deals'];
+			$row[] = $v['true_success_deals'];
+			$datas[$k] = $row;
+			
+			$s_total_deals+=$v['total_deals'];
+			$s_success_deals+=$v['success_deals'];
+			$s_success_percent += $v['success_percent']?$v['success_percent']:0;
+			$s_first_check_deals+= $v['first_check_deals'];
+			$s_first_success_deals+= $v['first_success_deals'];
+			$s_first_success_percent+= $v['first_success_percent']?$v['first_success_percent']:0;
+			$s_renew_check_deals += $v['renew_check_deals'];
+			$s_renew_success_deals+= $v['renew_success_deals'];
+			$s_renew_success_percent+= $v['renew_success_percent']?$v['renew_success_percent']:0;
+			$s_true_deals+= $v['true_deals'];
+			$s_true_success_deals+= $v['true_success_deals'];
+		}
+		//合计数据
+		$s_success_percent=(($s_success_percent*100)/$total).'%';
+		$s_first_success_percent=(($s_first_success_percent*100)/$total).'%';
+		$s_renew_success_percent=(($s_renew_success_percent*100)/$total).'%';
+		$row=array();
+		$row[] = '合计';
+		$row[] = $s_total_deals;
+		$row[] = $s_success_deals;
+		$row[] = $s_success_percent;
+		$row[] = $s_first_check_deals;
+		$row[] = $s_first_success_deals;
+		$row[] = $s_first_success_percent;
+		$row[] = $s_renew_check_deals;
+		$row[] = $s_renew_success_deals;
+		$row[] = $s_renew_success_percent;
+		$row[] = $s_true_deals;
+		$row[] = $s_true_success_deals;
+		$datas[] = $row;
+		
+		//Excel头部
+		$header = array();
+		$header['姓名'] = 'string';
+		$header['审核笔数'] = 'integer';
+		$header['审核成功数'] = 'integer';
+		$header['审核成功率'] = 'string';
+		$header['首借审核数'] = 'integer';
+		$header['首借审核成功数'] = 'integer';
+		$header['首借审核成功率'] = 'string';
+		$header['续借审核数'] = 'integer';
+		$header['续借审核成功数'] = 'integer';
+		$header['续借审核成功率'] = 'string';
+		$header['复审总数'] = 'integer';
+		$header['复审成功数'] = 'integer';
+		//导出
+		$this -> log('导出审核汇总(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('审核汇总(' . $datestart . ' - ' . $dateend . ')', $header, $datas);
+	}
+
+	//审核汇总--人员汇总
+	public function do_check_detail(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_checkDetail');
 	}
 	
 	//自动投标
