@@ -76,6 +76,7 @@
                 </dt>
                 <dd class="opt">
                     <?php echo $username;?>
+                    <a>资料认证(<?php echo $passed; ?>)</a>
                 </dd>
             </dl>
             <dl class="row">

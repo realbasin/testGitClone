@@ -656,7 +656,7 @@ class  controller_loan_audit extends controller_sysBase {
     }
 
     //预览页面
-    public function do_publish_preview()
+    public function do_preview()
     {
         $this->publish_edit();
         \Core::view()->load('loan_preview');
@@ -674,6 +674,7 @@ class  controller_loan_audit extends controller_sysBase {
     public function do_first_publish_edit()
     {
         $this->publish_edit();
+        \Core::view() -> load('loan_firstPublishEdit');
     }
 
     //初审操作
