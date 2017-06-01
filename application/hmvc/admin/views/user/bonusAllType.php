@@ -87,7 +87,7 @@ $(function(){
     });
 
     $('#btnsearch').click(function(){
-        $("#flexitable").flexOptions({url: '<?php echo adminUrl('user_bonus','use_log_json');?>&'+$("#form1").serialize(),query:'',qtype:''}).flexReload();
+        $("#flexitable").flexOptions({url: '<?php echo adminUrl('user_bonus','all_type_json');?>&'+$("#form1").serialize(),query:'',qtype:''}).flexReload();
     });
 });
 function type_add() {
