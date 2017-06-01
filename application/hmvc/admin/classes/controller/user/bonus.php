@@ -110,18 +110,9 @@ class  controller_user_bonus extends controller_sysBase {
         \Core::view()->load('user_bonusAllType');
     }
 
-    //手动发放优惠券
-    public function do_manual() {
-        \Core::view()->load('user_bonusManual');
-    }
-
-    //优惠券使用情况
-    public function do_use_log() {
-        \Core::view()->load('user_bonusUseLog');
-    }
-
     //优惠券类型列表
     public function do_use_log_json() {
+        $use_type = \Core::postGet('use_type', 1);
         $pagesize = \Core::postGet('rp');
         $page = \Core::postGet('curpage');
         if (!$page || !is_numeric($page))
@@ -129,7 +120,12 @@ class  controller_user_bonus extends controller_sysBase {
         if (!$pagesize || !is_numeric($pagesize))
             $pagesize = 15;
 
-        $data = \Core::dao('user_bonustype') -> getFlexPage($page, $pagesize, '*', null, array('id'=>'desc'));
+        $where = array('is_delete'=>0,'use_type'=>$use_type);
+        $bonus_type_name = \Core::postGet('bonus_type_name','');
+        if (!empty($bonus_type_name)) {
+            $where['bonus_type_name like'] = '%'.$bonus_type_name.'%';
+        }
+        $data = \Core::dao('user_bonustype') -> getFlexPage($page, $pagesize, '*', $where, array('id'=>'desc'));
 
         $outputJson = array(
             'page' => $page,
@@ -138,10 +134,11 @@ class  controller_user_bonus extends controller_sysBase {
         foreach ($data['rows'] as $v) {
             $row = array();
             $opration = "<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration .= "<li><a href='#'>查看</a></li>";
-            $opration .= "<li><a href='#'>发放</a></li>";
             $opration .= "<li><a href='javascript:type_edit(".$v['id'].")'>编辑</a></li>";
-            $opration .= "<li><a href='#'>删除</a></li>";
+            $opration .= "<li><a href='#'>优惠券</a></li>";
+            $opration .= "<li><a href='#'>查看</a></li>";
+            $opration .= "<li><a href='javascript:flexDelete(".$v['id'].")'>删除</a></li>";
+            $row['id'] = $v['id'];
             $row['cell'][] = $opration;
             $row['cell'][] = $v['id'];
             $row['cell'][] = $v['bonus_type_name'];
@@ -164,4 +161,29 @@ class  controller_user_bonus extends controller_sysBase {
         }
         echo @json_encode($outputJson);
     }
+
+    public function do_type_delete() {
+        $id = \Core::get("id");
+        if (!$id) {
+            showJSON(0, \Core::L('parameter_error'));
+        }
+        $ids = explode(',', $id);
+        foreach ($ids as $v) {
+            \Core::dao('user_bonustype')->update(array('is_delete'=>1), array('id'=>$v));
+        }
+        $this -> log('删除优惠券类型[ID:' . $id . ']', 'delete');
+        showJSON(200, \Core::L('delete,success'));
+    }
+
+    //手动发放优惠券
+    public function do_manual() {
+        \Core::view()->load('user_bonusManual');
+    }
+
+    //优惠券使用情况
+    public function do_use_log() {
+        \Core::view()->load('user_bonusUseLog');
+    }
+
+
 }
