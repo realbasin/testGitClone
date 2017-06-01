@@ -62,7 +62,7 @@ class dao_loan_loanbase extends Dao {
 	 * @return array
 	 */
 	public function getloanbase($id,$field){
-		return $this->getDb()->select($field)->from($this->getTable())->where($id)->execute()->row();
+		return $this->getDb()->select($field)->from($this->getTable())->where(array('id'=>$id))->execute()->row();
 	}
 
 

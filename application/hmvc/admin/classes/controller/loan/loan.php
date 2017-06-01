@@ -140,8 +140,9 @@ class  controller_loan_loan extends controller_sysBase {
 		$loanBid = $loanBidDao->getOneLoanById($deal_id,$fields);
 		$loanBase = $loanBaseDao->getloanbase($deal_id,'id,name,user_id,borrow_amount,repay_time_type,repay_time,rate');
 		$loanExt = $loanextDao->getExtByLoanId($deal_id);
+		//\Core::dump($loanExt);die();
 		//生成还款计划
-		if(!$loanBid || !$loanBase) {
+		if(!$loanBid || !$loanBase || !$loanExt) {
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
 		}
@@ -193,8 +194,9 @@ class  controller_loan_loan extends controller_sysBase {
 				return @json_encode($result);
 			}
 			//TODO 积分变动
+
 			//扣除投资人金额
-			$load_list = \Core::dao('loan_deal_load')->getLoads($deal_id,'id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
+			$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
 			if($load_list) {
 				foreach ($load_list as $v) {
 					//扣除投资人的冻结金额，金额为投标金额 - 红包金额 - 优惠券金额
@@ -202,17 +204,17 @@ class  controller_loan_loan extends controller_sysBase {
 						$ecv_money = 0;
 						if ($v['ecv_id'] > 0) {
 							//红包金额
-							$ecv_money = $GLOBALS['db']->getOne("SELECT `money` " . DB_PREFIX . "ecv WHERE ecv_id=" . $lv['ecv_id']);
+							$ecv_money =  \Core::dao('loan_ecv')->getMoneyById($v['ecv_id']);
 						}
 						$bonus_money = 0;
 						if ($v['bonus_user_id'] > 0) {
 							//优惠券金额
-							$sql = "SELECT br.money FROM " . DB_PREFIX . "bonus_user bu INNER JOIN " . DB_PREFIX . "bonus_rule br ON bu.bonus_rule_id=br.id WHERE bu.id=" . $lv['bonus_user_id'];
-							$bonus_money = intval($GLOBALS['db']->getOne($sql));
+							$bonus_rule_id = \Core::dao('loan_bonususer')->getBonusRuleIdByUserId($v['bonus_user_id']);
+							$bonus_money = \Core::dao('loan_bonusrule')->getMoneyById($bonus_rule_id);
 						}
 						if ($v['money'] - $ecv_money > 0) {
 							$editLockMoneyStatus = false;
-							$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($v['user_id'],-($lv['money'] - $ecv_money - $bonus_money));
+							$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($v['user_id'],-($v['money'] - $ecv_money - $bonus_money));
 							if($editLockMoneyStatus === false){
 								$result['message'] = "放款失败，扣除投资金额失败";
 								return @json_encode($result);
@@ -234,10 +236,15 @@ class  controller_loan_loan extends controller_sysBase {
 					}
 					//管理员提成
 					//获取投标用户的所属管理员id
-					$admin_id = \Core::dao('user_user')->getUser($v['user_id'],'id,admin_id');
-					if($admin_id){
+					$admin_id = \Core::dao('user_user')->getUser($v['user_id'],'id,admin_id,platform_code');
+
+					if($admin_id[$v['user_id']]){
+						$is_post_yott = false; //记录是否有Yott用户投标
+						if ($admin_id[$v['user_id']]["platform_code"] == "yott") {
+							$is_post_yott = true;
+						}
 						//获取部门成员
-						$mymanager = \Core::dao('sys_admin_adminext')->getAdminById($admin_id,'id,referrals_rate,pid');
+						$mymanager = \Core::dao('sys_admin_adminext')->getAdminById($admin_id[$v['user_id']]['id'],'id,referrals_rate,pid');
 						if($mymanager  && floatval($mymanager['referrals_rate']) != 0) {
 							$money = 0;
 							$url = '';
@@ -256,7 +263,7 @@ class  controller_loan_loan extends controller_sysBase {
 							$m_data['rel_admin_id'] = 0;
 							$m_data['admin_id'] = $mymanager['id'];
 							$m_data['rel_admin_id'] = $mymanager['pid'];
-							$m_data['create_time'] = time()+C('time_zone')*3600;
+							$m_data['create_time'] = getGmtime()+C('time_zone')*3600;
 							$m_data['loan_money'] = $loanBid['money'];
 							$m_data['memo'] = $memo;
 							//插入数据
@@ -274,14 +281,14 @@ class  controller_loan_loan extends controller_sysBase {
 							if($mymanager['pid'] > 0) {
 								//获取提成比
 								$mydepartment = \Core::dao('sys_admin_adminext')->getAdminById($mymanager['pid'],'id,referrals_rate,pid');
-								$d_data['deal_id'] = $loanBase['id'];
-								$d_data['user_id'] = $admin_id['id'];
+								$d_data['deal_id'] = $m_data['deal_id'];
+								$d_data['user_id'] = $m_data['user_id'];
 								$d_data['money'] = $m_data['money'] * floatval($mydepartment['referrals_rate']) * 0.01;
 								$d_data['rel_admin_id'] = $admin_id['admin_id'];
 								$d_data['admin_id'] = $mymanager['pid'];
-								$d_data['create_time'] =  time()+C('time_zone')*3600;
-								$d_data['loan_money'] = $loanBid['money'];
-								$d_data['memo'] = $memo;
+								$d_data['create_time'] =  $m_data['create_time'];
+								$d_data['loan_money'] = $m_data['loan_money'];
+								$d_data['memo'] = $m_data['memo'];
 								//插入数据
 								$insertmdata = \Core::dao('sys_adminreferrals')->insert($d_data);
 								//更新管理员提成金额
@@ -336,9 +343,10 @@ class  controller_loan_loan extends controller_sysBase {
 		$repayplan = \Core::business('sys_dealrepay')->makeRepayPlan($loanBase,$loanBid,$loanExt,$loanbid_info['loan_time']);
 		if($repayplan){
 			//放款成功
-			$loanBaseDao->update(array('is_effect'=>1),array('id'=>$loanBase['id']));
+			$loanBaseDao->update(array('is_effect'=>1,'loan_status'=>1),array('id'=>$deal_id));
+			
 			$result['code'] = 200;
-			$result['message'] = "放款成功,还/回款计划还在生成中...";
+			$result['message'] = "放款成功,还/回款计划已生成";
 			return @json_encode($result);
 		}else{
 			$result['message'] = "放款失败";
@@ -356,11 +364,17 @@ class  controller_loan_loan extends controller_sysBase {
 		$result = array();
 		$result['code'] = '000';
 		$deal_id = \Core::get('id',0);
-		if($deal_id == 0){
+		$reason = \Core::get('reason','');
+		if($deal_id == 0) {
 			$result['message'] = '返还失败，借款不存在';
 			return @json_encode($result);
 		}
-		$result['message'] = '待开发';
+		if($reason == '') {
+			$result['message'] = '请填写流标原因';
+			return @json_encode($result);
+		}
+
+		$result['message'] = $reason;
 		return @json_encode($result);
 	}
 	//贷款详细信息编辑

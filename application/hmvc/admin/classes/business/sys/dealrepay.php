@@ -69,6 +69,7 @@ class  business_sys_dealrepay extends Business {
 		$repay_day = $loan_time;
 		$has_use_self_money = 0;
 		$dealRepayDao = \Core::dao('loan_dealrepay');
+		$dealLoadRepayBusiness = \Core::business('sys_dealloadrepay');
 		for ($i=0;$i<$true_repay_time;$i++) {
 			//还款时间
 			$load_repay['repay_time'] = $repay_day = strtotime(date('Y-m-d', $repay_day) . '+1 month');
@@ -85,17 +86,17 @@ class  business_sys_dealrepay extends Business {
 			$server_fee = 6.5;
 			$load_repay['manage_money'] = number_format($loan['borrow_amount'] * $server_fee/ 100, 2);
 			$load_repay['interest_money'] = $load_repay['repay_money'] - $load_repay['self_money'];
-			$load_repay['deal_id'] = $loan['id'];
+			$load_repay['deal_id'] = $loan['loan_id'];
 			$load_repay['user_id'] = $loan['user_id'];
 			//判断是否存在该期还款计划
-			if ($repayInfo = $dealRepayDao->getOneRepayPlan($loan['id'], $i)) {
+			if ($repayInfo = $dealRepayDao->getOneRepayPlan($loan['loan_id'], $i)) {
 				$repay_id = $repayInfo['id'];
 				if ($repayInfo['has_repay'] == 0) {
 					//未还款
 					$load_repay['l_key'] = $i;
 					$load_repay['status'] = 0;
 					//更新数据
-					$dealRepayDao->update($load_repay,array('deal_id' => $loan['id'], 'l_key'=>$i));
+					$dealRepayDao->update($load_repay,array('deal_id' => $loan['loan_id'], 'l_key'=>$i));
 				} else {
 					$load_has_repay = array();
 					$load_has_repay = $load_repay;
@@ -103,7 +104,7 @@ class  business_sys_dealrepay extends Business {
 					unset($load_has_repay['repay_money']);
 					unset($load_has_repay['manage_money']);
 					unset($load_has_repay['manage_money_rebate']);
-					$dealRepayDao->update($load_has_repay,array('deal_id' => $loan['id'], 'l_key'=>$i));
+					$dealRepayDao->update($load_has_repay,array('deal_id' => $loan['loan_id'], 'l_key'=>$i));
 				}
 			} else {
 				$load_repay['l_key'] = $i;
@@ -111,62 +112,11 @@ class  business_sys_dealrepay extends Business {
 				$load_repay['has_repay'] = 0;
 				$repay_id = $dealRepayDao->insert($load_repay);
 			}
-			$this->make_user_repay_plan($loan,$load_repay, $repay_id);
+			$repay_plan[] = $load_repay;
+			$load_repay_plan = $dealLoadRepayBusiness->makeLoadRepayPlan($loan,$load_repay, $repay_id);
 		}
-		return true;
-	}
-	/**
-	 * 生成投标者的回款计划
-	 */
-	public function make_user_repay_plan($loan,$load_repay, $repay_id){
-		//查询投标人id 每个人生成一条回款信息
-		$load_users = \Core::dao('loan_dealload')->getList(array('deal_id'=>$loan['id']),'id,user_id,money,is_winning,income_type,income_value');
-
-		if(!$load_users){
-			//投资者不存在
-			return false;
-		}
-		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
-		foreach ($load_users as $k=>$v){
-			$load_repay['user_id'] = $v['user_id'];
-			$load_repay['repay_id'] = $repay_id;
-			$load_repay['load_id'] = $v['id'];
-			$load_repay['has_repay'] = 0;
-			$load_repay['t_user_id'] = 0;
-			if($k+1 == count($load_users)){
-				$load_repay['repay_manage_money'] = $load_repay['manage_money'] - round($load_repay['manage_money'] / $loan['buy_count'],2) * ($loan['buy_count'] - 1);
-				$load_repay['mortgage_fee'] = $loan['mortgage_fee'] - round($loan['mortgage_fee'] / $loan['buy_count'],2) * ($loan['buy_count'] - 1);
-			}
-			else{
-				$load_repay['repay_manage_money'] = $load_repay['manage_money']/ $loan['buy_count'];
-				$load_repay['mortgage_fee'] = $loan['mortgage_fee'] / $loan['buy_count'];
-			}
-
-			$load_repay['interest_money'] =  $load_repay['repay_money'] - $load_repay['self_money'];
-			//TODO 投资者管理费率 从config_common字段中获取
-			$user_loan_manage_fee = 0;
-			$load_repay['manage_money'] = $v['money']* floatval($user_loan_manage_fee)/100;
-			if($v['is_winning']==1 && (int)$v['income_type']==2 && (float)$v['income_value']!=0){
-				$load_repay['reward_money'] = $load_repay['interest_money'] * (float)$v['income_value'] * 0.01;
-			}
-			//判断是否存在该期回款计划
-			$is_plan = $dealLoadRepayDao->getSomeOneLkeyPlan($load_repay['deal_id'],$load_repay['l_key'],$v['user_id']);
-			if($is_plan){
-				if ($is_plan['has_repay'] == 1) {
-					//已回款
-					unset($load_repay['self_money']);
-					unset($load_repay['repay_money']);
-					unset($load_repay['interest_money']);
-					unset($load_repay['manage_money']);
-					unset($load_repay['repay_manage_money']);
-					unset($load_repay['manage_interest_money']);
-					unset($load_repay['manage_interest_money_rebate']);
-					unset($load_repay['has_repay']);
-				}
-				$dealLoadRepayDao->update($load_repay,array('deal_id'=>$load_repay['deal_id'],'l_key'=>$load_repay['l_key'],'user_id'=>$v['user_id']));
-			}else{
-				$dealLoadRepayDao->insert($load_repay);
-			}
-		}
+		$plan['repay_plan'] = $repay_plan;
+		$plan['load_repay_plan'] = $load_repay_plan;
+		return $plan;
 	}
 }
