@@ -42,7 +42,7 @@ class dao_loan_dealload extends Dao {
 	}
 	
 	public function getLoads($deal_id,$field){
-		return $this->getDb()->select($field)->from($this->getTable())->where('deal_id',$deal_id)->execute()->rows();
+		return $this->getDb()->select($field)->from($this->getTable())->where(array('deal_id'=>$deal_id))->execute()->rows();
 	}
 	
 	//报表
