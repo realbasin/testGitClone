@@ -140,8 +140,6 @@ class  controller_loan_loan extends controller_sysBase {
 		$loanBid = $loanBidDao->getOneLoanById($deal_id,$fields);
 		$loanBase = $loanBaseDao->getloanbase($deal_id,'id,name,user_id,borrow_amount,repay_time_type,repay_time,rate');
 		$loanExt = $loanextDao->getExtByLoanId($deal_id);
-		//\Core::dump($loanExt);die();
-		//生成还款计划
 		if(!$loanBid || !$loanBase || !$loanExt) {
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
@@ -173,9 +171,6 @@ class  controller_loan_loan extends controller_sysBase {
 			}
 			//收取服务费
 			//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
-
-			$config_common = $loanextDao->getCommonconfig($deal_id);
-			//$servicesfee = trim($config_common['services_fee']);
 			$servicesfee = 0.05;
 			$services_fee = $loanBase['borrow_amount'] * floatval($servicesfee) / 100;
 			//服务费，修改用户余额
@@ -198,6 +193,7 @@ class  controller_loan_loan extends controller_sysBase {
 			//扣除投资人金额
 			$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
 			if($load_list) {
+				$yott_users = array();
 				foreach ($load_list as $v) {
 					//扣除投资人的冻结金额，金额为投标金额 - 红包金额 - 优惠券金额
 					if($v['is_old_loan'] == 0) {
@@ -238,70 +234,17 @@ class  controller_loan_loan extends controller_sysBase {
 					//获取投标用户的所属管理员id
 					$admin_id = \Core::dao('user_user')->getUser($v['user_id'],'id,admin_id,platform_code');
 
-					if($admin_id[$v['user_id']]){
-						$is_post_yott = false; //记录是否有Yott用户投标
-						if ($admin_id[$v['user_id']]["platform_code"] == "yott") {
-							$is_post_yott = true;
+					if($admin_id[$v['user_id']]) {
+						$adminstatus = \Core::business('sys_admin_admin')->adminreferrals($admin_id[$v['user_id']],$loanBase,$loanBid);
+						if($adminstatus['status'] == 1) {
+							$result['message'] = $adminstatus['message'];
+							return @json_encode($result);
 						}
-						//获取部门成员
-						$mymanager = \Core::dao('sys_admin_adminext')->getAdminById($admin_id[$v['user_id']]['id'],'id,referrals_rate,pid');
-						if($mymanager  && floatval($mymanager['referrals_rate']) != 0) {
-							$money = 0;
-							$url = '';
-							if ($loanBase['repay_time_type'] == 0) {
-								//天 投资金额 × 投资的天数 / 365天
-								$money = $loanBid['load_money'] * $loanBase['repay_time'] / 365;
-							} else {
-								//月标：投资金额 × 投资的月数 / 12个月
-								$money = $loanBid['money'] * $loanBase['repay_time'] / 12;
-							}
-							$memo = "[<a href='" . $url . "' target='_blank'>" . $loanBase['name'] . "</a>],满标放款";
-							$m_data = array();
-							$m_data['deal_id'] = $loanBase['id'];
-							$m_data['user_id'] = $admin_id['id'];
-							$m_data['money'] = $money * floatval($mymanager['referrals_rate']) * 0.01;
-							$m_data['rel_admin_id'] = 0;
-							$m_data['admin_id'] = $mymanager['id'];
-							$m_data['rel_admin_id'] = $mymanager['pid'];
-							$m_data['create_time'] = getGmtime()+C('time_zone')*3600;
-							$m_data['loan_money'] = $loanBid['money'];
-							$m_data['memo'] = $memo;
-							//插入数据
-							$insertmdata = \Core::dao('sys_adminreferrals')->insert($m_data);
-							//更新管理员提成金额
-							if($insertmdata !== false){
-								$adminReferralsMoney = \Core::dao('sys_adminreferrals')->getSumMoneyByAdminId($admin_id);
-								$updateAdminMoney = \Core::dao('sys_admin_adminext')->update(array('referrals_money'=>$adminReferralsMoney),array('id'=>$admin_id));
-								if($updateAdminMoney === false) {
-									$result['message'] = "放款失败，更新管理员提成金额失败";
-									return @json_encode($result);
-								}
-							}
-							//部门
-							if($mymanager['pid'] > 0) {
-								//获取提成比
-								$mydepartment = \Core::dao('sys_admin_adminext')->getAdminById($mymanager['pid'],'id,referrals_rate,pid');
-								$d_data['deal_id'] = $m_data['deal_id'];
-								$d_data['user_id'] = $m_data['user_id'];
-								$d_data['money'] = $m_data['money'] * floatval($mydepartment['referrals_rate']) * 0.01;
-								$d_data['rel_admin_id'] = $admin_id['admin_id'];
-								$d_data['admin_id'] = $mymanager['pid'];
-								$d_data['create_time'] =  $m_data['create_time'];
-								$d_data['loan_money'] = $m_data['loan_money'];
-								$d_data['memo'] = $m_data['memo'];
-								//插入数据
-								$insertmdata = \Core::dao('sys_adminreferrals')->insert($d_data);
-								//更新管理员提成金额
-								if($insertmdata !== false){
-									$adminReferralsMoney = \Core::dao('sys_adminreferrals')->getSumMoneyByAdminId($admin_id);
-									$updateAdminMoney = \Core::dao('sys_admin_adminext')->update(array('referrals_money'=>$adminReferralsMoney),array('id'=>$mymanager['pid']));
-									if($updateAdminMoney === false) {
-										$result['message'] = "放款失败，更新管理员提成金额失败";
-										return @json_encode($result);
-									}
-								}
-							}
-						}
+					}
+					//是否优投用户
+					if($adminstatus['is_post_yott']) {
+						//记录优投用户id
+						$yott_users[] = $v['user_id'];
 					}
 					//返利给用户
 					if(floatval($v['rebate_money']) != 0 || intval($v['bid_score']) != 0) {
@@ -344,7 +287,11 @@ class  controller_loan_loan extends controller_sysBase {
 		if($repayplan){
 			//放款成功
 			$loanBaseDao->update(array('is_effect'=>1,'loan_status'=>1),array('id'=>$deal_id));
-			
+			//是否存在优投用户，存在发送推送
+			if($yott_users) {
+				$result['code'] = 200;
+				$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
+			}
 			$result['code'] = 200;
 			$result['message'] = "放款成功,还/回款计划已生成";
 			return @json_encode($result);
