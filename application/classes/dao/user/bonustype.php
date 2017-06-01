@@ -34,13 +34,4 @@ class dao_user_bonustype extends Dao {
 	public function getTable() {
 		return 'bonus_type';
 	}
-
-    /**
-     * 获取某个优惠券类型
-     * @param $id
-     * @return array|mixed
-     */
-	public function getBonusTypeById($id) {
-	    return $this->getDb()->select('*')->from($this->getTable())->where(array('id'=>$id))->execute()->row();
-    }
 }

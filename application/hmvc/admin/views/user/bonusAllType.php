@@ -42,13 +42,19 @@
         <form method="post" id="form1" name="form1">
             <input type="hidden" name="form_submit" value="ok" />
             <div class="title">
-                资产类别：
+                资产类别:
                 <select value="0" id="use_type" name='use_type'>
                     <option value="1">理财端</option>
                     <option value="2">借款端</option>
                 </select>
-                优惠券类型名称：
+                优惠券类型名称:
                 <input class="s-input-txt" type="text" name="bonus_type_name" placeholder="请输入优惠券类型名称">
+                是否启用:
+                <select value="0" id="is_effect" name='is_effect'>
+                    <option value="-1">-</option>
+                    <option value="1">是</option>
+                    <option value="0">否</option>
+                </select>
                 <input type="button" id="btnsearch" style="height: 26px;padding: 0 5px;margin-left: 20px;" value="提交查询"></button>
             </div>
         </form>
@@ -67,6 +73,7 @@ $(function(){
             {display: '发放方式', name : 'send_type', width : 50, sortable : false, align: 'left'},
             {display: '发放时间范围', name : 'send_time_limit', width : 180, sortable : false, align: 'left'},
             {display: '使用时间范围', name : 'use_time_limit', width : 200, sortable : false, align: 'left'},
+            {display: '是否启用', name : 'is_effect', width : 50, sortable : false, align: 'left'},
             {display: '发放数量', name : 'num', width : 50, sortable : false, align: 'left'},
             {display: '使用数量', name : 'used_num', width : 50, sortable : false, align: 'left'},
             {display: '优惠合计金额', name : 'amount', width : 100, sortable : false, align: 'left'},
@@ -76,7 +83,7 @@ $(function(){
             {display: '<i class="fa fa-plus"></i> <?php echo \Core::L("add");?>', name : 'add', bclass : 'add', title : '<?php echo \Core::L("add");?>', onpress: type_add },
             {display: '<i class="fa fa-trash"></i> <?php echo \Core::L("clear_batch");?>', name : 'delete', bclass : 'del', title : '<?php echo \Core::L("clear_batch_tip");?>', onpress: flexPress }
         ],
-        title: '优惠券类型管理',
+        title: '优惠券类型管理'
     });
 
     $('#btnsearch').click(function(){
@@ -88,6 +95,9 @@ function type_add() {
 }
 function type_edit(id) {
     window.location.href = '<?php echo adminUrl('user_bonus','type_edit');?>'+'&type_id='+id;
+}
+function type_bonus(id) {
+    window.location.href = '<?php echo adminUrl('user_bonus','type_bonus');?>'+'&type_id='+id;
 }
 function flexPress(name, grid) {
     if(name=='delete'){
@@ -118,7 +128,12 @@ function flexDelete(id){
                 url: "<?php echo adminUrl('user_bonus','type_delete');?>",
                 data: "id="+ids,
                 success: function(data){
-                    jsprint(data.message);
+                    if (data.code==200){
+                        $("#flexitable").flexReload();
+                    } else {
+                        jsprint(data.message);
+                    }
+
                 }
             });
         },
