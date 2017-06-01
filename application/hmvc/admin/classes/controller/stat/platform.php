@@ -260,6 +260,7 @@ class  controller_stat_platform extends controller_sysBase {
 		\Core::view() -> load('stat_check');
 	}
 	
+	//从统计库中获取数据
 	public function do_check_json(){
 		
 	}
