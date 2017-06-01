@@ -107,14 +107,7 @@
         </dd>
       </dl>
         <from class="bid_full">
-        <dl class="row fullbid" style="display: none;">
-            <dt class="tit">
-                <label>上传凭证：</label>
-            </dt>
-            <dd class="opt">
-                <input type="file" name="upload" />
-            </dd>
-        </dl>
+       
         <dl class="row fullbid" style="display: none;">
             <dt class="tit">
                 <label>确认时间：</label>
@@ -141,7 +134,7 @@
             </dt>
             <dd class="opt">
                     <p>已流标原因:</p>
-                    <textarea name="reason" rows="3" cols="50" style="height:auto"></textarea>
+                    <textarea id="received_reason" name="reason" rows="3" cols="50" style="height:auto"></textarea>
                     <div ></div>
                     <input type="button" class="input-btn" value="确定返款" onclick="do_received(<?php echo $loan_id;?>);">
                     <input type="button" class="input-btn" value="取消" onclick="nothingdo();">
@@ -298,12 +291,17 @@
     }
     //流标返还操作
     function do_received(id) {
+        var reason = $("#received_reason").val();
+        if(reason == ''){
+            jsprint('请填写流标原因');
+            return false;
+        }
         $.ajax({
             type: "GET",
             dataType: "json",
             //流标返还
             url: "<?php echo adminUrl('loan_loan','received');?>",
-            data: "id="+id,
+            data: "id="+id+"&reason="+reason,
             success: function(data){
                 if (data.code==200){
                     $("#flexitable").flexReload();

@@ -27,5 +27,8 @@ class dao_user_bonususer extends Dao {
 	public function getTable() {
 		return 'bonus_user';
 	}
-
+	//根据用户id获取优惠券id
+	public function getBonusRuleIdByUserId($userid){
+		return $this->getDb()->from($this->getTable())->where(array('user_id'))->execute()->value('bonus_rule_id');
+	}
 }
