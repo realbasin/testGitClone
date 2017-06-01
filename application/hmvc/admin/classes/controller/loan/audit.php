@@ -679,6 +679,7 @@ class  controller_loan_audit extends controller_sysBase {
     //初审操作
     public function do_first_publish_update()
     {
+        
     }
 
     //复审操作页面

@@ -531,7 +531,7 @@
 
         <div class="page-footer">
             <div class="btn-wrap">
-                <input type="submit" name="btnSubmit" value="<?php echo \Core::L('submit');?>" id="btnSubmit" class="btn" />
+                <input type="botton" name="goback" value="<?php echo \Core::L('goback');?>" id="goback" class="btn" />
             </div>
         </div>
     </form>
@@ -548,10 +548,9 @@
         d.show(ctrl);
     };
 
-    function goback(){
+    $('#goback').click(){
         window.history.back(-1);
-    };
-
+    }
     $('#uloadtype').on('change',function(){
         var uloadtype = $("#uloadtype option:selected").val();
         if(uloadtype == 0) {
@@ -564,25 +563,6 @@
             return false;
         }
     });
-    $(function () {
-        //初始化表单验证
-        $("#form1").initValidform();
-    });
-    function add_mortgage_img(type){
-        var str = '';
-        str += '名称：<input type="text" size="10" name="mortgage_'+type+'_name_';
-        if(type == 'contract'){
-            str += contractnum +'" id="mortgage_'+type+'_name_'+contractnum+'" value="">&nbsp;';
-            str += '图片：<input type="file" name="mortgage_'+type+'_name_'+contractnum+'"><br>';
-            contractnum = contractnum+1;
-        }
-        if(type == 'infos'){
-            str += infosnum +'" id="mortgage_'+type+'_name_'+infosnum+'" value="">&nbsp;';
-            str += '图片：<input type="file" name="mortgage_'+type+'_name_'+infosnum+'"><br>';
-            infosnum = infosnum+1;
-        }
-        $("#"+type).append(str);
-    }
 </script>
 </body>
 </html>

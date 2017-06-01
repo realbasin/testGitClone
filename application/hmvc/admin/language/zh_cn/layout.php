@@ -15,6 +15,7 @@ $lang['arrow']='箭头';
 $lang['welcome']='您好';
 $lang['help']='获取帮助';
 $lang['submit']='提交保存';
+$lang['goback']='返回';
 
 
 $lang['console']='工作台';
