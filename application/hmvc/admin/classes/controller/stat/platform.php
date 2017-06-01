@@ -249,6 +249,22 @@ class  controller_stat_platform extends controller_sysBase {
 	
 	//审核汇总
 	public function do_check(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_check');
+	}
+	
+	public function do_check_json(){
+		
+	}
+	
+	public function do_check_export(){
 		
 	}
 	
