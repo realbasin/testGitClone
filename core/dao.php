@@ -3,8 +3,8 @@ defined("IN_XIAOSHU") or exit("Access Invalid!");
 abstract class Dao {
 
 	private $db;
-	public function __construct() {
-		$this -> db = \Core::db();
+	public function __construct($groupName='',$isNewInstance=false) {
+		$this -> db = \Core::db($groupName,$isNewInstance);
 	}
 
 	/**

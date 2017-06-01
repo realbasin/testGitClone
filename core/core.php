@@ -135,11 +135,11 @@ class Core {
 		return $object;
 	}
 
-	static function dao($daoName) {
+	static function dao($daoName,$groupName='',$isNewInstance=false) {
 		$name = \Base::getConfig() -> getDaoDirName() . '_' . $daoName;
 		if (!class_exists("Dao", FALSE))
 			\Base::loadFrame("dao");
-		$object = self::factory($name);
+		$object = self::factory($name,null,$groupName,$isNewInstance);
 		if (!($object instanceof Dao)) {
 			throw new \Xs_Exception_500('[ ' . $name . ' ] not a valid Dao');
 		}
