@@ -168,6 +168,7 @@ class  controller_loan_loan extends controller_sysBase {
 				return @json_encode($result);
 			}else {
 				$editMoneyStatus = false;
+				\Core::dao('loan_sitemoneylog')->insert();
 			}
 			//收取服务费
 			//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
@@ -205,8 +206,8 @@ class  controller_loan_loan extends controller_sysBase {
 						$bonus_money = 0;
 						if ($v['bonus_user_id'] > 0) {
 							//优惠券金额
-							$bonus_rule_id = \Core::dao('loan_bonususer')->getBonusRuleIdByUserId($v['bonus_user_id']);
-							$bonus_money = \Core::dao('loan_bonusrule')->getMoneyById($bonus_rule_id);
+							$bonus_rule_id = \Core::dao('user_bonususer')->getBonusRuleIdByUserId($v['bonus_user_id']);
+							$bonus_money = \Core::dao('user_bonusrule')->getMoneyById($bonus_rule_id);
 						}
 						if ($v['money'] - $ecv_money > 0) {
 							$editLockMoneyStatus = false;
@@ -263,7 +264,7 @@ class  controller_loan_loan extends controller_sysBase {
 							if(intval($v['bid_score']) != 0) {
 								$editScoreStatus = \Core::business('user_userinfo')->editUserScore($loanBase['user_id'],intval($v['bid_score']));
 								if($editScoreStatus === false) {
-									$result['message'] = "放款失败，收取服务费出错";
+									$result['message'] = "放款失败，积分返还出错";
 									return @json_encode($result);
 								}
 							}
@@ -287,6 +288,8 @@ class  controller_loan_loan extends controller_sysBase {
 		if($repayplan){
 			//放款成功
 			$loanBaseDao->update(array('is_effect'=>1,'loan_status'=>1),array('id'=>$deal_id));
+			//发送短信发送邮件
+
 			//是否存在优投用户，存在发送推送
 			if($yott_users) {
 				$result['code'] = 200;

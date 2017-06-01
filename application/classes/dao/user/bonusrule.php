@@ -25,5 +25,7 @@ class dao_user_bonusrule extends Dao {
 	public function getTable() {
 		return 'bonus_rule';
 	}
-
+	public function getMoneyById($id){
+		return $this->getDb()->from($this->getTable())->where(array('id'=>$id))->execute()->value('money');
+	}
 }
