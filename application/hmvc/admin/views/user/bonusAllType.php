@@ -73,8 +73,10 @@ $(function(){
             {display: '投资总额', name : 'userd_amount', width : 100, sortable : false, align: 'left'}
         ],
         buttons : [
-            {display: '<i class="fa fa-plus"></i> <?php echo \Core::L("add");?>', name : 'add', bclass : 'add', title : '<?php echo \Core::L("add");?>', onpress: type_add }
+            {display: '<i class="fa fa-plus"></i> <?php echo \Core::L("add");?>', name : 'add', bclass : 'add', title : '<?php echo \Core::L("add");?>', onpress: type_add },
+            {display: '<i class="fa fa-trash"></i> <?php echo \Core::L("clear_batch");?>', name : 'delete', bclass : 'del', title : '<?php echo \Core::L("clear_batch_tip");?>', onpress: flexPress }
         ],
+        title: '优惠券类型管理',
     });
 
     $('#btnsearch').click(function(){
@@ -86,6 +88,43 @@ function type_add() {
 }
 function type_edit(id) {
     window.location.href = '<?php echo adminUrl('user_bonus','type_edit');?>'+'&type_id='+id;
+}
+function flexPress(name, grid) {
+    if(name=='delete'){
+        if($('.trSelected',grid).length>0){
+            var itemlist = new Array();
+            $('.trSelected',grid).each(function(){
+                itemlist.push($(this).attr('data-id'));
+            });
+            flexDelete(itemlist);
+        } else {
+            jsprint(lang['no_rows_selected']);
+            return false;
+        }
+    }
+}
+function flexDelete(id){
+    var ids = new Array();
+    ids.push(id);
+    parent.dialog({
+        title: lang['tip'],
+        content: lang['delete_confirm'],
+        okValue: lang['ok'],
+        ok: function () {
+            ids = ids.join(',');
+            $.ajax({
+                type: "GET",
+                dataType: "json",
+                url: "<?php echo adminUrl('user_bonus','type_delete');?>",
+                data: "id="+ids,
+                success: function(data){
+                    jsprint(data.message);
+                }
+            });
+        },
+        cancelValue: lang['cancel'],
+        cancel: function () { }
+    }).showModal();
 }
 </script>
 </body>

@@ -103,7 +103,7 @@
                 <dd class="opt">
                     <select name="use_end_time_type" id="use_end_time_type">
                         <option value="1" <?php if(empty($bonusType) || $bonusType['use_end_time_type']==1) echo 'selected';?>>设定固定日期</option>
-                        <option value="2" <?php if(!empty($bonusType) || $bonusType['use_end_time_type']==2) echo 'selected';?>>激活后有效期</option>
+                        <option value="2" <?php if(!empty($bonusType) && $bonusType['use_end_time_type']==2) echo 'selected';?>>激活后有效期</option>
                     </select>
                     <input type="text" class="input-txt" name="use_end_time" id="use_end_time" value="<?php if(!empty($bonusType)) echo toDate($bonusType['use_end_time']);?>" />
                     <input type="text" name="use_end_day" id="use_end_day" style="width: 130px;" value="<?php if(!empty($bonusType)) echo $bonusType['use_end_day'];?>"/>
