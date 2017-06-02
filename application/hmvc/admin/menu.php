@@ -44,10 +44,22 @@ $menu = array(
 							array('link'=>'loan_oplog,index','text'=>$lang['loan_op_log']),
 						)
 					),
+					array('link'=>'','text'=>$lang['audit'],
+						'sub'=>array(
+							array('link'=>'loan_audit,first_publish','text'=>$lang['first_publish']),
+							array('link'=>'loan_audit,publish','text'=>$lang['publish']),
+							array('link'=>'loan_audit,my_publish','text'=>$lang['my_publish']),
+							array('link'=>'loan_audit,true_publish','text'=>$lang['true_publish']),
+							array('link'=>'loan_loan,all','text'=>$lang['loan_ing']),
+							array('link'=>'loan_loan,all','text'=>$lang['loan_flow']),
+							array('link'=>'loan_loan,all','text'=>$lang['loan_reject']),
+						)
+					),
+
 				)
 			),
 			3 => array(
-				'text' => '会员管理',
+				'text' => '会员管理', 
 				'subtext'=>'会员管理',
 				'img'=>'user',
 				'list' => array(

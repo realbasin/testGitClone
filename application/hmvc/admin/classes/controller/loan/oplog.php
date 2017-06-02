@@ -23,6 +23,10 @@ class  controller_loan_oplog extends Controller {
 		//查询条件
 		$where = array();
 		$bidwhere = array();
+
+		if (\Core::get('loan_id')) {
+			$where['deal_id'] = \Core::get('loan_id');
+		}
 		//排序
 		$orderby = array();
 		if (!$page || !is_numeric($page))
