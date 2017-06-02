@@ -170,6 +170,18 @@ abstract class Dao {
 		}
 		return $this -> getDb() -> delete($this -> getTable()) -> execute();
 	}
+	
+	/*
+	 * 获得指定条件的记录条数
+	 * @param type $where 查询条件
+	 */ 
+	public function getCount(Array $where = null){
+		if (is_array($where)) {
+			$this -> getDb() -> where($where);
+		}
+		$total = $this -> getDb() -> select('count(*) as total') -> from($this -> getTable()) -> execute() -> value('total');
+		return $total;
+	}
 
 	/**
 	 * 分页方法
@@ -248,7 +260,7 @@ abstract class Dao {
 			$this -> getDb() -> orderBy($k, $v);
 		}
 		$this -> getDb() -> select($fields,$fieldsWrap) -> limit(($page - 1) * $pagesize, $pagesize) -> from($this -> getTable());
-		
+
 		$data['total']=$total;
 		$data['rows'] = $this->getDb()->execute() ->rows();
 
