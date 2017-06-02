@@ -102,7 +102,7 @@
 <script>
     $(function(){
         $("#flexitable").flexigrid({
-            url: '<?php echo adminUrl('loan_oplog','all_op_log_json',array('loan_id'=>$loan_id));?>',
+            url: '<?php echo adminUrl('loan_oplog','all_op_log_json');?>',
             colModel : [
                 {display: '贷款编号', name : 'deal_id', width : 50, sortable : false, align: 'center'},
                 {display: '借款用户', name : 'user_id', width : 100, sortable : false, align : 'center'},

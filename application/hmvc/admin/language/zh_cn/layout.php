@@ -15,6 +15,7 @@ $lang['arrow']='箭头';
 $lang['welcome']='您好';
 $lang['help']='获取帮助';
 $lang['submit']='提交保存';
+$lang['goback']='返回';
 
 
 $lang['console']='工作台';
@@ -81,6 +82,17 @@ $lang['wechat_user_tag']='粉丝标签';
 $lang['loan_all']='全部贷款';
 $lang['loan_add']='新增贷款';
 $lang['loan_notice']='预告中贷款';
+$lang['loan_ing']='未满标贷款';
+$lang['loan_flow']='流标的贷款';
+$lang['loan_reject']='审核失败的贷款';
+
+
+$lang['audit']='审核管理';
+$lang['first_publish']='首单待审核列表';
+$lang['publish']='续借待审核列表';
+$lang['my_publish']='我的待审核列表';
+$lang['true_publish']='复审核列表';
+
 //add by zlz 20170518
 $lang['loan_op_log'] = '审核日志列表';
 $lang['loan_repay_plan'] = '还款计划';

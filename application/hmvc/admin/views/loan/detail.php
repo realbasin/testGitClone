@@ -95,7 +95,7 @@
         </dd>
       </dl>
 
-      <dl class="row" <?php echo $loan['deal_status'] >= 4?'style="display:none;"':'';?>>
+      <dl class="row" <?php echo $loan['deal_status'] >= 3?'style="display:none;"':'';?>>
         <dt class="tit">
           <label><?php echo \Core::L('operate');?>：</label>
         </dt>
@@ -304,7 +304,8 @@
             data: "id="+id+"&reason="+reason,
             success: function(data){
                 if (data.code==200){
-                    $("#flexitable").flexReload();
+                    alert(data.message);
+                    location.reload();
                 } else {
                     jsprint(data.message);
                 }
