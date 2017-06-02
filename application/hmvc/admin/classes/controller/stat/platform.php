@@ -496,7 +496,7 @@ class  controller_stat_platform extends controller_sysBase {
 			$adminRow=$admins[$admin_id];
 			$adminName=$adminRow['admin_real_name']?$adminRow['admin_real_name']:$adminRow['admin_name'];
 		}else{
-			$adminName=$id.'(已删除)';
+			$adminName=$admin_id.'(已删除)';
 		}
 		\Core::view() -> set('datestart', $datestart);
 		\Core::view() -> set('dateend', $dateend);
@@ -636,7 +636,7 @@ class  controller_stat_platform extends controller_sysBase {
 		$header['复审成功数'] = 'integer';
 		//导出
 		$this -> log('导出审核人员汇总('.$admin_name.' '. $datestart . ' - ' . $dateend . ')', 'export');
-		exportExcel('导出审核人员汇总('.$admin_name.' '. $datestart . ' - ' . $dateend . ')', $header, $datas['rows']);
+		exportExcel('审核人员汇总('.$admin_name.' '. $datestart . ' - ' . $dateend . ')', $header, $datas['rows']);
 	}
 	
 	//自动投标
