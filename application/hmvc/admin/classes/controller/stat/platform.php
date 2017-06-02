@@ -641,6 +641,115 @@ class  controller_stat_platform extends controller_sysBase {
 	
 	//自动投标
 	public function do_autoBid(){
+		\Core::view() -> load('stat_autoBid');
+	}
+	
+	//自动投标
+	public function do_autoBid_json(){
+		$userId = \Core::postGet('user_id','');
+		$userName = \Core::postGet('user_name','');
+		$autoBid=\Core::getPost('auto_bid',-1);
+		$pagesize = \Core::postGet('rp');
+		$page = \Core::postGet('curpage');
+		if (!$page || !is_numeric($page))
+			$page = 1;
+		if (!$pagesize || !is_numeric($pagesize))
+			$pagesize = 15;
+		$order='';
+		$sort='desc';
+		if (\Core::postGet('sortorder') && in_array(\Core::postGet('sortorder'), array('id','user_name','money','min_money','max_money','retain_money','min_rate','max_rate','min_period','max_period','use_bonus','auto_bid','last_bid_time'))) {
+			$order=\Core::postGet('sortname');
+			$sort=\Core::postGet('sortorder');
+		}
+		$businessStat=\Core::business('loan_stat');
+		$datas=$businessStat->getStatAutobid($userId,$userName,$autoBid,'',$page,$pagesize,$order,$sort);
+		$json = array();
+		$json['page'] = $page;
+		$json['total'] = $datas['total'];
+		$json['total_money'] = $datas['total_money'];
+		foreach ($datas['rows'] as $v) {
+			$row = array();
+			$row['id'] = $v['id'];
+			$row['cell'][] = $v['id'];
+			$row['cell'][] = $v['user_name'];
+			$row['cell'][] = '￥'.priceFormat($v['money']);
+			$row['cell'][] = '￥'.priceFormat($v['min_money']);
+			$row['cell'][] = '￥'.priceFormat($v['max_money']);
+			$row['cell'][] = '￥'.priceFormat($v['retain_money']);
+			$row['cell'][] = $v['min_rate'].'%';
+			$row['cell'][] = $v['max_rate'].'%';
+			$row['cell'][] = $v['min_period'];
+			$row['cell'][] = $v['max_period'];
+			$row['cell'][] = $v['use_bonus']?'是':'否';
+			$row['cell'][] = $v['is_effect']?'是':'否';
+			$row['cell'][] = date('Y-m-d',$v['last_bid_time']);
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		//返回JSON
+		echo @json_encode($json);
+	}
+	
+	//自动投标
+	public function do_autoBid_export(){
+		$userId = \Core::postGet('user_id','');
+		$userName = \Core::postGet('user_name','');
+		$autoBid=\Core::getPost('auto_bid',-1);
+		$id = \Core::getPost("id");
+		$where = array();
+		$orderby = array();
+		if (!preg_match('/^[\d,]+$/', $id)) {
+			$id='';
+		}
+		//排序
+		$order='';
+		$sort='desc';
+		if (\Core::postGet('sortorder') && in_array(\Core::postGet('sortorder'), array('id','user_name','money','min_money','max_money','retain_money','min_rate','max_rate','min_period','max_period','use_bonus','auto_bid','last_bid_time'))) {
+			$order=\Core::postGet('sortname');
+			$sort=\Core::postGet('sortorder');
+		}
 		
+		$businessStat=\Core::business('loan_stat');
+		$businessComm=\Core::business('common');
+		$curPage=\Core::getPost('curpage');
+		
+		$sql=$businessStat->getStatAutobid($userId,$userName,$autoBid,$id,1,1,$order,$sort,true);
+		
+		if (!is_numeric($curPage)){
+			$count=$businessComm->getCount($sql);
+			//超过最大数据，需要分页，跳转到分页页面
+			if($count>C('export_perpage')){
+				$page = ceil($count/C('export_perpage'));
+                for ($i=1;$i<=$page;$i++){
+                    $limit1 = ($i-1)*C('export_perpage') + 1;
+                    $limit2 = $i*C('export_perpage') > $count ? $count : $i*C('export_perpage');
+                    $array[$i] = $limit1.' ~ '.$limit2 ;
+                }
+                Core::view()->set('list',$array);
+                Core::view()->set('murl',adminUrl('stat_platform', 'autoBid'));
+                Core::view()->load('export.excel');
+				exit;
+			}
+		}
+		$curPage=$curPage?$curPage:1;
+		$datas=$businessStat->getStatAutobid($userId,$userName,$autoBid,$id,$curPage,C('export_perpage'),$order,$sort);
+        //Excel头部
+		$header = array();
+		$header['ID'] = 'integer';
+		$header['用户名'] = 'string';
+		$header['当前账户余额'] = 'price';
+		$header['最小投标额'] = 'price';
+		$header['最大投标额'] = 'price';
+		$header['保留金额'] = 'price';
+		$header['最小利率(%)'] = 'integer';
+		$header['最大利率(%)'] = 'integer';
+		$header['最小期限'] = 'integer';
+		$header['最小期限'] = 'integer';
+		$header['使用优惠券'] = 'integer';
+		$header['启用'] = 'integer';
+		$header['最近自动投标'] = 'datetime';
+		//导出
+		$this -> log('导出自动投标汇总', 'export');
+		exportExcel('自动投标汇总', $header, $datas['rows']);
 	}
 }
