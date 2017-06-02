@@ -125,7 +125,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
+            $opration.="<li><a href='javascript:loan_audit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
             $row['cell'][] = $opration;
@@ -259,7 +259,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
+            $opration.="<li><a href='javascript:loan_audit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
             $row['cell'][] = $opration;
@@ -532,7 +532,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
             $opration.="<li><a href='javascript:loan_preview(".$v['id'].")'>预览</a></li>";
-            $opration.="<li><a href='javascript:loan_edit(".$v['id'].")'>审核操作</a></li>";
+            $opration.="<li><a href='javascript:loan_audit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
             $row['cell'][] = $opration;
@@ -705,11 +705,14 @@ class  controller_loan_audit extends controller_sysBase {
         }else {
             $loan_id = \Core::get('loan_id',0);
             $loanBusiness=\Core::business('loan_loanenum');
+            $usercreditBusiness = \Core::business('user_usercredit');
+
             //根据借款id，获取贷款基本信息
             $basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type';
             $loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
             //获取会员名称
-            $user_id = $loanbase['user_id'];
+            $user_id = Core::arrayGet($loanbase,'user_id');
+            $passed = $usercreditBusiness->passed($user_id);
             $user = \Core::dao('user_user')->getUser($user_id,'id,user_name,real_name,pid');
             $username = \Core::arrayKeyExists($user_id, $user)?\Core::arrayGet(\Core::arrayGet($user, $user_id),'user_name').'('.\Core::arrayGet(\Core::arrayGet($user, $user_id),'real_name').')':'';
             if($username != '') {
@@ -737,6 +740,7 @@ class  controller_loan_audit extends controller_sysBase {
                 ->set('dealloantype',$loanBusiness->enumDealLoanType())
                 ->set('plathtml',$loanBusiness->userPlatRegVerified($loan_id,$user_id))
                 ->set('loanbase',$loanbase)
+                ->set('passed',$passed)
                 ->set('loanbid',$loanbid)
                 ->set('username',$username)
                 ->set('contract',$contract)

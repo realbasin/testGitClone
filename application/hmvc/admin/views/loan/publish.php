@@ -248,8 +248,8 @@
     }
 
     //编辑
-    function loan_edit(id){
-        location.href='<?php echo adminUrl('loan_loan','edit');?>';
+    function loan_audit(id){
+        location.href='<?php echo adminUrl('loan_audit','first_publish_edit');?>&loan_id='+id;
     }
 
     //还款计划

@@ -1,6 +1,6 @@
 <?php
 defined('IN_XIAOSHU') or exit('Access Invalid!');
-class  business_user_passed extends Business {
+class  business_user_usercredit extends Business {
     public function business() {
 
     }
@@ -12,8 +12,7 @@ class  business_user_passed extends Business {
         $usercreditfileDao = \Core::dao('user_usercreditfile');
         $dealloantypeDao = \Core::dao('loan_dealloantype');
         $usercredittypeDao = \Core::dao('user_usercredittype');
-        
-        $user_info=$userDao->getUser('*',$user_id);
+        $user_info=$userDao->getUser($user_id,'*');
         $field_array = array(
             "credit_identificationscanning" => "idcardpassed",
             "credit_contact" => "workpassed",
@@ -30,6 +29,7 @@ class  business_user_passed extends Business {
         );
 
         $t_credit_file = $usercreditfileDao->getByUserId($user_id);
+        $credit_file = array();
         foreach ($t_credit_file as $k => $v) {
             $file_list = array();
             if ($v['file'])
@@ -57,10 +57,10 @@ class  business_user_passed extends Business {
 
             if ($v['must'] == 1 || $loantype == 0 || (count($needs_credits) > 0 && in_array($v['type'], $needs_credits))) {
                 $credit_list[$v['type']] = $credit_type['list'][$v['type']];
-                $credit_list[$v['type']]['credit'] = $credit_file[$v['type']];
+                $credit_list[$v['type']]['credit'] = \Core::arrayGet($credit_file,$v['type']);
 
                 //User表里面的数据
-                if ($user_info[$field_array[$v['type']]]) {
+                if (\Core::arrayGet($user_info,\Core::arrayGet($field_array,$v['type']))) {
                     $credit_list[$v['type']]['credit']['passed'] = $user_info[$field_array[$v['type']]];
                 }
             }

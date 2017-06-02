@@ -30,7 +30,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('loan');?></span>
     <i class="arrow"></i>
-    <span><a href="<?php echo adminUrl('loan_loan','index');?>"><?php echo \Core::L('loan_all');?></a></span>
+    <span><a href="<?php echo adminUrl('loan_audit','index');?>"><?php echo \Core::L('fitst_publish');?></a></span>
     <i class="arrow"></i>
     <span><?php echo $loanbase['name'];?></span>
 </div>
@@ -388,6 +388,84 @@
                     <input type="text" name="sort" id="sort" style="width: 80px;"  value="0">
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>审核状态</label>
+                </dt>
+                <dd class="opt">
+                    <label>审核失败<input type="radio" name="is_delete" value="3" /> </label>
+                    <label>审核成功<input type="radio" name="deal_status" value="1" /> </label>
+                    <label>审核中<input type="radio" name="auditing_show" value="2" /> </label>
+                </dd>
+            </dl>
+            <dl class="row" id="delele_msg_box" style="display:none">
+                <dt class="tit">
+                    <label>短信回复:</label>
+                </dt>
+                <dd class="opt">
+                    <select name="delete_msg">
+                        <option value="综合评分不足">综合评分不足</option>
+                        <option value="资料不完备">资料不完备</option>
+                        <option value="暂不支持成人高等教育">暂不支持成人高等教育</option>
+                        <option value="借款意愿变更">借款意愿变更</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row" id="delete_real_msg_box" style="display:none">
+                <dt class="tit">
+                    <label>真实原因:</label>
+                </dt>
+                <dd class="opt">
+                    <select name="delete_real_msg">
+                        <option value="">请选择</option>
+                        <option value="学籍与产品不符">学籍与产品不符</option>
+                        <option value="已毕业">已毕业</option>
+                        <option value="偿还能力不足">偿还能力不足</option>
+                        <option value="成人教育">成人教育</option>
+                        <option value="网络教育">网络教育</option>
+                        <option value="待审核">待审核</option>
+                        <option value="当前逾期">当前逾期</option>
+                        <option value="电话审核失败">电话审核失败</option>
+                        <option value="风险客户">风险客户</option>
+                        <option value="网贷黑名单">网贷黑名单</option>
+                        <option value="小树黑名单">小树黑名单</option>
+                        <option value="客户不需要">客户不需要</option>
+                        <option value="没接电话">没接电话</option>
+                        <option value="没有学信网">没有学信网</option>
+                        <option value="偏远地区">偏远地区</option>
+                        <option value="已实习">已实习</option>
+                        <option value="视频审核失败">视频审核失败</option>
+                        <option value="资料虚假">资料虚假</option>
+                        <option value="学信网没有照片">学信网没有照片</option>
+                        <option value="资料不齐全">资料不齐全</option>
+                        <option value="用户不需要">用户不需要</option>
+                        <option value="客户不配合">客户不配合</option>
+                        <option value="客户态度不好">客户态度不好</option>
+                        <option value="严重逾期">严重逾期</option>
+                        <option value="风险分数过高">风险分数过高</option>
+                        <option value="学籍不符">学籍不符</option>
+                        <option value="休学">休学</option>
+                        <option value="借贷平台较多">借贷平台较多</option>
+                        <option value="负债高">负债高</option>
+                        <option value="客户不提供其他平台账号密码">客户不提供其他平台账号密码</option>
+                        <option value="没有身份证">没有身份证</option>
+                        <option value="没有服务密码">没有服务密码</option>
+                        <option value="芝麻信用分低于550">芝麻信用分低于550</option>
+                        <option value="没有还款记录">没有还款记录</option>
+                        <option value="入学年份不符">入学年份不符</option>
+                        <option value="未满18岁">未满18岁</option>
+                        <option value="资料审核失败">资料审核失败</option>
+                        <option value="资料不全">资料不全</option>
+                        <option value="通话记录不足3个月">通话记录不足3个月</option>
+                        <option value="手机号码非实名制">手机号码非实名制</option>
+                        <option value="3个月内申请平台超过16家">3个月内申请平台超过16家</option>
+                        <option value="联系人电话审核失败">联系人电话审核失败</option>
+                        <option value="优才贷">优才贷</option>
+                        <option value="毕业年份不符">毕业年份不符</option>
+                        <option value="工作单位审核失败">工作单位审核失败</option>
+                    </select>
+                </dd>
+            </dl>
         </div>
         <!--相关参数-->
         <div class="tab-content" style="display: none;">
@@ -531,7 +609,7 @@
 
         <div class="page-footer">
             <div class="btn-wrap">
-                <input type="button" class="btn" value="<?php echo \Core::L('goback');?>"  onclick="goback();"/>
+                <input type="submit" name="btnSubmit" value="<?php echo \Core::L('submit');?>" id="btnSubmit" class="btn" />
             </div>
         </div>
     </form>
@@ -578,6 +656,57 @@
         }
         $("#"+type).append(str);
     }
+    $('input[name=is_delete]').click(function() {
+        var no_region = $("#no_region");
+        if (no_region.length > 0) {
+            alert("确定不匹配贷款所在城市");
+        }
+    });
+    $("input[name='deal_status']").live("click",function(){
+        $("input[name='is_delete']").attr("checked",false);
+        $("input[name='auditing_show']").attr("checked",false);
+        $("select[name='auditing_status']").val(0);
+        $("#delele_msg_box,#delete_real_msg_box").hide();
+        $("#auditing_status_box").hide();
+        deal_status_click(this);
+    });
+
+    $("input[name='is_delete']").click(function(){
+        if ($(this).val() == "3") {
+            $("input[name='deal_status']").attr("checked",false);
+            $("#delele_msg_box,#delete_real_msg_box").show();
+        }
+        $("input[name='auditing_show']").attr("checked",false);
+        $("select[name='auditing_status']").val(0);
+        $("#auditing_status_box").hide();
+        deal_status_click();
+        return true;
+    });
+
+    $("input[name='auditing_show']").click(function(){
+        $("input[name='deal_status']").attr("checked",false);
+        $("input[name='is_delete']").attr("checked",false);
+        $("#delele_msg_box,#delete_real_msg_box").hide();
+        $("#auditing_status_box").show();
+        deal_status_click();
+        $("select[name='auditing_status']").addClass("require");
+        return true;
+    });
+
+    function deal_status_click(obj){
+        $("#start_time_box #start_time").removeClass("require");
+        $("select[name='auditing_status']").removeClass("require");
+        switch($(obj).val()){
+            case "1":  //开始时间后移至复审时指定
+                //$("#start_time_box").show();
+                //$("#start_time_box #start_time").addClass("require");
+                break;
+            default :
+                $("#start_time_box").hide();
+                break;
+        }
+    };
+
 </script>
 </body>
 </html>
