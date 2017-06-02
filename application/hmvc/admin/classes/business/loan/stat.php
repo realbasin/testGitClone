@@ -8,7 +8,7 @@ class  business_loan_stat extends Business {
 	//统计投资排名
 	//涉及多表
 	//@retSql不为0时返回sql语句
-	public function getStatTotalAmount($page,$pagesize,$stime,$etime,$loantype=0,$sort='desc',$retSql=0){
+	public function getStatTotalAmount($page,$pagesize,$stime,$etime,$loantype=0,$sort='desc',$retSql=false){
 		$type_condition="";
 		if($loantype){
 			$type_condition=" AND _tablePrefix_deal.type_id=".$loantype;
@@ -90,5 +90,67 @@ class  business_loan_stat extends Business {
 		//缓存
 		\Core::cache()->set(__METHOD__.$startDate.$endDate,$reDatas,C('stat_sql_cache_time'));
 		return $reDatas;
+	}
+	
+	public function getStatAutobid($userId,$userName,$userGroup,$ids='',$page,$pagesize,$order='',$sort='desc',$retSql=false){
+		$where="";
+		if($userId){
+			$where.=' and u.id='.$userId;
+		}
+		if($userName){
+			$where.=" and u.user_name like '%".$userId."%'";
+		}
+		if($userGroup>-1){
+			$where.=" and a.is_effect=".$userGroup;
+		}
+		if($ids){
+			$where.=" and u.id in(".$ids.")";
+		}
+		if(!$order){
+			$order='id';
+		}
+		$sql="
+			select 
+			u.id as id,
+			u.user_name as user_name,
+			AES_DECRYPT(u.money_encrypt,'" . AES_DECRYPT_KEY . "') AS money,
+			a.min_amount as min_money,
+			a.max_amount as max_money,
+			a.retain_amount as retain_money,
+			a.min_rate as min_rate,
+			a.max_rate as max_rate,
+			a.min_period as min_period,
+			a.max_period as max_period,
+			a.is_use_bonus as use_bonus,
+			a.is_effect as auto_bid,
+			a.last_bid_time as last_bid_time 
+			from _tablePrefix_user_autobid a  
+			right join 
+			_tablePrefix_user u 
+			on a.user_id=u.id 
+			where u.user_mark=".C('USER_MARK_INVEST').$where.' order by '.$order.' '.$sort;
+		$sqlTotal="
+		select 
+		sum(AES_DECRYPT(u.money_encrypt,'" . AES_DECRYPT_KEY . "')) as total_money 
+		from _tablePrefix_user_autobid a  
+		right join 
+		_tablePrefix_user u 
+		on a.user_id=u.id 
+		where u.user_mark=".C('USER_MARK_INVEST').$where;
+		
+		if(!$retSql){
+			$bussiness=\Core::business('common');
+			$datas=$bussiness->getPageList($page,$pagesize,$sql);
+			//获取汇总
+			$totalMoney=$bussiness->getDatas($sqlTotal);
+			$total_money=0;
+			if($totalMoney){
+				$row=$totalMoney[0];
+				$total_money=is_null($row['total_money'])?0:$row['total_money'];
+			}
+			$datas['total_money']=$total_money;
+			return $datas;
+		}
+		return $sql;
 	}
 }

@@ -12,7 +12,7 @@ class  business_user_userlog extends Business {
 	 *  */
 	public function addUserLog($user_id,$log_msg,$data){
 		$log_info['log_info'] = $log_msg;
-		$log_info['log_time'] = getGmtime()+C('time_zone')*3600;
+		$log_info['log_time'] = time();
 		//当前登录的用户id
 		$adm_cookie = \Core::cookie('admin');
 		$admin = unserialize(\Core::decrypt($adm_cookie));
@@ -45,7 +45,7 @@ class  business_user_userlog extends Business {
 		$money_log_info['user_id'] = $user_id;
 		$money_log_info['user_name'] = $user_name;
 		$money_log_info['user_mark'] = $user_mark;
-		$money_log_info['create_time'] = getGmtime()+C('time_zone')*3600;
+		$money_log_info['create_time'] = time();
 		//$money_log_info['create_time_ymd'] = to_date(TIME_UTC,"Y-m-d");
 		//$money_log_info['create_time_ym'] = to_date(TIME_UTC,"Ym");
 		//$money_log_info['create_time_y'] = to_date(TIME_UTC,"Y");
@@ -65,7 +65,7 @@ class  business_user_userlog extends Business {
 		$money_log_info['lock_money'] = floatval($money);
 		$money_log_info['account_lock_money'] = $userDao->getUserLockMoneyById($user_id);
 		$money_log_info['user_id'] = $user_id;
-		$money_log_info['create_time'] = getGmtime()+C('time_zone')*3600;
+		$money_log_info['create_time'] = time();
 		//$money_log_info['create_time_ymd'] = to_date(TIME_UTC,"Y-m-d");
 		//$money_log_info['create_time_ym'] = to_date(TIME_UTC,"Ym");
 		//$money_log_info['create_time_y'] = to_date(TIME_UTC,"Y");
@@ -85,7 +85,7 @@ class  business_user_userlog extends Business {
 		$score_log_info['score'] = floatval($score);
 		$score_log_info['account_score'] = $userDao->getUserScoreById($user_id);
 		$score_log_info['user_id'] = $user_id;
-		$score_log_info['create_time'] = getGmtime()+C('time_zone')*3600;
+		$score_log_info['create_time'] = time();
 		//$score_log_info['create_time_ymd'] = to_date(TIME_UTC,"Y-m-d");
 		//$score_log_info['create_time_ym'] = to_date(TIME_UTC,"Ym");
 		//$score_log_info['create_time_y'] = to_date(TIME_UTC,"Y");

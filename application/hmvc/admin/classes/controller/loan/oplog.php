@@ -10,7 +10,7 @@ class  controller_loan_oplog extends Controller {
 	}
 	//审核日志列表（全部）
 	public function do_op_log(){
-		\Core::view()->set('loan_id',\Core::get('loan_id',0))->load('loan_oplog');
+		\Core::view()->load('loan_oplog');
 	}
 	//获取贷款审核日志分页JSON数据
 	public function do_all_op_log_json(){
@@ -38,8 +38,8 @@ class  controller_loan_oplog extends Controller {
 			$where[\Core::postGet('qtype') . " like"] = "%" . \Core::postGet('query') . "%";
 		}
 		//高级查询条件
-		if(\Core::get('deal_id')!=null && is_numeric(\Core::get('deal_id'))){
-			$where['deal_id ']=\Core::get('deal_id');
+		if(\Core::get('loan_id')!=null && is_numeric(\Core::get('loan_id'))){
+			$where['deal_id ']=\Core::get('loan_id');
 		}
 		if(\Core::get('op_type')!=-1 && is_numeric(\Core::get('op_type'))){
 			$where['op_id ']=\Core::get('op_type');

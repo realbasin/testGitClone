@@ -5,7 +5,7 @@ class  business_sys_admin_admin extends Business {
 		
 	}
 	//管理员提成
-	public function adminreferrals($admin_id,$loanBase,$loanBid){
+	public function adminreferrals($admin_id,$admin_deal_info){
 		$result = array();
 		$result['status'] = 0;
 		$result['is_post_yott'] = false; //记录是否有Yott用户投标
@@ -17,23 +17,23 @@ class  business_sys_admin_admin extends Business {
 		if($mymanager  && floatval($mymanager['referrals_rate']) != 0) {
 			$money = 0;
 			$url = '';
-			if ($loanBase['repay_time_type'] == 0) {
+			if ($admin_deal_info['repay_time_type'] == 0) {
 				//天 投资金额 × 投资的天数 / 365天
-				$money = $loanBid['load_money'] * $loanBase['repay_time'] / 365;
+				$money = $admin_deal_info['load_money'] * $admin_deal_info['repay_time'] / 365;
 			} else {
 				//月标：投资金额 × 投资的月数 / 12个月
-				$money = $loanBid['money'] * $loanBase['repay_time'] / 12;
+				$money = $admin_deal_info['load_money'] * $admin_deal_info['repay_time'] / 12;
 			}
-			$memo = "[<a href='" . $url . "' target='_blank'>" . $loanBase['name'] . "</a>],满标放款";
+			$memo = "[<a href='" . $url . "' target='_blank'>" . $admin_deal_info['deal_name'] . "</a>],满标放款";
 			$m_data = array();
-			$m_data['deal_id'] = $loanBase['id'];
+			$m_data['deal_id'] = $admin_deal_info['id'];
 			$m_data['user_id'] = $admin_id['id'];
 			$m_data['money'] = $money * floatval($mymanager['referrals_rate']) * 0.01;
 			$m_data['rel_admin_id'] = 0;
 			$m_data['admin_id'] = $mymanager['id'];
 			$m_data['rel_admin_id'] = $mymanager['pid'];
-			$m_data['create_time'] = getGmtime()+C('time_zone')*3600;
-			$m_data['loan_money'] = $loanBid['money'];
+			$m_data['create_time'] = time();
+			$m_data['loan_money'] = $admin_deal_info['load_money'];
 			$m_data['memo'] = $memo;
 			//插入数据
 			$insertmdata = \Core::dao('sys_adminreferrals')->insert($m_data);

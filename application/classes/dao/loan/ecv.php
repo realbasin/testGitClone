@@ -29,4 +29,9 @@ class dao_loan_ecv extends Dao {
 	public function getMoneyById($id){
 		return $this->getDb()->from($this->getTable())->where(array('id'=>$id))->execute()->value('money');
 	}
+	//通过id获取使用数量
+	public function getUseCountById($id){
+		return $this->getDb()->from($this->getTable())->where(array('id'=>$id))->execute()->value('use_count');
+	}
+	
 }

@@ -393,37 +393,4 @@ function getDateFromRange($startdate, $enddate,$unixdate=false){
     }
     return $date;
 }
-
-//获取GMTime
-function getGmtime() {
-    return (time() - date('Z'));
-}
-
-/**
- * 日期格式化
- * @param $utc_time
- * @param string $format
- * @return bool|string
- */
-function toDate($utc_time, $format = 'Y-m-d H:i:s') {
-    if (empty ($utc_time)) {
-        return '';
-    }
-    $timezone = intval(C('time_zone'));
-    $time = $utc_time + $timezone * 3600;
-    return date($format, $time);
-}
-
-/**
- * 进行时间戳格式化
- * @param $str
- * @return int
- */
-function toTimeSpan($str) {
-    $timezone = intval(C('time_zone'));
-    $time = intval(strtotime($str));
-    if ($time != 0)
-        $time = $time - $timezone * 3600;
-    return $time;
-}
 ?>

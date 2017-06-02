@@ -20,6 +20,16 @@ class  business_sys_dealrepay extends Business {
 			return 0;
 	}
 	/**
+	 * 按月还款计算方式
+	 * $total_money 贷款金额
+	 * $rate 年化利率
+	 * 返回月应该还多少利息
+	 */
+	function av_it_formula($total_money, $rate)
+	{
+		return $total_money * $rate;
+	}
+	/**
 	 * 获取该期剩余本金
 	 * int $Idx  第几期
 	 * int $all_idx 总的是几期
