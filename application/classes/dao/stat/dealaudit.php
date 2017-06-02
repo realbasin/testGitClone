@@ -59,5 +59,36 @@ class dao_stat_dealaudit extends Dao {
 		$this->getDb()->select($select)->from($this->getTable())->where($where)->groupBy('admin_id')->orderBy($orderBy,$sort)->cache(C('stat_sql_cache_time'),__METHOD__.$startDate.$endDate.$order.$sort);
 		return $this->getDb()->execute()->key('admin_id')->rows();
 	}
+	
+	public function getStatCheckDetail($page,$pageSize,$startDate,$endDate,$adminId,$order='',$sort='desc',$ids=array()){
+		$select = "id,
+		date_time,
+		totals,
+		success_totals,
+		(success_totals)/(totals) as success_percent,
+		first_totals,
+		first_success_totals,
+		(first_success_totals)/(first_totals) as first_success_percent,
+		renew_totals,
+		renew_success_totals,
+		(renew_success_totals)/(renew_totals) as renew_success_percent,
+		true_totals,
+		true_success_totals";
+		$where=array();
+		$where['unix_timestamp(date_time) >=']=$startDate;
+		$where['unix_timestamp(date_time) <=']=$endDate;
+		$where['admin_id']=$adminId;
+		if($ids){
+			$where['id']=$ids;
+		}
+		$orderBy=$order;
+		if(!$orderBy){
+			$orderBy='date_time';
+		}
+		if(!in_array($orderBy, array('date_time','total_deals','success_deals','first_check_deals','renew_check_deals','renew_success_deals','true_deals','true_success_deals','success_percent','first_success_percent','renew_success_percent'))){
+			$orderBy='date_time';
+		}
+		return $this->getFlexPage($page,$pageSize,$select,$where,array($orderBy=>$sort));
+	}
 
 }
