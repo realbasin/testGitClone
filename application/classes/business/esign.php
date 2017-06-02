@@ -53,7 +53,7 @@ class  business_esign extends Business {
                     'accountId_error_msg' => $responseData['accountId_error_msg'],
                     'type' => 1,
                     'is_effect' => 1,
-                    'create_time' => getGmtime(),
+                    'create_time' => time(),
                 );
                 $res = $this->saveUserSignature($userSign);
                 /*-----------------------end---------------------*/
@@ -133,7 +133,7 @@ class  business_esign extends Business {
                     'accountId_error_msg' => $accountData['accountId_error_msg'],
                     'is_effect' => 1,
                     'type' => $type,
-                    'create_time' => getGmtime(),
+                    'create_time' => time(),
                 );
                 $res = $this->saveUserSignature($userSign, $type);
                 if ($accountData['errCode'] > 0 || empty($res)) {

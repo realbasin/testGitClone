@@ -75,7 +75,7 @@
                         <td><?php echo $v['use_deal_load'] ? '是' : '否';?></td>
                         <td><?php echo $v['is_effect'] ? '是' : '否';?></td>
                         <td><?php echo $v['is_delete'] ? '已删除' : '否';?></td>
-                        <td><?php echo toDate($v['create_time']);?></td>
+                        <td><?php echo date($v['create_time']);?></td>
                         <td></td>
                     </tr>
                 <?php } ?>
