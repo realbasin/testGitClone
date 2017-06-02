@@ -59,7 +59,7 @@ $menu = array(
 				)
 			),
 			3 => array(
-				'text' => '会员管理',
+				'text' => '会员管理', 
 				'subtext'=>'会员管理',
 				'img'=>'user',
 				'list' => array(

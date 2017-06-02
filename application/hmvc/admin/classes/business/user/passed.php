@@ -8,8 +8,12 @@ class  business_user_passed extends Business {
     //查询用户认证资料是否已审核
     public function passed($user_id)
     {
-        $user_info = M("User")->getById($user_id);
-
+        $userDao = \Core::dao('user_user');
+        $usercreditfileDao = \Core::dao('user_usercreditfile');
+        $dealloantypeDao = \Core::dao('loan_dealloantype');
+        $usercredittypeDao = \Core::dao('user_usercredittype');
+        
+        $user_info=$userDao->getUser('*',$user_id);
         $field_array = array(
             "credit_identificationscanning" => "idcardpassed",
             "credit_contact" => "workpassed",
@@ -25,7 +29,7 @@ class  business_user_passed extends Business {
             "credit_seal" => "sealpassed",
         );
 
-        $t_credit_file = M("UserCreditFile")->where("user_id=" . $user_id)->findAll();
+        $t_credit_file = $usercreditfileDao->getByUserId($user_id);
         foreach ($t_credit_file as $k => $v) {
             $file_list = array();
             if ($v['file'])
@@ -38,16 +42,16 @@ class  business_user_passed extends Business {
         }
 
 
-        $loantype = intval($_REQUEST['loantype']);
+        $loantype = intval(\Core::getPost('loantype'));
         $needs_credits = array();
         if ($loantype > 0) {
-            $loantypeinfo = M("DealLoanType")->getById($loantype);
+            $loantypeinfo = $dealloantypeDao->getDealLoanTypes('*',array('id'=>$loantype));
             if ($loantypeinfo['credits'] != "") {
                 $needs_credits = unserialize($loantypeinfo['credits']);
             }
         }
 
-        $credit_type = load_auto_cache("credit_type");
+        $credit_type = $usercredittypeDao->getCreditType();
         $credit_list = array();
         foreach ($credit_type['list'] as $k => $v) {
 
@@ -61,6 +65,7 @@ class  business_user_passed extends Business {
                 }
             }
         }
+
         $passed = 1;
         foreach ($credit_list as $k => $v) {
             if ($v['credit']['passed'] != 1)
