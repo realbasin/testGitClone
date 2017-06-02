@@ -111,11 +111,11 @@ class  controller_loan_loan extends controller_sysBase {
 	 * mark：生成还款计划/回款计划，扣除理财人冻结资金，发放邀请返利等
 	 */
 	public function do_loans(){
-		$nowtime = time();
 		$result = array();
 		$loanbid_info = array();
 		$loanbase_info = array();
 		$result['code'] = '000';
+		$result['status'] = 0;
 		$deal_id = \Core::get('id',0);
 		$loanbid_info['repay_start_time'] = \Core::get('repay_start_time','');
 		if(!$deal_id) {
@@ -158,101 +158,101 @@ class  controller_loan_loan extends controller_sysBase {
 		$loanbase_info['is_effect'] = 0;
 		$loanBid['deal_status'] = $loanbid_info['deal_status'] = 4;
 		$loanbid_info['is_has_loans'] = 1;
-		//TODO 开启事务操作
-		//更新贷款状态
-		$effectBidNumbers =$loanBidDao->updateData(array('loan_id'=>$deal_id),$loanbid_info);
-		$effectBaseNumbers = $loanBaseDao->update($loanbase_info,array('id'=>$deal_id));
-		if($effectBidNumbers && $effectBaseNumbers){
+		// 开启事务操作
+		\Core::db()->begin();
+		try{
+			//更新贷款状态
+			$effectBidNumbers =$loanBidDao->updateData(array('loan_id'=>$deal_id),$loanbid_info);
+			$effectBaseNumbers = $loanBaseDao->update($loanbase_info,array('id'=>$deal_id));
+			if($effectBidNumbers && $effectBaseNumbers){
 
-			//放款，修改用户余额
-			$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
-			$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],招标成功";
-			$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],$loanBase['borrow_amount'],$log_msg,3);
-			if($editMoneyStatus === false) {
-				$result['message'] = "放款失败，修改余额出错";
-				return @json_encode($result);
-			}
-			//收取服务费
-			//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
-			$servicesfee = 0.05;
-			$services_fee = $loanBase['borrow_amount'] * floatval($servicesfee) / 100;
-			//服务费，修改用户余额
-			if($services_fee){
+				//放款，修改用户余额
 				$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
-				$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],服务费";
-				$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],-$services_fee,$log_msg,14);
+				$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],招标成功";
+				$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],$loanBase['borrow_amount'],$log_msg,3);
 				if($editMoneyStatus === false) {
-					$result['message'] = "放款失败，收取服务费出错";
-					return @json_encode($result);
+					$result['message'] = "放款失败，修改余额出错";
+					$result['status'] = 1;
+					//return @json_encode($result);
 				}
-			}
-			//是否本地标，扣除本地标风险保证金
-			$amt_common = $loanextDao->getAmtconfig($deal_id);
-			if($amt_common['l_guarantees_amt'] != 0){
-				$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
-				$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],咨询服务费";
-				$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($loanBase['user_id'],-$amt_common['l_guarantees_amt'],$log_msg,120);
-				if($editLockMoneyStatus === false){
-					$result['message'] = "放款失败，扣除本地标风险保证金失败";
-					return @json_encode($result);
+				//收取服务费
+				//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
+				$servicesfee = 0.05;
+				$services_fee = $loanBase['borrow_amount'] * floatval($servicesfee) / 100;
+				//服务费，修改用户余额
+				if($services_fee){
+					$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
+					$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],服务费";
+					$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],-$services_fee,$log_msg,14);
+					if($editMoneyStatus === false) {
+						$result['message'] = "放款失败，收取服务费出错";
+						$result['status'] = 1;
+						//return @json_encode($result);
+					}
 				}
-			}
-			//TODO 积分变动
-			//扣除投资人金额
-			$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
-			if($load_list) {
-				$result = \Core::business('sys_dealload')->dealLoadUserMoney($load_list);
-				if($result['status'] = 1){
-					return @json_encode($result);
-				}
-			}else {
-				$result['message'] = "放款失败，投资不存在";
-				return @json_encode($result);
-			}
-		}
-		//更新贷款状态为已放款
-		$load_loan = \Core::dao('loan_dealload')->update(array('is_has_loans'=>1),array('deal_id'=>$deal_id));
-		//TODO 分销相关
-		//生成还款计划
-		$repayplan = \Core::business('sys_dealrepay')->makeRepayPlan($loanBase,$loanBid,$loanExt,$loanbid_info['loan_time']);
-		if($repayplan){
-			//放款成功
-			$loanBaseDao->update(array('is_effect'=>1,'loan_status'=>1),array('id'=>$deal_id));
-			//发送短信发送邮件
+				//是否本地标，扣除本地标风险保证金
+				$result = \Core::business('sys_dealload')->dealLoadBond($deal_id,$loanBase['user_id']);
 
-			//是否存在优投用户，存在发送推送
-			if($result['yott_users']) {
+				//TODO 积分变动
+				//扣除投资人金额
+				$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
+				if($load_list) {
+					$result = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
+				}else {
+					$result['message'] = "放款失败，投资不存在";
+					$result['status'] = 1;
+				}
+			}
+			//更新贷款状态为已放款
+			$load_loan = \Core::dao('loan_dealload')->update(array('is_has_loans'=>1),array('deal_id'=>$deal_id));
+			//TODO 分销相关
+			//生成还款计划
+			$repayplan = \Core::business('sys_dealrepay')->makeRepayPlan($loanBase,$loanBid,$loanExt,$loanbid_info['loan_time']);
+			if($repayplan) {
+				//放款成功
+				$loanBaseDao->update(array('is_effect' => 1, 'loan_status' => 1), array('id' => $deal_id));
+				//发送短信发送邮件
 
+				//是否存在优投用户，存在发送推送
+				if ($result['yott_users']) {
+					$result['code'] = 200;
+					$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
+				}
+				//TODO 发借款成功邮件
+
+				//TODO 发借款成功站内信
+
+				//TODO 发送借款协议范本
+				//手机端自动提现
+				if ($loanBase['is_mobile'] > 0) {
+					//$carryMoney = \Core::business('user_');
+				}
 				$result['code'] = 200;
-				$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
+				$result['message'] = "放款成功,还/回款计划已生成";
+			}else{
+				$result['message'] = "放款失败";
 			}
-			//TODO 发借款成功邮件
-
-			//TODO 发借款成功站内信
-
-			//TODO 发送借款协议范本
-			//手机端自动提现
-			if ($loanBase['is_mobile'] > 0) {
-				$carryMoney = \Core::business('user_');
-			}
-			$result['code'] = 200;
-			$result['message'] = "放款成功,还/回款计划已生成";
+		}catch(\Exception $e){
+			$result['message'] = '系统错误';
 			return @json_encode($result);
-		}else{
-			$result['message'] = "放款失败";
+		}finally{
+			if($result['code'] == 200 && $result['status'] == 0){
+				\Core::db()->commit();
+			}else{
+				\Core::db()->rollback();
+			}
 			return @json_encode($result);
 		}
-
 	}
 
 	/**
 	 * 流标还返
 	 * $id deal_id
-	 * $type 0 普通返回，  1资金托管
 	 */
 	public function do_received(){
 		$result = array();
 		$result['code'] = '000';
+		$result['status'] = 0;
 		$deal_id = \Core::get('id',0);
 		$reason = \Core::get('reason','');
 		if($deal_id == 0) {
@@ -279,106 +279,57 @@ class  controller_loan_loan extends controller_sysBase {
 			return @json_encode($result);
 		}
 		if (intval($loanBid['deal_status']) >= 4) {
-			$result['info'] = "返还失败，借款状态为还款状态";
+			$result['message'] = "返还失败，借款状态为还款状态";
 			return @json_encode($result);
 		}
 		//流标时返还
 		//投资人列表
 		$dealLoadDao = \Core::dao('loan_dealload');
-		$load_list = $dealLoadDao->getLoads($deal_id,'id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
-		if($load_list) {
-			$yott_users = array();
-			$userDao = \Core::dao('user_user');
-			foreach ($load_list as $v) {
-				//退还使用的优惠券
-				$bonus_msg = '';
-				$ecv_money = 0;
-				if ($v['ecv_id'] > 0) {
-					//红包金额
-					$ecv_money =  \Core::dao('loan_ecv')->getMoneyById($v['ecv_id']);
-					//红包使用数量-1
-					$use_count =  \Core::dao('loan_ecv')->getUseCountById($v['ecv_id']);
-					\Core::dao('loan_ecv')->update(array('id'=>$v['ecv_id']),array('use_count'=>$use_count-1));
-				}
-				$bonus_money = 0;
-				if ($v['bonus_user_id'] > 0) {
-					//优惠券金额
-					$bonus_rule_id = \Core::dao('user_bonususer')->getBonusRuleIdByUserId($v['bonus_user_id']);
-					$bonus_info = \Core::dao('user_bonusrule')->find(array('id'=>$bonus_rule_id));
-					$bonus_name = \Core::dao('user_bonustype')->getBonusTypeById($bonus_info['bonus_type_id']);
-					$bonus_money = $bonus_info['money'];
-					$update_bonus_info = array();
-					$update_bonus_info['module'] = '';
-					$update_bonus_info['module_pk_Id'] = 0;
-					$update_bonus_info['used_time'] = 0;
-					//返还优惠券
-					\Core::dao('user_bonususer')->update(array('id'=>$bonus_rule_id),$v['bonus_user_id']);
-					$bonus_msg .= ",返还所使用的优惠券[" . $bonus_name['bonus_type_name'] . "]金额" . $bonus_money;
-				}
-				if ($v['money'] - $ecv_money > 0) {
-					$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
-					$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],流标返还";
-					if($v['is_old_loan'] == 0) {
-						//使用了优惠券
-						//将用户冻结资金返回到用户余额
-						//记录用户金钱日志和用户日志
-						$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],流标返还" . $bonus_msg;
-
-					}
-					$return_money = ($v['money']-$ecv_money-$bonus_money);
-					$editMoneyStatus = false;
-					//修改用户余额
-					$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($v['user_id'],$return_money);
-					$editMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($v['user_id'],-$return_money);
-					if($editMoneyStatus === false) {
-						$result['message'] = "返还失败，修改余额出错";
-						return @json_encode($result);
-					}else {
-						//修改成功，记录日志
-						$loginfoid = \Core::business('user_userlog')->addUserLog($v['user_id'], $log_msg, array('money' => $return_money));
-						$moneyloginfoid = \Core::business('user_userlog')->addUserMoneyLog($v['user_id'], $log_msg, $return_money, 19);
-						$lockmoneyloginfoid = \Core::business('user_userlog')->addUserLockMoneyLog($v['user_id'], $log_msg, -$return_money, 19);
-						//未使用优惠券
+		$load_list = $dealLoadDao->getLoads($deal_id,'id,deal_id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
+		//开启事务
+		\Core::db()->begin();
+		try{
+			if($load_list) {
+				$result = \Core::business('sys_dealload')->dealLoadUserBackMoney($load_list);
+				if($result['status'] == 0){
+					//修改贷款状态，并返回结果信息
+					$bad_data['bad_msg'] = $reason;
+					if($dealLoadDao->find(array('is_repay'=>0,'deal_id'=>$deal_id))) {
+						$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
+						$result['message'] = '部分返还';
+						$result['code'] = 200;
+					}else{
+						$bad_data['is_has_received'] = 1;
+						$bad_data['bad_time'] = time();
+						//$bad_data['bad_date'] = to_date(TIME_UTC, "Y-m-d");
+						$bad_data['deal_status'] = 3;
+						$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
+						$result['message'] = '返还成功';
+						$result['code'] = 200;
 					}
 				}
-				//修改返还状态
-				$dealLoadDao->update(array('is_repay'=>1),array('id'=>$v['id']));
-				//获取投标用户的用户码
-				$admin_id = \Core::dao('user_user')->getUser($v['user_id'],'id,admin_id,platform_code');
-				//是否优投用户
-				if($admin_id[$v['user_id']]['platform_code'] == 'yott') {
-					//记录优投用户id
-					$yott_users[] = $v['user_id'];
-				}
-			}
-			//TODO 推送优投信息
-			//修改贷款状态，并返回结果信息
-			$bad_data['bad_msg'] = $reason;
-			if($dealLoadDao->find(array('is_repay'=>0,'deal_id'=>$deal_id))) {
-				$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
-				$result['message'] = '部分返还';
-				$result['code'] = 200;
 			}else{
-				$bad_data['is_has_received'] = 1;
-				$bad_data['bad_time'] = getGmtime()+C('time_zone')*3600;
-				//$bad_data['bad_date'] = to_date(TIME_UTC, "Y-m-d");
-				$bad_data['deal_status'] = 3;
-				$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
-				$result['message'] = '返还成功';
-				$result['code'] = 200;
+				$result['message'] = '返还失败，投资不存在';
+				$result['status'] = 1;
 			}
-		}else{
-			$result['message'] = '返还失败，投资不存在';
+			//保存贷款状态更改信息
+			$deal_log = array();
+			$deal_log['deal_id'] = $deal_id;
+			$deal_log['user_id'] = $loanBase['user_id'];
+			$deal_log['type'] = 19;
+			$deal_log['create_time'] = time();
+			\Core::dao('loan_dealstatuslog')->insert($deal_log);
+		}catch(\Exception $e){
+			$result['message'] = '系统错误';
+			return @json_encode($result);
+		}finally{
+			if($result['code'] == 200 && $result['status'] == 0){
+				\Core::db()->commit();
+			}else{
+				\Core::db()->rollback();
+			}
 			return @json_encode($result);
 		}
-		//保存贷款状态更改信息
-		$deal_log = array();
-		$deal_log['deal_id'] = $deal_id;
-		$deal_log['user_id'] = $loanBase['user_id'];
-		$deal_log['type'] = 19;
-		$deal_log['create_time'] = getGmtime()+C('time_zone')*3600;
-		\Core::dao('loan_dealstatuslog')->insert($deal_log);
-		return @json_encode($result);
 	}
 	//贷款详细信息编辑
 	public function do_loan_show_edit(){
