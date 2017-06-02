@@ -32,7 +32,7 @@ class  business_sys_admin_admin extends Business {
 			$m_data['rel_admin_id'] = 0;
 			$m_data['admin_id'] = $mymanager['id'];
 			$m_data['rel_admin_id'] = $mymanager['pid'];
-			$m_data['create_time'] = getGmtime()+C('time_zone')*3600;
+			$m_data['create_time'] = time();
 			$m_data['loan_money'] = $loanBid['money'];
 			$m_data['memo'] = $memo;
 			//插入数据
