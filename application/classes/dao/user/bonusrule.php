@@ -26,4 +26,17 @@ class dao_user_bonusrule extends Dao {
 		return 'bonus_rule';
 	}
 
+    /**
+     * 根据优惠券类型获取对应的规则列表
+     * @param $bonusTypeId
+     * @return array
+     */
+	public function getBonusRuleByTypeId($bonusTypeId) {
+	    $where = array('bonus_type_id'=>$bonusTypeId);
+	    return $this->getDb()->select('*')->from($this->getTable())->where($where)->orderBy('id')->execute()->rows();
+    }
+
+	public function getMoneyById($id){
+		return $this->getDb()->from($this->getTable())->where(array('id'=>$id))->execute()->value('money');
+	}
 }

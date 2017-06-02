@@ -36,7 +36,9 @@
   <i class="home"></i>
   <span>平台统计</span>
   <i class="arrow"></i>
-  <span>审核业绩统计</span>
+   <span><a href="<?php echo adminUrl('stat_platform','check');?>">审核汇总</a></span>
+  <i class="arrow"></i>
+  <span>审核业绩统计 - <?php echo $admin_name;?></span>
 
 </div>
 <div class="line10"></div>
@@ -64,44 +66,50 @@
 <script>
 $(function(){
 	$("#flexitable").flexigrid({
-        url: '<?php echo adminUrl('stat_platform','check_json');?>'+'&'+$("#form1").serialize(),
+        url: '<?php echo adminUrl('stat_platform','check_detail_json');?>'+'&'+$("#form1").serialize()+'&admin_id=<?php echo $admin_id;?>',
         colModel : [
-			{display: '姓名', name : 'admin_name', width : 60, sortable : true, align: 'center'},
-			{display: '审核笔数', name : 'total_deals', width : 80, sortable : true, align: 'center'},
-			{display: '审核成功数', name : 'success_deals', width : 70, sortable : true, align: 'center'},
+			{display: '时间', name : 'date_time', width : 80, sortable : true, align: 'center'},
+			{display: '审核笔数', name : 'totals', width : 80, sortable : true, align: 'center'},
+			{display: '审核成功数', name : 'success_totals', width : 70, sortable : true, align: 'center'},
 			{display: '审核成功率', name : 'success_percent', width : 60, sortable : true, align: 'center'},
-			{display: '首借审核数', name : 'first_check_deals', width : 70, sortable : true, align: 'center'},
-			{display: '首借审核成功数', name : 'first_success_deals', width : 90, sortable : true, align: 'center'},
+			{display: '首借审核数', name : 'first_totals', width : 70, sortable : true, align: 'center'},
+			{display: '首借审核成功数', name : 'first_success_totals', width : 90, sortable : true, align: 'center'},
 			{display: '首借审核成功率', name : 'first_success_percent', width : 90, sortable : true, align: 'center'},
-			{display: '续借审核数', name : 'renew_check_deals', width : 70, sortable : true, align: 'center'},
-			{display: '续借审核成功数', name : 'renew_success_deals', width : 90, sortable : true, align: 'center'},
+			{display: '续借审核数', name : 'renew_totals', width : 70, sortable : true, align: 'center'},
+			{display: '续借审核成功数', name : 'renew_success_totals', width : 90, sortable : true, align: 'center'},
 			{display: '续借审核成功率', name : 'renew_success_percent', width : 90, sortable : true, align: 'center'},
-			{display: '复审总数', name : 'true_deals', width : 50, sortable : true, align: 'center'},
-			{display: '复审成功数', name : 'true_success_deals', width : 70, sortable : true, align: 'center'}
+			{display: '复审总数', name : 'true_totals', width : 50, sortable : true, align: 'center'},
+			{display: '复审成功数', name : 'true_success_totals', width : 70, sortable : true, align: 'center'}
             ],
         buttons : [
-            {display: '<i class="fa fa-file-excel-o"></i> 全部导出为Excel', name : 'csv', bclass : 'csv', title : '将选择的行或者全部数据导出为Excel', onpress : flexPress }
+            {display: '<i class="fa fa-file-excel-o"></i> 导出Excel', name : 'csv', bclass : 'csv', title : '将选择的行或者全部数据导出为Excel', onpress : flexPress }
         ],
-        sortname: "total_deals",
+        sortname: "date_time",
         sortorder: "desc",
-        title: '审核业绩统计',
-        usepager:false,
+        title: '审核业绩统计 - <?php echo $admin_name;?>',
         columnControl:false
     });
     
     $('#btnsearch').click(function(){
-        $("#flexitable").flexOptions({url: '<?php echo adminUrl('stat_platform','check_json');?>&'+$("#form1").serialize(),query:'',qtype:''}).flexReload();
+        $("#flexitable").flexOptions({url: '<?php echo adminUrl('stat_platform','check_detail_json');?>&'+$("#form1").serialize()+'&admin_id=<?php echo $admin_id;?>',query:'',qtype:''}).flexReload();
     });
 });
 
 function flexPress(name, grid) {
 	if(name=='csv'){
-        flexExport();
+       var itemlist = new Array();
+        if($('.trSelected',grid).length>0){
+            $('.trSelected',grid).each(function(){
+            	itemlist.push($(this).attr('data-id'));
+            });
+        }
+        flexExport(itemlist);
 	}
 }
 
-function flexExport(){
-	 var url= '<?php echo adminUrl('stat_platform','check_export');?>&'+$("#flexitable").flexSimpleSearchQueryString(true)+"&"+$("#form1").serialize();
+function flexExport(id){
+	 var ids = id.join(',');
+	 var url= '<?php echo adminUrl('stat_platform','check_detail_export');?>&'+$("#flexitable").flexSimpleSearchQueryString(true)+"&"+$("#form1").serialize()+'&admin_id=<?php echo $admin_id;?>&admin_name=<?php echo $admin_name;?>&id='+ids;
      window.location.href =url;
 }
 
@@ -129,7 +137,7 @@ $('#daterange').dateRangePicker({
 
 $('#syshelp').on("click",function(){
 	var d = dialog({
-        content: "可以导出全部数据到Excel",
+        content: "<li>选择需要导出的行可以导出指定数据<li>不选择任何行可以导出全部数据",
         quickClose: true
         });
        d.show(this);

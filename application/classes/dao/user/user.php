@@ -283,4 +283,21 @@ class dao_user_user extends Dao {
 	public function getStatUserRegist($startDate,$endDate){
 		return $this->getDb()->select("FROM_UNIXTIME(create_time,'%Y-%m-%d') as createdate,count(id) as usercount")->from($this->getTable())->where(array('create_time >='=>$startDate,'create_time <='=>$endDate))->groupBy('createdate')->cache(C('stat_sql_cache_time'),__METHOD__.$startDate.$endDate)->execute()->rows();
 	}
+	//add by zlz 201706011544
+	//通过id获取用户名
+	public function getUserNameById($id){
+		return $this->getDb()->from($this->getTable())->where(array('id'=>$id))->execute()->value('user_name');
+	}
+	//通过id获取用户类型
+	public function getUserMarkById($id){
+		return $this->getDb()->from($this->getTable())->where(array('id'=>$id))->execute()->value('user_mark');
+	}
+	//获取用户冻结资金余额
+	public function getUserLockMoneyById($user_id){
+		return $this->getDb()->from($this->getTable())->where(array('id'=>$user_id))->execute()->value('lock_money');
+	}
+	//获取用户当前积分
+	public function getUserScoreById($user_id){
+		return $this->getDb()->from($this->getTable())->where(array('id'=>$user_id))->execute()->value('score');
+	}
 }
