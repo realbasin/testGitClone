@@ -496,7 +496,7 @@ class  controller_stat_platform extends controller_sysBase {
 			$adminRow=$admins[$admin_id];
 			$adminName=$adminRow['admin_real_name']?$adminRow['admin_real_name']:$adminRow['admin_name'];
 		}else{
-			$adminName=$id.'(已删除)';
+			$adminName=$admin_id.'(已删除)';
 		}
 		\Core::view() -> set('datestart', $datestart);
 		\Core::view() -> set('dateend', $dateend);
