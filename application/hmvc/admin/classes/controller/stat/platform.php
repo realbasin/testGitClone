@@ -636,7 +636,7 @@ class  controller_stat_platform extends controller_sysBase {
 		$header['复审成功数'] = 'integer';
 		//导出
 		$this -> log('导出审核人员汇总('.$admin_name.' '. $datestart . ' - ' . $dateend . ')', 'export');
-		exportExcel('导出审核人员汇总('.$admin_name.' '. $datestart . ' - ' . $dateend . ')', $header, $datas['rows']);
+		exportExcel('审核人员汇总('.$admin_name.' '. $datestart . ' - ' . $dateend . ')', $header, $datas['rows']);
 	}
 	
 	//自动投标
