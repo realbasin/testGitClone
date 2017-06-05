@@ -9,7 +9,7 @@ class dao_user_user extends Dao {
 				,'user_name'//会员名
 				,'short_name'//缩略名
 				,'brief'//担保方介绍
-				,'header'//头部
+				,'header'//头部\n
 				,'company_brief'//company_brief
 				,'history'//发展史
 				,'content'//内容
