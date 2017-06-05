@@ -177,7 +177,7 @@ class  controller_loan_loan extends controller_sysBase {
 				//收取服务费
 				//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
 				$config_common = unserialize($loanExt['config_common']);
-				$servicesfee =$config_common['services_fee'];
+				$servicesfee = \Core::arrayKeyExists('services_fee',$config_common)?\Core::arrayGet('services_fee',$config_common):0;
 				$services_fee = $loanBase['borrow_amount'] * floatval($servicesfee) / 100;
 				//服务费，修改用户余额
 				if($services_fee){
@@ -198,6 +198,7 @@ class  controller_loan_loan extends controller_sysBase {
 				$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
 				if($load_list) {
 					$result = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
+					//\Core::dump($result);
 				}else {
 					$result['message'] = "放款失败，投资不存在";
 					$result['status'] = 1;
@@ -210,11 +211,11 @@ class  controller_loan_loan extends controller_sysBase {
 			$repayplan = \Core::business('sys_dealrepay')->makeRepayPlan($loanBase,$loanBid,$loanExt,$loanbid_info['loan_time']);
 			if($repayplan) {
 				//放款成功
-				$loanBaseDao->update(array('is_effect' => 1, 'loan_status' => 1), array('id' => $deal_id,'is_effect'=>0));
+				$loanBaseDao->update(array('is_effect' => 1, 'loan_status' => 1), array('id' => $deal_id));
 				//发送短信发送邮件
 
 				//TODO 是否存在优投用户，存在发送推送
-				if ($result['yott_users']) {
+				if (isset($result['yott_users'])) {
 					$result['code'] = 200;
 					$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
 				}
@@ -230,7 +231,9 @@ class  controller_loan_loan extends controller_sysBase {
 				$result['code'] = 200;
 				$result['message'] = "放款成功,还/回款计划生成中";
 			}else{
+				$result['code'] = '000';
 				$result['message'] = "放款失败";
+				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
 			$result['message'] = '系统错误';

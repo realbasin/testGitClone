@@ -9,6 +9,7 @@ class  business_sys_dealload extends Business {
 		$result = array();
 		$result['yott_users'] = array();
 		$result['status'] = 0;
+		$result['code'] = '000';
 		$userDao = \Core::dao('user_user');
 		$loanBaseDao = \Core::dao('loan_loanbase');
 		$loanBidDao = \Core::dao('loan_loanbid');
@@ -64,6 +65,7 @@ class  business_sys_dealload extends Business {
 			}
 			//TODO 管理员提成
 			//获取投标用户的所属管理员id
+			addGerman('loanSuccess',array('user_id'=>$v['user_id']),'admin');
 			$admin_id = \Core::dao('user_user')->getUser($v['user_id'],'id,admin_id,platform_code');
 			if($admin_id[$v['user_id']]) {
 				$loanBid = $loanBidDao->getOneLoanById($v['deal_id'],'load_money');

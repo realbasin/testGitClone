@@ -22,9 +22,17 @@ class  business_user_userinfo extends Business {
 	 * return 成功返回true 失败返回false
 	 *  */
 	public function editUserMoney($user_id,$money,$log_msg,$type){
+		//TODO 加锁
 		$flag = false;
+		$userDb = \Core::db();
+		if($userDb->isLocked()) {
+			return false;
+		}
+		$userDb->lock();
+
 		$sql = "update _tablePrefix_user set money_encrypt = AES_ENCRYPT(ROUND(ifnull(AES_DECRYPT(money_encrypt,'".AES_DECRYPT_KEY."'),0) + ".floatval($money).",2),'".AES_DECRYPT_KEY."') where id =".$user_id;
-		$flag = \Core::db() -> execute($sql);
+		$flag = $userDb -> execute($sql);
+		$userDb->unlock();
 		//修改金额后记录日志
 		if($flag === false){
 			return $flag;
@@ -43,7 +51,13 @@ class  business_user_userinfo extends Business {
 	public function editUserLockMoney($user_id,$money,$log_msg,$type){
 		$flag = false;
 		$sql = 'update _tablePrefix_user set lock_money = lock_money + '.floatval($money).' where id ='.$user_id;
-		$flag = \Core::db() -> execute($sql);
+		$userDb = \Core::db();
+		if($userDb->isLocked()) {
+			return false;
+		}
+		$userDb->lock();
+		$flag = $userDb -> execute($sql);
+		$userDb->unlock();
 		//修改后记录日志
 		if($flag === false){
 			return $flag;
@@ -61,7 +75,13 @@ class  business_user_userinfo extends Business {
 	public function editUserScore($user_id,$score,$log_msg,$type){
 		$flag = false;
 		$sql = 'update _tablePrefix_user set score = score + '.floatval($score).' where id ='.$user_id;
-		$flag = \Core::db() -> execute($sql);
+		$userDb = \Core::db();
+		if($userDb->isLocked()) {
+			return false;
+		}
+		$userDb->lock();
+		$flag = $userDb -> execute($sql);
+		$userDb->unlock();
 		//修改后记录日志
 		if($flag === false){
 			return $flag;

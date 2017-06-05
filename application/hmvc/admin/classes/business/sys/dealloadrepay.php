@@ -17,6 +17,8 @@ class  business_sys_dealloadrepay extends Business {
 			//投资者不存在
 			return false;
 		}
+		$return = false;
+		unset($load_repay['manage_money_rebate']);
 		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
 		foreach ($load_users as $k=>$v){
 			$load_repay['user_id'] = $v['user_id'];
@@ -34,8 +36,9 @@ class  business_sys_dealloadrepay extends Business {
 			}
 
 			$load_repay['interest_money'] =  $load_repay['repay_money'] - $load_repay['self_money'];
-			//TODO 投资者管理费率 从config_common字段中获取
-			$user_loan_manage_fee = 0;
+			//投资者管理费率 从config_common字段中获取
+			$config_common = unserialize($loan['config_common']);
+			$user_loan_manage_fee = \Core::arrayKeyExists('user_loan_manage_fee',$config_common)?\Core::arrayGet($config_common,'user_loan_manage_fee'):0;
 			$load_repay['manage_money'] = $v['money']* floatval($user_loan_manage_fee)/100;
 			if($v['is_winning']==1 && (int)$v['income_type']==2 && (float)$v['income_value']!=0){
 				$load_repay['reward_money'] = $load_repay['interest_money'] * (float)$v['income_value'] * 0.01;
@@ -54,12 +57,17 @@ class  business_sys_dealloadrepay extends Business {
 					unset($load_repay['manage_interest_money_rebate']);
 					unset($load_repay['has_repay']);
 				}
-				$dealLoadRepayDao->update($load_repay,array('deal_id'=>$load_repay['deal_id'],'l_key'=>$load_repay['l_key'],'user_id'=>$v['user_id']));
+				$return = $dealLoadRepayDao->update($load_repay,array('deal_id'=>$load_repay['deal_id'],'l_key'=>$load_repay['l_key'],'user_id'=>$v['user_id']));
 			}else{
-				$dealLoadRepayDao->insert($load_repay);
+				$return = $dealLoadRepayDao->insert($load_repay);
 			}
 			$load_repay_plan[] = $load_repay;
 		}
-		return $load_repay_plan;
+		if($return === false) {
+			return $return;
+		}else {
+			return $load_repay_plan;
+		}
+
 	}
 }

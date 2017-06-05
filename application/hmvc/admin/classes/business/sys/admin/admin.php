@@ -13,7 +13,7 @@ class  business_sys_admin_admin extends Business {
 			$result['is_post_yott'] = true;
 		}
 		//获取部门成员
-		$mymanager = \Core::dao('sys_admin_adminext')->getAdminById($admin_id,'id,referrals_rate,pid');
+		$mymanager = \Core::dao('sys_admin_admin')->getAdminById($admin_id,'id,pid');
 		if($mymanager  && floatval($mymanager['referrals_rate']) != 0) {
 			$money = 0;
 			$url = '';
