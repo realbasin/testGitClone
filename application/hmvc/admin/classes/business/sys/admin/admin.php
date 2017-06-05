@@ -5,7 +5,7 @@ class  business_sys_admin_admin extends Business {
 		
 	}
 	//管理员提成
-	public function adminreferrals($admin_id,$admin_deal_info){
+	public function adminReferrals($admin_id,$admin_deal_info){
 		$result = array();
 		$result['status'] = 0;
 		$result['is_post_yott'] = false; //记录是否有Yott用户投标
@@ -46,8 +46,8 @@ class  business_sys_admin_admin extends Business {
 					$result['message'] = "放款失败，更新管理员提成金额失败";
 				}
 			}
-			//部门
-			if($mymanager['pid'] > 0) {
+			//部门提成无用，先注释
+			/*if($mymanager['pid'] > 0) {
 				//获取提成比
 				$mydepartment = \Core::dao('sys_admin_adminext')->getAdminById($mymanager['pid'],'id,referrals_rate,pid');
 				$d_data['deal_id'] = $m_data['deal_id'];
@@ -69,7 +69,7 @@ class  business_sys_admin_admin extends Business {
 						$result['message'] = "放款失败，更新管理员提成金额失败";
 					}
 				}
-			}
+			}*/
 		}
 		return $result;
 	}

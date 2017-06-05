@@ -41,6 +41,7 @@ class  business_sys_dealload extends Business {
 					$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($v['user_id'],-$realmoney,$log_msg,2);
 					if($editLockMoneyStatus === false){
 						$result['message'] = "放款失败，扣除投资金额失败";
+						$result['status'] = 1;
 					}else {
 						//修改放款状态为已放款
 						$updateloan = array();
@@ -52,7 +53,8 @@ class  business_sys_dealload extends Business {
 						$updateloanstatus = \Core::dao('loan_dealload')->update($updateloan,$updatewhere);
 						if($updateloanstatus === false) {
 							$result['message'] = "放款失败，修改放款状态失败";
-							return @json_encode($result);
+							$result['status'] = 1;
+							//return @json_encode($result);
 						}
 					}
 				}else {
@@ -60,14 +62,14 @@ class  business_sys_dealload extends Business {
 					$result['status'] = 1;
 				}
 			}
-			//管理员提成
+			//TODO 管理员提成
 			//获取投标用户的所属管理员id
 			$admin_id = \Core::dao('user_user')->getUser($v['user_id'],'id,admin_id,platform_code');
 			if($admin_id[$v['user_id']]) {
 				$loanBid = $loanBidDao->getOneLoanById($v['deal_id'],'load_money');
 				$loanBase = $loanBaseDao->getloanbase($v['deal_id'],'id,name,repay_time_type,repay_time');
 				$admin_deal_info = array_merge($loanBase,$loanBid);
-				$adminstatus = \Core::business('sys_admin_admin')->adminreferrals($admin_id[$v['user_id']],$admin_deal_info);
+				$adminstatus = \Core::business('sys_admin_admin')->adminReferrals($admin_id[$v['user_id']],$admin_deal_info);
 				if($adminstatus['status'] == 1) {
 					$result['message'] = $adminstatus['message'];
 					$result['status'] = 1;
@@ -78,7 +80,7 @@ class  business_sys_dealload extends Business {
 				//记录优投用户id
 				$result['yott_users'][] = $v['user_id'];
 			}
-			//返利给用户
+			//TODO 返利给用户
 			if(floatval($v['rebate_money']) != 0 || intval($v['bid_score']) != 0) {
 				//修改is_rebate状态
 				$rebateStatus = \Core::dao('loan_dealload')->update(array('is_rebate'=>1),array('is_rebate'=>0,'id'=>$v['id'],'user_id'=>$v['user_id']));
