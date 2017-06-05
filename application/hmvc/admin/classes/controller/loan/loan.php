@@ -138,7 +138,7 @@ class  controller_loan_loan extends controller_sysBase {
 		$fields = 'loan_id,deal_status,load_money,repay_start_time,buy_count,loan_time';
 		//获取数据
 		$loanBid = $loanBidDao->getOneLoanById($deal_id,$fields);
-		$loanBase = $loanBaseDao->getloanbase($deal_id,'id,name,user_id,borrow_amount,repay_time_type,repay_time,rate,is_mobile');
+		$loanBase = $loanBaseDao->getloanbase($deal_id,'id,name,user_id,borrow_amount,repay_time_type,repay_time,rate,is_mobile,loantype');
 		$loanExt = $loanextDao->getExtByLoanId($deal_id);
 		if(!$loanBid || !$loanBase || !$loanExt) {
 			$result['message'] = '贷款不存在';
@@ -162,10 +162,9 @@ class  controller_loan_loan extends controller_sysBase {
 		\Core::db()->begin();
 		try{
 			//更新贷款状态
-			$effectBidNumbers =$loanBidDao->updateData(array('loan_id'=>$deal_id),$loanbid_info);
+			$effectBidNumbers =$loanBidDao->updateData(array('loan_id'=>$deal_id,'is_has_loans'=>0),$loanbid_info);
 			$effectBaseNumbers = $loanBaseDao->update($loanbase_info,array('id'=>$deal_id));
 			if($effectBidNumbers && $effectBaseNumbers){
-
 				//放款，修改用户余额
 				$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
 				$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],招标成功";
@@ -177,7 +176,8 @@ class  controller_loan_loan extends controller_sysBase {
 				}
 				//收取服务费
 				//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
-				$servicesfee = 0.05;
+				$config_common = unserialize($loanExt['config_common']);
+				$servicesfee = \Core::arrayKeyExists('services_fee',$config_common)?\Core::arrayGet('services_fee',$config_common):0;
 				$services_fee = $loanBase['borrow_amount'] * floatval($servicesfee) / 100;
 				//服务费，修改用户余额
 				if($services_fee){
@@ -198,6 +198,7 @@ class  controller_loan_loan extends controller_sysBase {
 				$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
 				if($load_list) {
 					$result = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
+					//\Core::dump($result);
 				}else {
 					$result['message'] = "放款失败，投资不存在";
 					$result['status'] = 1;
@@ -206,15 +207,15 @@ class  controller_loan_loan extends controller_sysBase {
 			//更新贷款状态为已放款
 			$load_loan = \Core::dao('loan_dealload')->update(array('is_has_loans'=>1),array('deal_id'=>$deal_id));
 			//TODO 分销相关
-			//生成还款计划
+			//TODO 生成还款计划
 			$repayplan = \Core::business('sys_dealrepay')->makeRepayPlan($loanBase,$loanBid,$loanExt,$loanbid_info['loan_time']);
 			if($repayplan) {
 				//放款成功
 				$loanBaseDao->update(array('is_effect' => 1, 'loan_status' => 1), array('id' => $deal_id));
 				//发送短信发送邮件
 
-				//是否存在优投用户，存在发送推送
-				if ($result['yott_users']) {
+				//TODO 是否存在优投用户，存在发送推送
+				if (isset($result['yott_users'])) {
 					$result['code'] = 200;
 					$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
 				}
@@ -223,14 +224,16 @@ class  controller_loan_loan extends controller_sysBase {
 				//TODO 发借款成功站内信
 
 				//TODO 发送借款协议范本
-				//手机端自动提现
+				//TODO 手机端自动提现
 				if ($loanBase['is_mobile'] > 0) {
 					//$carryMoney = \Core::business('user_');
 				}
 				$result['code'] = 200;
-				$result['message'] = "放款成功,还/回款计划已生成";
+				$result['message'] = "放款成功,还/回款计划生成中";
 			}else{
+				$result['code'] = '000';
 				$result['message'] = "放款失败";
+				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
 			$result['message'] = '系统错误';
@@ -309,8 +312,13 @@ class  controller_loan_loan extends controller_sysBase {
 					}
 				}
 			}else{
-				$result['message'] = '返还失败，投资不存在';
-				$result['status'] = 1;
+				//直接流标
+				$bad_data['bad_time'] = time();
+				//$bad_data['bad_date'] = to_date(TIME_UTC, "Y-m-d");
+				$bad_data['deal_status'] = 3;
+				$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
+				$result['message'] = '流标成功';
+				$result['code'] = 200;
 			}
 			//保存贷款状态更改信息
 			$deal_log = array();
@@ -360,7 +368,7 @@ class  controller_loan_loan extends controller_sysBase {
 				$l_guarantees_amt = number_format($loanbase['borrow_amount'] * $guarantees_amt / 100,2);
 			}
 			//commconfig
-			$commonConfig = $loanextDao->getCommonconfig($loan_id);
+			$commonConfig = unserialize($loanextDao->getCommonconfig($loan_id));
 			//获取合同范本
 			$contract =  \Core::dao('loan_contract')->getContractList('id,title');
 			//根据借款id，获取标基本信息

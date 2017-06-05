@@ -403,6 +403,7 @@ function getDateFromRange($startdate, $enddate,$unixdate=false){
  */
 function addGerman($taskName,Array $taskArgs=array(),$hmvc=''){
 	//TODO 增加german队列
+
 }
 
 /*
@@ -410,5 +411,6 @@ function addGerman($taskName,Array $taskArgs=array(),$hmvc=''){
  */
 function addRabbitQueue($taskName,$taskArgs=array(),$hmvc=''){
 	//TODO 增加RabbitMQ队列
+
 }
 ?>
