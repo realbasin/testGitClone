@@ -59,4 +59,12 @@ class dao_loan_dealloantype extends Dao {
 		return $this->getDb()->select($field)->from($this->getTable())->where($where)->execute()->rows();
 	}
 
+	public function getDealLoanType($id){
+        return $this->getDb()->select('*')->from($this->getTable())->where(['id'=>$id])->execute()->row();
+    }
+
+    public function getMaxSort(){
+        return $this->getDb()->select('max(sort) as max_sort')->from($this->getTable())->where([])->execute()->value('max_sort');
+    }
+
 }
