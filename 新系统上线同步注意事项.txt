@@ -1,4 +1,5 @@
 1.所有时间字段，需要在原时间基础上+3600*8
 2.deal表写task任务进行同步
-3.xssd_stat库，写task任务进行数据同步
+3.xssd_stat库，写task任务进行数据同步(原来为程序在特定逻辑内进行双写)
 4.存管问题
+5.原admin表重构为adminuser表，role表重构为admin_auth表，adminuser需要同步，admin_auth权限表需要手工配置，管理员行为记录表为admin_log
