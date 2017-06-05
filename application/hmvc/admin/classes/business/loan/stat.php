@@ -153,4 +153,9 @@ class  business_loan_stat extends Business {
 		}
 		return $sql;
 	}
+	
+	//逾期排名-业务员
+	public function getStatOverdueDetailAgent(){
+		
+	}
 }

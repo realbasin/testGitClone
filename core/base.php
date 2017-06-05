@@ -225,10 +225,14 @@ private static function initSession() {
 	private static function runCli() {
 		if(!class_exists("Task",FALSE)) self::loadFrames(array("task","generator"));
 		$task = str_replace('/', '_', \Core::getOpt('task'));
+		
 		$hmvcModuleName = \Core::getOpt('hmvc');
 		
 		if (empty($task)) {
 			exit('require a task name,please use --task=<taskname>' . "\n");
+		}
+		if(!\Core::strBeginsWith($task, 'task_')){
+			$task='task_'.$task;
 		}
 		if (!empty($hmvcModuleName)) {
 			self::checkHmvc($hmvcModuleName);

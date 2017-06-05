@@ -402,13 +402,15 @@ function getDateFromRange($startdate, $enddate,$unixdate=false){
  * @option $hmvc 要执行的task所在的MVC，如果留空，默认主mvc
  */
 function addGerman($taskName,Array $taskArgs=array(),$hmvc=''){
-	
+	//TODO 增加german队列
+
 }
 
 /*
  * 增加rabbitmq队列
  */
 function addRabbitQueue($taskName,$taskArgs=array(),$hmvc=''){
+	//TODO 增加RabbitMQ队列
 
 }
 ?>

@@ -354,6 +354,25 @@ class  controller_stat_borrow extends controller_sysBase {
 	}
 	
 	public function do_overdueDetail_saleman_json(){
+		$datas=array();
+		//先查询业务员表
+		$daoAgent=\Core::dao('user_agent');
+		$agents=$daoAgent->findAll(null,array(),null,'agent_id,agent_name,real_name');
+		if($agents){
+			$agentIds=array();
+			foreach($agents as $k=>$v){
+				$agentIds[]=$v['agent_id'];
+				$row=array();
+				$row['agent_name']=$v['agent_name'];
+				$row['user_count']=0;
+				$row['deal_count']=0;
+				$row['repay_count']=0;
+				$row['has_repay_count']=0;
+				$row['expired_days']=0;
+				$datas['agent_id']=$row;
+			}
+			$bStat=\Core::business('loan_stat');
+		}
 	}
 	
 	//逾期排名 - 归属行长
