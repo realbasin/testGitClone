@@ -142,7 +142,7 @@ class  business_sys_dealrepay extends Business {
 			}
 			//管理费率，从配置字段config_common中获取
 			$config_common = unserialize($loan['config_common']);
-			$manage_fee = \Core::arrayKeyExists('manage_fee',$config_common)?\Core::arrayGet('manage_fee',$config_common):0;
+			$manage_fee = \Core::arrayKeyExists('manage_fee',$config_common)?\Core::arrayGet($config_common,'manage_fee'):0;
 			//管理费
 			if($loan['loantype'] == 2) {
 				if($i + 1 == $true_repay_time) {

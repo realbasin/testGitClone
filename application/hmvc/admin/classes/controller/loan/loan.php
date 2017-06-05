@@ -172,12 +172,12 @@ class  controller_loan_loan extends controller_sysBase {
 				if($editMoneyStatus === false) {
 					$result['message'] = "放款失败，修改余额出错";
 					$result['status'] = 1;
-					//return @json_encode($result);
+
 				}
 				//收取服务费
 				//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
 				$config_common = unserialize($loanExt['config_common']);
-				$servicesfee = \Core::arrayKeyExists('services_fee',$config_common)?\Core::arrayGet('services_fee',$config_common):0;
+				$servicesfee = \Core::arrayKeyExists('services_fee',$config_common)?\Core::arrayGet($config_common,'services_fee'):0;
 				$services_fee = $loanBase['borrow_amount'] * floatval($servicesfee) / 100;
 				//服务费，修改用户余额
 				if($services_fee){
@@ -236,6 +236,7 @@ class  controller_loan_loan extends controller_sysBase {
 				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
+			\Core::db()->rollback();
 			$result['message'] = '系统错误';
 			return @json_encode($result);
 		}finally{

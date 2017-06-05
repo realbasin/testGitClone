@@ -24,23 +24,26 @@ class  business_user_userinfo extends Business {
 	public function editUserMoney($user_id,$money,$log_msg,$type){
 		//TODO 加锁
 		$flag = false;
-		$userDb = \Core::db();
-		if($userDb->isLocked()) {
-			return false;
-		}
-		$userDb->lock();
-
 		$sql = "update _tablePrefix_user set money_encrypt = AES_ENCRYPT(ROUND(ifnull(AES_DECRYPT(money_encrypt,'".AES_DECRYPT_KEY."'),0) + ".floatval($money).",2),'".AES_DECRYPT_KEY."') where id =".$user_id;
-		$flag = $userDb -> execute($sql);
-		$userDb->unlock();
-		//修改金额后记录日志
-		if($flag === false){
-			return $flag;
-		}else {
+		//开启事务
+		\Core::db()->begin();
+		try{
+			$flag = \Core::db() -> execute($sql);
 			\Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('money'=>$money));
 			\Core::business('user_userlog')->addUserMoneyLog($user_id,$log_msg,$money,$type);
-			return true;
+		}catch (\Exception $e){
+			\Core::db()->rollback();
+		}finally{
+			//修改金额后记录日志
+			if($flag === false){
+				\Core::db()->rollback();
+				return $flag;
+			}else {
+				\Core::db()->commit();
+				return true;
+			}
 		}
+
 	}
 	/*
 	 *修改用户lock_money
@@ -51,13 +54,7 @@ class  business_user_userinfo extends Business {
 	public function editUserLockMoney($user_id,$money,$log_msg,$type){
 		$flag = false;
 		$sql = 'update _tablePrefix_user set lock_money = lock_money + '.floatval($money).' where id ='.$user_id;
-		$userDb = \Core::db();
-		if($userDb->isLocked()) {
-			return false;
-		}
-		$userDb->lock();
-		$flag = $userDb -> execute($sql);
-		$userDb->unlock();
+		$flag = \Core::db() -> execute($sql);
 		//修改后记录日志
 		if($flag === false){
 			return $flag;
@@ -75,13 +72,7 @@ class  business_user_userinfo extends Business {
 	public function editUserScore($user_id,$score,$log_msg,$type){
 		$flag = false;
 		$sql = 'update _tablePrefix_user set score = score + '.floatval($score).' where id ='.$user_id;
-		$userDb = \Core::db();
-		if($userDb->isLocked()) {
-			return false;
-		}
-		$userDb->lock();
-		$flag = $userDb -> execute($sql);
-		$userDb->unlock();
+		$flag = \Core::db() -> execute($sql);
 		//修改后记录日志
 		if($flag === false){
 			return $flag;
