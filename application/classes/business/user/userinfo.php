@@ -24,26 +24,38 @@ class  business_user_userinfo extends Business {
 	public function editUserMoney($user_id,$money,$log_msg,$type){
 		//TODO 加锁
 		$flag = false;
-		$sql = "update _tablePrefix_user set money_encrypt = AES_ENCRYPT(ROUND(ifnull(AES_DECRYPT(money_encrypt,'".AES_DECRYPT_KEY."'),0) + ".floatval($money).",2),'".AES_DECRYPT_KEY."') where id =".$user_id;
-		//开启事务
-		\Core::db()->begin();
+		$userDb = \Core::db();
+		//TODO 开启事务
+		$userDb->begin();
 		try{
-			$flag = \Core::db() -> execute($sql);
+			while(true){
+				$userMoney=$userDb->execute('select money_encrypt from 
+_tablePrefix_user where id='.$user_id)->value('_tablePrefix_user');
+				$sql = "update _tablePrefix_user set money_encrypt = AES_ENCRYPT
+(ROUND(ifnull(AES_DECRYPT(money_encrypt,'".AES_DECRYPT_KEY."'),0) + ".floatval
+					($money).",2),'".AES_DECRYPT_KEY."') where id =".$user_id." and money_encrypt='".
+					$userMoney."'";
+				$flag = $userDb -> execute($sql);
+				if($flag){
+					break;
+				}
+				sleep(100);
+			}
 			\Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('money'=>$money));
 			\Core::business('user_userlog')->addUserMoneyLog($user_id,$log_msg,$money,$type);
 		}catch (\Exception $e){
-			\Core::db()->rollback();
+			//$userDb->rollback();
+			return false;
 		}finally{
 			//修改金额后记录日志
 			if($flag === false){
-				\Core::db()->rollback();
+				$userDb->rollback();
 				return $flag;
 			}else {
-				\Core::db()->commit();
+				$userDb->commit();
 				return true;
 			}
 		}
-
 	}
 	/*
 	 *修改用户lock_money
