@@ -231,7 +231,7 @@ private static function initSession() {
 		if (empty($task)) {
 			exit('require a task name,please use --task=<taskname>' . "\n");
 		}
-		if(!\Core::strBeginsWith($task, 'task_')){
+		if(!\Core::strBeginsWith($task, 'task_') && !in_array(ucfirst($task), array('Generator_Default','Generator_Mysql'))){
 			$task='task_'.$task;
 		}
 		if (!empty($hmvcModuleName)) {

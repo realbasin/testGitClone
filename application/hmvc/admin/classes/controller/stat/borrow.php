@@ -3,7 +3,7 @@ defined('IN_XIAOSHU') or exit('Access Invalid!');
 class  controller_stat_borrow extends controller_sysBase {
 
 	//逾期排名顶部tab
-	private $overDueTaps = array( array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_saleman', 'text' => '归属业务员'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_saleman1', 'text' => '归属行长'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_referrer', 'text' => '推荐人'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_checker', 'text' => '初审人'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_month', 'text' => '月排行'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_day', 'text' => '日排行'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_area', 'text' => '地区'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_college', 'text' => '学校'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_age', 'text' => '年龄'), );
+	private $overDueTaps = array( array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_agent', 'text' => '归属业务员'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_saleman', 'text' => '归属行长'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_referrer', 'text' => '推荐人'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_checker', 'text' => '初审人'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_month', 'text' => '月排行'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_day', 'text' => '日排行'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_area', 'text' => '地区'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_college', 'text' => '学校'), array('ctl' => 'stat_borrow', 'act' => 'overdueDetail_age', 'text' => '年龄'), );
 
 	public function before() {
 
@@ -337,7 +337,7 @@ class  controller_stat_borrow extends controller_sysBase {
 		$dateend = \Core::get('dateend');
 		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
 		$dateend = $dateend ? $dateend : date('Y-m-d', time());
-		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_saleman');
+		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_agent');
 		\Core::view() -> set('datestart', $datestart);
 		\Core::view() -> set('dateend', $dateend);
 		\Core::view() -> load('stat_overdueDetailAgent', $pagetabs);
@@ -427,7 +427,7 @@ class  controller_stat_borrow extends controller_sysBase {
 
 	//逾期排名 - 归属行长
 	public function do_overdueDetail_saleman() {
-		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_saleman1');
+		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_saleman');
 		$datestart = \Core::get('datestart');
 		$dateend = \Core::get('dateend');
 		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
@@ -435,6 +435,12 @@ class  controller_stat_borrow extends controller_sysBase {
 		\Core::view() -> set('datestart', $datestart);
 		\Core::view() -> set('dateend', $dateend);
 		\Core::view() -> load('stat_overdueDetailSaleman', $pagetabs);
+	}
+	
+	public function do_overdueDetail_saleman_json() {
+	}
+	
+	public function do_overdueDetail_saleman_export() {
 	}
 
 	//逾期排名 - 推荐人
