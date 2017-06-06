@@ -79,8 +79,8 @@ $(function(){
             {display: '<i class="fa fa-file-excel-o"></i> 导出全部数据到Excel', name : 'csv', bclass : 'csv', title : '导出全部数据到Excel', onpress : flexPress }
         ],
        
-        sortname: "name",
-        sortorder: "asc",
+        sortname: "user_count",
+        sortorder: "desc",
         title: '归属业务员',
         usepager:false
    });
