@@ -66,9 +66,9 @@
 <script>
 $(function(){
 	$("#flexitable").flexigrid({
-        url: '<?php echo adminUrl('stat_borrow','overdueDetail_agent_json');?>'+'&'+$("#form1").serialize(),
+        url: '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_json');?>'+'&'+$("#form1").serialize(),
         colModel : [
-            {display: '业务员', name : 'agent_name', width : 150, sortable : true, align: 'center'}, 
+            {display: '行长', name : 'saleman_id', width : 150, sortable : true, align: 'center'}, 
 			{display: '逾期总人数', name : 'user_count', width : 120, sortable : true, align : 'center'},
 			{display: '逾期总笔数', name : 'deal_count', width : 120, sortable : true, align: 'center'},
 			{display: '逾期总期数', name : 'repay_count', width : 120, sortable : true, align: 'center'},
@@ -79,9 +79,9 @@ $(function(){
             {display: '<i class="fa fa-file-excel-o"></i> 导出全部数据到Excel', name : 'csv', bclass : 'csv', title : '导出全部数据到Excel', onpress : flexPress }
         ],
        
-        sortname: "name",
-        sortorder: "asc",
-        title: '归属业务员',
+        sortname: "user_count",
+        sortorder: "desc",
+        title: '归属行长',
         usepager:false
    });
    
@@ -89,7 +89,7 @@ $(function(){
 	
 function flexPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_borrow','overdueDetail_agent_export',array('datestart'=>$datestart?$datestart:date('Y-m-d',strtotime('-30 day')),'dateend'=>$dateend?$dateend:date('Y-m-d',time())));?>';
+        window.location.href = '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_export',array('datestart'=>$datestart?$datestart:date('Y-m-d',strtotime('-30 day')),'dateend'=>$dateend?$dateend:date('Y-m-d',time())));?>';
     }
 };
 	
@@ -120,7 +120,7 @@ $('#daterange').dateRangePicker({
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	$("#flexitable").flexOptions({url: '<?php echo adminUrl('stat_borrow','overdueDetail_agent_json');?>&datestart='+datestart+'&dateend='+dateend,query:'',qtype:''}).flexReload();
+	$("#flexitable").flexOptions({url: '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_json');?>&datestart='+datestart+'&dateend='+dateend,query:'',qtype:''}).flexReload();
 });
 
 $('#syshelp').on("click",function(){
