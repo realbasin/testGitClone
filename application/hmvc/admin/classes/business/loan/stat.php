@@ -163,9 +163,9 @@ class  business_loan_stat extends Business {
 		count(DISTINCT a.id)  as repay_count,
 		count(DISTINCT if(a.has_repay = 1, a.id, null)) as has_repay_count,
 		sum(CEILING((if(a.has_repay=1,(a.true_repay_time-a.repay_time),(UNIX_TIMESTAMP(NOW())-a.repay_time)))/(3600*24))) expired_days
-			 from xssd_deal_repay as a inner join xssd_loan_base as b on a.deal_id=b.id
-					inner join xssd_user as c on b.user_id=c.id
-					left join xssd_user as d on d.id=c.pid
+			 from _tablePrefix_deal_repay as a inner join _tablePrefix_loan_base as b on a.deal_id=b.id
+					inner join _tablePrefix_user as c on b.user_id=c.id
+					left join _tablePrefix_user as d on d.id=c.pid
 		 where if(isnull(d.rpid),0,d.rpid)=0 and ((a.has_repay = 1 and a.true_repay_time > a.repay_time) or (a.has_repay = 0 and  a.repay_time <= ".time().")) 
 		 and a.repay_time>=$startDate and a.repay_time<=$endDate and d.user_type=".C("USER_MARK_SALESMAN")." group by adminid order by ".$orderBy;
 		 return $sql;
@@ -188,9 +188,9 @@ class  business_loan_stat extends Business {
 		count(DISTINCT a.id)  as repay_count,
 		count(DISTINCT if(a.has_repay = 1, a.id, null)) as has_repay_count,
 		sum(CEILING((if(a.has_repay=1,(a.true_repay_time-a.repay_time),(UNIX_TIMESTAMP(NOW())-a.repay_time)))/(3600*24))) expired_days
-			 from xssd_deal_repay as a inner join xssd_loan_base as b on a.deal_id=b.id
-					inner join xssd_user as c on b.user_id=c.id
-					left join xssd_user as d on d.id=c.pid
+			 from _tablePrefix_deal_repay as a inner join _tablePrefix_loan_base as b on a.deal_id=b.id
+					inner join _tablePrefix_user as c on b.user_id=c.id
+					left join _tablePrefix_user as d on d.id=c.pid
 		 where if(isnull(d.rpid),0,d.rpid)=0 and ((a.has_repay = 1 and a.true_repay_time > a.repay_time) or (a.has_repay = 0 and  a.repay_time <= ".time().")) 
 		 and a.repay_time>=$startDate and a.repay_time<=$endDate and d.user_type=".C("USER_MARK_SALESMAN")." group by saleman_id order by ".$order." ".$sort;
 		 return $sql;
@@ -198,6 +198,33 @@ class  business_loan_stat extends Business {
 	
 	//逾期排名-行长
 	public function getStatOverdueDetailSaleman($page,$pagesize,$startDate,$endDate,$order="user_count",$sort="desc"){
+		$sql=$this->getStatOverdueDetailAgentSql($startDate,$endDate,$order,$sort);
+		$bussiness=\Core::business('common');
+		$datas=$bussiness->getPageList($page,$pagesize,$sql);
+		return $datas;
+	}
+	
+	//逾期排名-推荐人SQL
+	public function getStatOverdueDetailReferrerSql($startDate,$endDate,$order="user_count",$sort="desc"){
+		$sql="select
+		c.pid as referrer_id,
+		d.user_name as referrer_name,
+		d.real_name as referrer_realname,
+		count(DISTINCT b.user_id) as user_count,
+		count(DISTINCT a.deal_id)  as deal_count,
+		count(DISTINCT a.id)  as repay_count,
+		count(DISTINCT if(a.has_repay = 1, a.id, null)) as has_repay_count,
+		sum(CEILING((if(a.has_repay=1,(a.true_repay_time-a.repay_time),(UNIX_TIMESTAMP(NOW())-a.repay_time)))/(3600*24))) expired_days
+			 from _tablePrefix_deal_repay as a inner join _tablePrefix_loan_base as b on a.deal_id=b.id
+					inner join _tablePrefix_user as c on b.user_id=c.id
+					left join _tablePrefix_user as d on d.id=c.pid
+		 where if(isnull(d.rpid),0,d.rpid)=0 and ((a.has_repay = 1 and a.true_repay_time > a.repay_time) or (a.has_repay = 0 and  a.repay_time <= ".time().")) 
+		 and a.repay_time>=$startDate and a.repay_time<=$endDate  group by referrer_id order by ".$order." ".$sort;
+		 return $sql;
+	}
+	
+	//逾期排名-推荐人
+	public function getStatOverdueDetailReferrer($page,$pagesize,$startDate,$endDate,$order="user_count",$sort="desc"){
 		$sql=$this->getStatOverdueDetailAgentSql($startDate,$endDate,$order,$sort);
 		$bussiness=\Core::business('common');
 		$datas=$bussiness->getPageList($page,$pagesize,$sql);
