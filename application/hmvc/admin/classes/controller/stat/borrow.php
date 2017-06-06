@@ -328,11 +328,11 @@ class  controller_stat_borrow extends controller_sysBase {
 
 	//逾期排名
 	public function do_overdueDetail() {
-		$this -> do_overdueDetail_saleman();
+		$this -> do_overdueDetail_agent();
 	}
 
 	//逾期排名 - 归属业务员
-	public function do_overdueDetail_saleman() {
+	public function do_overdueDetail_agent() {
 		$datestart = \Core::get('datestart');
 		$dateend = \Core::get('dateend');
 		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
@@ -343,7 +343,7 @@ class  controller_stat_borrow extends controller_sysBase {
 		\Core::view() -> load('stat_overdueDetailSaleman', $pagetabs);
 	}
 
-	public function do_overdueDetail_saleman_json() {
+	public function do_overdueDetail_agent_json() {
 		$datestart = \Core::postGet('datestart');
 		$dateend = \Core::postGet('dateend');
 		if (!$datestart || !$dateend) {
@@ -384,7 +384,7 @@ class  controller_stat_borrow extends controller_sysBase {
 		echo @json_encode($json);
 	}
 
-	public function do_overdueDetail_saleman_export(){
+	public function do_overdueDetail_agent_export(){
 		$datestart = \Core::get('datestart');
 		$dateend = \Core::get('dateend');
 		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
@@ -426,8 +426,15 @@ class  controller_stat_borrow extends controller_sysBase {
 	}
 
 	//逾期排名 - 归属行长
-	public function do_overdueDetail_saleman1() {
+	public function do_overdueDetail_saleman() {
 		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_saleman1');
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_overdueDetailSaleman', $pagetabs);
 	}
 
 	//逾期排名 - 推荐人
