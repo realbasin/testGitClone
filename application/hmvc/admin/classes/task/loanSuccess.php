@@ -11,7 +11,7 @@ class  task_loanSuccess extends Task {
 		echo $user_id;
 		if($user_id && is_numeric($user_id)){
 			$admin_id = \Core::dao('user_user')->getUser($user_id,'id,admin_id,platform_code');
-			if($admin_id[$user_id]) {
+			if($admin_id) {
 				$loanBid = \Core::dao('loan_loanbid')->getOneLoanById($user_id,'load_money');
 				$loanBase = \Core::dao('loan_loanbase')->getloanbase($user_id,'id,name,repay_time_type,repay_time');
 				$admin_deal_info = array_merge($loanBase,$loanBid);
@@ -20,8 +20,11 @@ class  task_loanSuccess extends Task {
 					$result['message'] = $adminstatus['message'];
 					$result['status'] = 1;
 				}
+			}else {
+				$result['message'] = '无管理员';
+				$result['status'] = 1;
 			}
-
+			return $result;
 			//$loanBaseDao->update(array('is_effect' => 1, 'loan_status' => 1), array('id' => $deal_id));
 			//发送短信发送邮件
 

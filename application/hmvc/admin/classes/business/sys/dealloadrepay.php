@@ -4,7 +4,7 @@ class  business_sys_dealloadrepay extends Business {
 	public function business() {
 		
 	}
-	//生存回款计划
+	//生成回款计划
 	public function makeLoadRepayPlan($loan,$load_repay, $repay_id){
 		//贷款不存在
 		if(!$loan){
@@ -63,6 +63,7 @@ class  business_sys_dealloadrepay extends Business {
 			}
 			$load_repay_plan[] = $load_repay;
 		}
+		//TODO 获取已转让的标
 		if($return === false) {
 			return $return;
 		}else {
