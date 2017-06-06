@@ -283,3 +283,4 @@ $lang['restore_dir_no_exsits']='找不到还原文件夹';
 $lang['restore_file_no_exsits']='找不到还原文件';
 
 $lang['restore_help']='<li>恢复数据库会先清除现有表的数据<li>请尽量不要赋予非系统管理员恢复权限';
+$lang['loan_type_setting']='贷款类型设置';

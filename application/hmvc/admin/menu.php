@@ -15,20 +15,33 @@ $menu = array(
 				'subtext'=>$lang['subsetting'],
 				'img'=>'sys',
 				'list' => array(
-					array('link'=>'sys_setting,base','text'=>$lang['base_setting']),
-					array('link'=>'sys_setting,upload','text'=>$lang['upload_setting']),
-					array('link'=>'sys_setting,watermark','text'=>$lang['watermark_setting']),
-					array('link'=>'sys_setting,email','text'=>$lang['email_setting']),
-					array('link'=>'sys_setting,sms','text'=>$lang['sms_setting']),
-					array('link'=>'sys_setting,login','text'=>$lang['login_setting']),
-					array('link'=>'sys_setting,permission','text'=>$lang['permission_setting']),
-					array('link'=>'sys_setting,admin','text'=>$lang['admin_setting']),
-					array('link'=>'sys_setting,log','text'=>$lang['log_setting']),
-					array('link'=>'sys_setting,variablessys','text'=>'系统变量'),
-					array('link'=>'sys_setting,variables','text'=>$lang['variables_setting']),
-					array('link'=>'sys_setting,cache','text'=>$lang['cache_setting']),
-					//array('link'=>'sys_setting,dbbackup','text'=>$lang['database_backup']),
-					//array('link'=>'sys_setting,dbrestore','text'=>$lang['database_restore']),
+					[
+                        'link'=>'',
+						'text'=>$lang['subsetting'],
+						'sub' => [
+                            array('link'=>'sys_setting,base','text'=>$lang['base_setting']),
+                            array('link'=>'sys_setting,upload','text'=>$lang['upload_setting']),
+                            array('link'=>'sys_setting,watermark','text'=>$lang['watermark_setting']),
+                            array('link'=>'sys_setting,email','text'=>$lang['email_setting']),
+                            array('link'=>'sys_setting,sms','text'=>$lang['sms_setting']),
+                            array('link'=>'sys_setting,login','text'=>$lang['login_setting']),
+                            array('link'=>'sys_setting,permission','text'=>$lang['permission_setting']),
+                            array('link'=>'sys_setting,admin','text'=>$lang['admin_setting']),
+                            array('link'=>'sys_setting,log','text'=>$lang['log_setting']),
+                            array('link'=>'sys_setting,variablessys','text'=>'系统变量'),
+                            array('link'=>'sys_setting,variables','text'=>$lang['variables_setting']),
+                            array('link'=>'sys_setting,cache','text'=>$lang['cache_setting']),
+                            //array('link'=>'sys_setting,dbbackup','text'=>$lang['database_backup']),
+                            //array('link'=>'sys_setting,dbrestore','text'=>$lang['database_restore']),
+						]
+					],
+					[
+                        'link'=>'',
+                        'text'=>'贷款设置',
+						'sub' => [
+                            ['link' => 'sys_loan,type_list', 'text' => '贷款类型设置']
+						]
+					]
 				)
 			),
 			2 => array(
