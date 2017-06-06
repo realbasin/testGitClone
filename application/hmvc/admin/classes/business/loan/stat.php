@@ -178,7 +178,7 @@ class  business_loan_stat extends Business {
 	}
 	
 	//逾期排名-行长SQL
-	public function getStatOverdueDetailAgentSql($startDate,$endDate,$order="user_count",$sort="desc"){
+	public function getStatOverdueDetailSalemanSql($startDate,$endDate,$order="user_count",$sort="desc"){
 		$sql="select
 		d.id as saleman_id,
 		d.user_name as saleman_name,
@@ -197,7 +197,7 @@ class  business_loan_stat extends Business {
 	}
 	
 	//逾期排名-行长
-	public function getStatOverdueDetailAgent($page,$pagesize,$startDate,$endDate,$order="user_count",$sort="desc"){
+	public function getStatOverdueDetailSaleman($page,$pagesize,$startDate,$endDate,$order="user_count",$sort="desc"){
 		$sql=$this->getStatOverdueDetailAgentSql($startDate,$endDate,$order,$sort);
 		$bussiness=\Core::business('common');
 		$datas=$bussiness->getPageList($page,$pagesize,$sql);
