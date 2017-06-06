@@ -340,7 +340,7 @@ class  controller_stat_borrow extends controller_sysBase {
 		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_saleman');
 		\Core::view() -> set('datestart', $datestart);
 		\Core::view() -> set('dateend', $dateend);
-		\Core::view() -> load('stat_overdueDetailSaleman', $pagetabs);
+		\Core::view() -> load('stat_overdueDetailAgent', $pagetabs);
 	}
 
 	public function do_overdueDetail_agent_json() {
