@@ -8,6 +8,7 @@ class  business_sys_admin_admin extends Business {
 	public function adminReferrals($admin_id,$admin_deal_info){
 		$result = array();
 		$result['status'] = 0;
+		$result['code'] = 200;
 		$result['is_post_yott'] = false; //记录是否有Yott用户投标
 		if ($admin_id["platform_code"] == "yott") {
 			$result['is_post_yott'] = true;
@@ -43,6 +44,7 @@ class  business_sys_admin_admin extends Business {
 				$updateAdminMoney = \Core::dao('sys_admin_adminext')->update(array('referrals_money'=>$adminReferralsMoney),array('id'=>$admin_id));
 				if($updateAdminMoney === false) {
 					$result['status'] = 1;
+					$result['code'] = '000';
 					$result['message'] = "放款失败，更新管理员提成金额失败";
 				}
 			}

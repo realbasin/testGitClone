@@ -161,10 +161,9 @@ class  controller_loan_loan extends controller_sysBase {
 		// 开启事务操作
 		\Core::db()->begin();
 		try{
-			//更新贷款状态
-			$effectBidNumbers =$loanBidDao->updateData(array('loan_id'=>$deal_id,'is_has_loans'=>0),$loanbid_info);
+			//更新贷款状态为无效
 			$effectBaseNumbers = $loanBaseDao->update($loanbase_info,array('id'=>$deal_id));
-			if($effectBidNumbers && $effectBaseNumbers){
+			if($effectBaseNumbers){
 				//放款，修改用户余额
 				$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
 				$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],招标成功";
@@ -195,9 +194,14 @@ class  controller_loan_loan extends controller_sysBase {
 
 				//TODO 积分变动
 				//扣除投资人金额
-				$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
+				$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_rebate,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
 				if($load_list) {
 					$result = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
+					if($result['status'] == 1) {
+						$result['code'] = '000';
+					}else {
+						$result['code'] = 200;
+					}
 					//\Core::dump($result);
 				}else {
 					$result['message'] = "放款失败，投资不存在";
@@ -212,34 +216,39 @@ class  controller_loan_loan extends controller_sysBase {
 			if($repayplan) {
 				//放款成功
 				$loanBaseDao->update(array('is_effect' => 1, 'loan_status' => 1), array('id' => $deal_id));
-				//发送短信发送邮件
+				//修改为已放款
+				$effectBidNumbers =$loanBidDao->update($loanbid_info,array('loan_id'=>$deal_id,'is_has_loans'=>0));
+				if($effectBidNumbers === false) {
+					$result['message'] = "放款失败";
+				}else {
+					//TODO 是否存在优投用户，存在发送推送
+					if (isset($result['yott_users'])) {
+						$result['code'] = 200;
+						$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
+					}
+					//TODO 发借款成功邮件
 
-				//TODO 是否存在优投用户，存在发送推送
-				if (isset($result['yott_users'])) {
+					//TODO 发借款成功站内信
+
+					//TODO 发送借款协议范本
+					//TODO 手机端自动提现
+					if ($loanBase['is_mobile'] > 0) {
+						//$carryMoney = \Core::business('user_');
+					}
 					$result['code'] = 200;
-					$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
+					$result['message'] = "放款成功,还/回款计划生成中";
 				}
-				//TODO 发借款成功邮件
-
-				//TODO 发借款成功站内信
-
-				//TODO 发送借款协议范本
-				//TODO 手机端自动提现
-				if ($loanBase['is_mobile'] > 0) {
-					//$carryMoney = \Core::business('user_');
-				}
-				$result['code'] = 200;
-				$result['message'] = "放款成功,还/回款计划生成中";
 			}else{
 				$result['code'] = '000';
 				$result['message'] = "放款失败";
 				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
-			\Core::db()->rollback();
+			//\Core::db()->rollback();
 			$result['message'] = '系统错误';
 			return @json_encode($result);
 		}finally{
+
 			if($result['code'] == 200 && $result['status'] == 0){
 				\Core::db()->commit();
 			}else{
