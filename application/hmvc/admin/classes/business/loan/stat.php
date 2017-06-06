@@ -324,4 +324,54 @@ class  business_loan_stat extends Business {
 		$datas=$bussiness->getPageList($page,$pagesize,$sql);
 		return $datas;
 	}
+	
+	//逾期排名-学院SQL
+	public function getStatOverdueDetailCollegeSql($startDate,$endDate,$order="user_count",$sort="desc"){
+		$sql="select
+		c.university as college,
+		count(DISTINCT b.user_id) as user_count,
+		count(DISTINCT a.deal_id)  as deal_count,
+		count(DISTINCT a.id)  as repay_count,
+		count(DISTINCT if(a.has_repay = 1, a.id, null)) as has_repay_count,
+		sum(CEILING((if(a.has_repay=1,(a.true_repay_time-a.repay_time),(UNIX_TIMESTAMP(NOW())-a.repay_time)))/(3600*24))) expired_days
+			 from _tablePrefix_deal_repay as a inner join _tablePrefix_loan_base as b on a.deal_id=b.id
+					inner join _tablePrefix_user as c on b.user_id=c.id
+					left join _tablePrefix_user as d on d.id=c.pid
+		 where if(isnull(d.rpid),0,d.rpid)=0 and ((a.has_repay = 1 and a.true_repay_time > a.repay_time) or (a.has_repay = 0 and  a.repay_time <= ".time().")) 
+		 and a.repay_time>=$startDate and a.repay_time<=$endDate  group by college order by ".$order." ".$sort;
+		 return $sql;
+	}
+	
+	//逾期排名-学院
+	public function getStatOverdueDetailCollege($page,$pagesize,$startDate,$endDate,$order="user_count",$sort="desc"){
+		$sql=$this->getStatOverdueDetailCollegeSql($startDate,$endDate,$order,$sort);
+		$bussiness=\Core::business('common');
+		$datas=$bussiness->getPageList($page,$pagesize,$sql);
+		return $datas;
+	}
+	
+	//逾期排名-年龄SQL
+	public function getStatOverdueDetailAgeSql($startDate,$endDate,$order="age",$sort="asc"){
+		$sql="select
+		(YEAR(FROM_UNIXTIME(b.create_time))-c.byear-1)+if(MONTH(FROM_UNIXTIME(b.create_time))>c.bmonth,1,0)+if((DAY(FROM_UNIXTIME(b.create_time))>=c.bday and MONTH(FROM_UNIXTIME(b.create_time))=c.bmonth),1,0) age,
+		count(DISTINCT b.user_id) as user_count,
+		count(DISTINCT a.deal_id)  as deal_count,
+		count(DISTINCT a.id)  as repay_count,
+		count(DISTINCT if(a.has_repay = 1, a.id, null)) as has_repay_count,
+		sum(CEILING((if(a.has_repay=1,(a.true_repay_time-a.repay_time),(UNIX_TIMESTAMP(NOW())-a.repay_time)))/(3600*24))) expired_days
+			 from _tablePrefix_deal_repay as a inner join _tablePrefix_loan_base as b on a.deal_id=b.id
+					inner join _tablePrefix_user as c on b.user_id=c.id
+					left join _tablePrefix_user as d on d.id=c.pid
+		 where if(isnull(d.rpid),0,d.rpid)=0 and ((a.has_repay = 1 and a.true_repay_time > a.repay_time) or (a.has_repay = 0 and  a.repay_time <= ".time().")) 
+		 and a.repay_time>=$startDate and a.repay_time<=$endDate  group by age order by ".$order." ".$sort;
+		 return $sql;
+	}
+	
+	//逾期排名-年龄
+	public function getStatOverdueDetailAge($page,$pagesize,$startDate,$endDate,$order="age",$sort="asc"){
+		$sql=$this->getStatOverdueDetailAgeSql($startDate,$endDate,$order,$sort);
+		$bussiness=\Core::business('common');
+		$datas=$bussiness->getPageList($page,$pagesize,$sql);
+		return $datas;
+	}
 }

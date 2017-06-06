@@ -564,12 +564,12 @@ class  controller_stat_borrow extends controller_sysBase {
 		$datestart = \Core::postGet('datestart');
 		$dateend = \Core::postGet('dateend');
 		if (!$datestart || !$dateend) {
-			\Core::message('请选择日期范围', adminUrl('stat_borrow', 'overdueDetail_saleman'), 'fail', 3, 'message');
+			\Core::message('请选择日期范围', adminUrl('stat_borrow', 'overdueDetail_referrer'), 'fail', 3, 'message');
 		}
 		$startStamp=strtotime($datestart);
 		$endStamp=strtotime($dateend);
 		if($startStamp>$endStamp){
-			\Core::message('开始日期不能大于结束日期', adminUrl('stat_borrow', 'overdueDetail_saleman'), 'fail', 3, 'message');
+			\Core::message('开始日期不能大于结束日期', adminUrl('stat_borrow', 'overdueDetail_referrer'), 'fail', 3, 'message');
 		}
 		$bStat = \Core::business('loan_stat');
 		$bComm = \Core::business('common');
@@ -836,12 +836,12 @@ class  controller_stat_borrow extends controller_sysBase {
 		$datestart = \Core::postGet('datestart');
 		$dateend = \Core::postGet('dateend');
 		if (!$datestart || !$dateend) {
-			\Core::message('请选择日期范围', adminUrl('stat_borrow', 'overdueDetail_saleman'), 'fail', 3, 'message');
+			\Core::message('请选择日期范围', adminUrl('stat_borrow', 'overdueDetail_area'), 'fail', 3, 'message');
 		}
 		$startStamp=strtotime($datestart);
 		$endStamp=strtotime($dateend);
 		if($startStamp>$endStamp){
-			\Core::message('开始日期不能大于结束日期', adminUrl('stat_borrow', 'overdueDetail_saleman'), 'fail', 3, 'message');
+			\Core::message('开始日期不能大于结束日期', adminUrl('stat_borrow', 'overdueDetail_area'), 'fail', 3, 'message');
 		}
 		$bStat = \Core::business('loan_stat');
 		$bComm = \Core::business('common');
@@ -860,21 +860,181 @@ class  controller_stat_borrow extends controller_sysBase {
 	//逾期排名 - 学校
 	public function do_overdueDetail_college() {
 		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_college');
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_overdueDetailCollege', $pagetabs);
+	}
+	
+	public function do_overdueDetail_college_json() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			showJSON('101', '开始日期不能大于结束日期');
+		}
+		$pagesize = \Core::postGet('rp');
+		$page = \Core::postGet('curpage');
+		if (!$page || !is_numeric($page))
+			$page = 1;
+		if (!$pagesize || !is_numeric($pagesize))
+			$pagesize = 15;
+		$orderName='user_count';
+		$orderSort='desc';
+		if (\Core::postGet('sortorder')) {
+			$orderName=\Core::postGet('sortname');
+			$orderSort=\Core::postGet('sortorder');
+		}
+		$bStat = \Core::business('loan_stat');
+		$dataDetail = $bStat -> getStatOverdueDetailCollege($page,$pagesize,$startStamp,$endStamp,$orderName,$orderSort);
+		$i=0;
+		foreach ($dataDetail['rows'] as $k => $v) {
+			$row['id'] = $i;
+			$row['cell'][]=$v['college']?$v['college']:'未完善资料';
+			$row['cell'][] = $v['user_count'];
+			$row['cell'][] = $v['deal_count'];
+			$row['cell'][] = $v['repay_count'];
+			$row['cell'][] = $v['has_repay_count'];
+			$row['cell'][] = $v['expired_days'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+			$i+=1;
+		}
+		$json['total']=$dataDetail['total'];
+		echo @json_encode($json);
+	}
+	
+	public function do_overdueDetail_college_export() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			\Core::message('请选择日期范围', adminUrl('stat_borrow', 'overdueDetail_college'), 'fail', 3, 'message');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			\Core::message('开始日期不能大于结束日期', adminUrl('stat_borrow', 'overdueDetail_college'), 'fail', 3, 'message');
+		}
+		$bStat = \Core::business('loan_stat');
+		$bComm = \Core::business('common');
+		$sql=$bStat->getStatOverdueDetailCollegeSql($startStamp,$endStamp);
+		$header=array();
+		$header['学院'] = 'string';
+		$header['逾期总人数'] = 'integer';
+		$header['逾期总笔数'] = 'integer';
+		$header['逾期总期数'] = 'integer';
+		$header['逾期已还期数'] = 'integer';
+		$header['逾期总天数'] = 'integer';
+		$this -> log('导出按学院逾期统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		$bComm->exportExcel($sql,'按学院逾期统计(' . $datestart . ' - ' . $dateend . ')',$header,adminUrl('stat_borrow','overdueDetail_college'));
 	}
 
 	//逾期排名 - 年龄
 	public function do_overdueDetail_age() {
 		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_age');
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_overdueDetailAge', $pagetabs);
+	}
+	
+	public function do_overdueDetail_age_json() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			showJSON('101', '开始日期不能大于结束日期');
+		}
+		$pagesize = \Core::postGet('rp');
+		$page = \Core::postGet('curpage');
+		if (!$page || !is_numeric($page))
+			$page = 1;
+		if (!$pagesize || !is_numeric($pagesize))
+			$pagesize = 15;
+		$orderName='age';
+		$orderSort='asc';
+		if (\Core::postGet('sortorder')) {
+			$orderName=\Core::postGet('sortname');
+			$orderSort=\Core::postGet('sortorder');
+		}
+		$bStat = \Core::business('loan_stat');
+		$dataDetail = $bStat -> getStatOverdueDetailAge($page,$pagesize,$startStamp,$endStamp,$orderName,$orderSort);
+		foreach ($dataDetail['rows'] as $k => $v) {
+			$row['id'] = $k;
+			$row['cell'][]=$v['age'];
+			$row['cell'][] = $v['user_count'];
+			$row['cell'][] = $v['deal_count'];
+			$row['cell'][] = $v['repay_count'];
+			$row['cell'][] = $v['has_repay_count'];
+			$row['cell'][] = $v['expired_days'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		$json['total']=$dataDetail['total'];
+		echo @json_encode($json);
+	}
+	
+	public function do_overdueDetail_age_export() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			\Core::message('请选择日期范围', adminUrl('stat_borrow', 'overdueDetail_age'), 'fail', 3, 'message');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			\Core::message('开始日期不能大于结束日期', adminUrl('stat_borrow', 'overdueDetail_age'), 'fail', 3, 'message');
+		}
+		$bStat = \Core::business('loan_stat');
+		$bComm = \Core::business('common');
+		$sql=$bStat->getStatOverdueDetailAgeSql($startStamp,$endStamp);
+		$header=array();
+		$header['年龄'] = 'integer';
+		$header['逾期总人数'] = 'integer';
+		$header['逾期总笔数'] = 'integer';
+		$header['逾期总期数'] = 'integer';
+		$header['逾期已还期数'] = 'integer';
+		$header['逾期总天数'] = 'integer';
+		$this -> log('导出按年龄逾期统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		$bComm->exportExcel($sql,'按年龄逾期统计(' . $datestart . ' - ' . $dateend . ')',$header,adminUrl('stat_borrow','overdueDetail_age'));
 	}
 
 	//逾期分析
 	public function do_overdueAnalyze() {
-
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_overdueAnalyze');
+	}
+	
+	public function do_overdueAnalyze_json() {
+		
+	}
+	
+	public function do_overdueAnalyze_export() {
+		
 	}
 
 	//逾期波动
 	public function do_overdueDay() {
-
+		
 	}
 
 }
