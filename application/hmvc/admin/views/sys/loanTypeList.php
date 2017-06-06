@@ -77,6 +77,10 @@
         window.location.href = '<?php echo adminUrl('sys_loan','type_add');?>';
     }
 
+    function type_edit($id){
+        location.href='<?php echo adminUrl('sys_loan','type_edit');?>'+'&id='+$id;
+    }
+
 
 </script>
 </body>

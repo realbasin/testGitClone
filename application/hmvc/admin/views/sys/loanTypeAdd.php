@@ -71,7 +71,7 @@
                     <label>贷款缩略图</label>
                 </dt>
                 <dd class="opt">
-                    <input type="file" name="name" id="name" value="">
+                    <input type="file" name="icon" >
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -283,25 +283,25 @@
                     <div id="contact_div">
                         <div class="contact_wrap" data-index="1">
                             第1联系人&nbsp;
-                            <input type="text" placeholder="父亲">&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="text" name="contact_arr[0]" value="父亲">&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="company_arr[0]" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="contact_norequired_arr[0]" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
                             <input type="button" class="input-btn" value="删除" onclick="contact_del(this);">
                         </div>
 
                         <div class="contact_wrap" data-index="2">
                             第2联系人&nbsp;
-                            <input type="text" placeholder="母亲">&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="text" name="contact_arr[1]" value="母亲">&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="company_arr[1]" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="contact_norequired_arr[1]" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
                             <input type="button" class="input-btn" value="删除" onclick="contact_del(this);">
                         </div>
 
                         <div class="contact_wrap" data-index="3">
                             第3联系人&nbsp;
-                            <input type="text" placeholder="直属主管">&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="text" name="contact_arr[2]" value="直属主管">&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="company_arr[2]" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="contact_norequired_arr[2]" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
                             <input type="button" class="input-btn" value="删除" onclick="contact_del(this);">
                         </div>
                     </div>
@@ -335,7 +335,7 @@
                     <label>产品简介</label>
                 </dt>
                 <dd class="opt">
-                    <textarea name="condition" cols="80" style="height: 100px;"></textarea>
+                    <textarea name="content" cols="80" style="height: 100px;"></textarea>
                 </dd>
             </dl>
         </div>
@@ -420,7 +420,7 @@
                     <label>Banner图</label>
                 </dt>
                 <dd class="opt">
-                    <input type="file" name="name" id="name" value="">
+                    <input type="file" name="banner">
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -736,9 +736,9 @@
         maxIndex+=1;
         var html = '<div class="contact_wrap" data-index="'+maxIndex+'">'+
             '第'+maxIndex+'联系人&nbsp;'+
-        '<input type="text" placeholder="">&nbsp;&nbsp;&nbsp;&nbsp;'+
-        '<input type="checkbox" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;'+
-        '<input type="checkbox" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;'+
+        '<input type="text" name="contact_arr['+maxIndex+']" placeholder="">&nbsp;&nbsp;&nbsp;&nbsp;'+
+        '<input type="checkbox" name="company_arr['+maxIndex+']" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;'+
+        '<input type="checkbox" name="contact_norequired_arr['+maxIndex+']" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;'+
         '<input type="button" class="input-btn" value="删除" onclick="contact_del(this);">'+
         '</div>';
         $('#contact_div').append(html);
