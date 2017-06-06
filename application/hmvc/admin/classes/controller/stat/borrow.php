@@ -681,11 +681,101 @@ class  controller_stat_borrow extends controller_sysBase {
 	//逾期排名 - 月排行
 	public function do_overdueDetail_month() {
 		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_month');
+		\Core::view() -> load('stat_overdueDetailMonth', $pagetabs);
+	}
+	
+	public function do_overdueDetail_month_json() {
+		$orderBy = 'deal_month asc';
+		$orderSortName=\Core::postGet('sortname');
+		if (\Core::postGet('sortorder') && in_array($orderSortName, array('deal_month', 'user_count', 'deal_count', 'repay_count', 'has_repay_count', 'expired_days'))) {
+			$orderBy = $orderSortName . " " . \Core::postGet('sortorder');
+		}
+		$bStat = \Core::business('loan_stat');
+		$dataDetail = $bStat -> getStatOverdueDetailMonth($orderBy);
+		$json=array();
+		foreach ($dataDetail as $k => $v) {
+			$row['id'] = $k;
+			$row['cell'][] = $v['deal_month'];
+			$row['cell'][] = $v['user_count'];
+			$row['cell'][] = $v['deal_count'];
+			$row['cell'][] = $v['repay_count'];
+			$row['cell'][] = $v['has_repay_count'];
+			$row['cell'][] = $v['expired_days'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		$json['total']=count($dataDetail);
+		echo @json_encode($json);
+	}
+	
+	public function do_overdueDetail_month_export() {
+		$orderBy = 'deal_month asc';
+		$orderSortName=\Core::postGet('sortname');
+		if (\Core::postGet('sortorder') && in_array($orderSortName, array('deal_month', 'user_count', 'deal_count', 'repay_count', 'has_repay_count', 'expired_days'))) {
+			$orderBy = $orderSortName . " " . \Core::postGet('sortorder');
+		}
+		$bStat = \Core::business('loan_stat');
+		$dataDetail = $bStat -> getStatOverdueDetailMonth(strtotime($datestart), strtotime($dateend),$orderBy);
+		$header = array();
+		$header['借款月'] = 'string';
+		$header['逾期总人数'] = 'integer';
+		$header['逾期总笔数'] = 'integer';
+		$header['逾期总期数'] = 'integer';
+		$header['逾期已还期数'] = 'integer';
+		$header['逾期总天数'] = 'integer';
+		//导出
+		$this -> log('导出按月逾期统计', 'export');
+		exportExcel('按月逾期统计', $header, $dataDetail);
 	}
 
 	//逾期排名 - 日排行
 	public function do_overdueDetail_day() {
 		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_day');
+		\Core::view() -> load('stat_overdueDetailDay', $pagetabs);
+	}
+	
+	public function do_overdueDetail_day_json() {
+		$orderBy = 'deal_day asc';
+		$orderSortName=\Core::postGet('sortname');
+		if (\Core::postGet('sortorder') && in_array($orderSortName, array('deal_day', 'user_count', 'deal_count', 'repay_count', 'has_repay_count', 'expired_days'))) {
+			$orderBy = $orderSortName . " " . \Core::postGet('sortorder');
+		}
+		$bStat = \Core::business('loan_stat');
+		$dataDetail = $bStat -> getStatOverdueDetailDay($orderBy);
+		$json=array();
+		foreach ($dataDetail as $k => $v) {
+			$row['id'] = $k;
+			$row['cell'][] = $v['deal_day'];
+			$row['cell'][] = $v['user_count'];
+			$row['cell'][] = $v['deal_count'];
+			$row['cell'][] = $v['repay_count'];
+			$row['cell'][] = $v['has_repay_count'];
+			$row['cell'][] = $v['expired_days'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		$json['total']=count($dataDetail);
+		echo @json_encode($json);
+	}
+	
+	public function do_overdueDetail_day_export() {
+		$orderBy = 'deal_day asc';
+		$orderSortName=\Core::postGet('sortname');
+		if (\Core::postGet('sortorder') && in_array($orderSortName, array('deal_day', 'user_count', 'deal_count', 'repay_count', 'has_repay_count', 'expired_days'))) {
+			$orderBy = $orderSortName . " " . \Core::postGet('sortorder');
+		}
+		$bStat = \Core::business('loan_stat');
+		$dataDetail = $bStat -> getStatOverdueDetailDay($orderBy);
+		$header = array();
+		$header['借款日'] = 'string';
+		$header['逾期总人数'] = 'integer';
+		$header['逾期总笔数'] = 'integer';
+		$header['逾期总期数'] = 'integer';
+		$header['逾期已还期数'] = 'integer';
+		$header['逾期总天数'] = 'integer';
+		//导出
+		$this -> log('导出按日逾期统计', 'export');
+		exportExcel('按日逾期统计', $header, $dataDetail);
 	}
 
 	//逾期排名 - 地区
