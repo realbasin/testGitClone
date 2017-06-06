@@ -230,4 +230,27 @@ class  business_loan_stat extends Business {
 		$datas=$bussiness->getPageList($page,$pagesize,$sql);
 		return $datas;
 	}
+	
+	//逾期排名-初审人SQL
+	public function getStatOverdueDetailCheckerSql($startDate,$endDate,$orderBy="user_count desc"){
+		$sql="select
+		b.first_audit_admin_id as audit_id,
+		count(DISTINCT b.user_id) as user_count,
+		count(DISTINCT a.deal_id)  as deal_count,
+		count(DISTINCT a.id)  as repay_count,
+		count(DISTINCT if(a.has_repay = 1, a.id, null)) as has_repay_count,
+		sum(CEILING((if(a.has_repay=1,(a.true_repay_time-a.repay_time),(UNIX_TIMESTAMP(NOW())-a.repay_time)))/(3600*24))) expired_days
+			 from _tablePrefix_deal_repay as a inner join _tablePrefix_loan_base as b on a.deal_id=b.id
+					inner join _tablePrefix_user as c on b.user_id=c.id
+					left join _tablePrefix_user as d on d.id=c.pid
+		 where if(isnull(d.rpid),0,d.rpid)=0 and ((a.has_repay = 1 and a.true_repay_time > a.repay_time) or (a.has_repay = 0 and  a.repay_time <= ".time().")) 
+		 and a.repay_time>=$startDate and a.repay_time<=$endDate and  b.first_audit_admin_id>0 group by audit_id order by ".$orderBy;
+		 return $sql;
+	}
+	
+	//逾期排名-初审人
+	public function getStatOverdueDetailChecker($startDate,$endDate,$orderBy="user_count desc"){
+		$sql=$this->getStatOverdueDetailAgentSql($startDate,$endDate,$orderBy);
+		return \Core::db()->cache(C('stat_sql_cache_time'),__METHOD__.$startDate.$endDate.str_replace(' ','_',$orderBy))->execute($sql)->key('audit_id')->rows();
+	}
 }

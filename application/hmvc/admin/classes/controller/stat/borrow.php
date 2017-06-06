@@ -590,6 +590,92 @@ class  controller_stat_borrow extends controller_sysBase {
 	//逾期排名 - 初审人
 	public function do_overdueDetail_checker() {
 		$pagetabs = $this -> createTaps($this -> overDueTaps, 'overdueDetail_checker');
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_overdueDetailChecker', $pagetabs);
+	}
+	
+	public function do_overdueDetail_checker_json() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$orderBy = 'user_count desc';
+		$orderSortName=\Core::postGet('sortname');
+		if (\Core::postGet('sortorder') && in_array($orderSortName, array('audit_id', 'user_count', 'deal_count', 'repay_count', 'has_repay_count', 'expired_days'))) {
+			$orderBy = $orderSortName . " " . \Core::postGet('sortorder');
+		}
+		$datas = array();
+		//先查询管理员表
+		$daoAdmin = \Core::dao('sys_admin_admin');
+		$admins = $daoAdmin -> findAll(null, array(), null, 'admin_id,admin_name,admin_real_name');
+		$bStat = \Core::business('loan_stat');
+		$dataDetail = $bStat -> getStatOverdueDetailChecker(strtotime($datestart), strtotime($dateend),$orderBy);
+		$json=array();
+		foreach ($dataDetail as $k => $v) {
+			$row['id'] = $k;
+			if(\Core::arrayKeyExists($k, $admins)){
+				$adminRow=$admins[$k];
+				$row['cell'][] = $adminRow['admin_real_name']?$adminRow['admin_real_name']:$adminRow['admin_name'];
+			}else{
+				$row['cell'][]=' ';
+			}
+			$row['cell'][] = $v['user_count'];
+			$row['cell'][] = $v['deal_count'];
+			$row['cell'][] = $v['repay_count'];
+			$row['cell'][] = $v['has_repay_count'];
+			$row['cell'][] = $v['expired_days'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		$json['total']=count($dataDetail);
+		echo @json_encode($json);
+	}
+	
+	public function do_overdueDetail_checker_export() {
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-30 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		$orderBy = 'user_count desc';
+		$orderSortName=\Core::postGet('sortname');
+		if (\Core::postGet('sortorder') && in_array($orderSortName, array('agent_name', 'user_count', 'deal_count', 'repay_count', 'has_repay_count', 'expired_days'))) {
+			if($orderSortName=='agent_name'){
+				$orderSortName='adminid';
+			}
+			$orderBy = $orderSortName . " " . \Core::postGet('sortorder');
+		}
+		$datas = array();
+		//先查询管理员表
+		$daoAdmin = \Core::dao('sys_admin_admin');
+		$admins = $daoAdmin -> findAll(null, array(), null, 'admin_id,admin_name,admin_real_name');
+		$bStat = \Core::business('loan_stat');
+		$dataDetail = $bStat -> getStatOverdueDetailChecker(strtotime($datestart), strtotime($dateend),$orderBy);
+		$json=array();
+		foreach ($dataDetail as $k => $v) {
+			if(\Core::arrayKeyExists($k, $admins)){
+				$adminRow=$admins[$k];
+				$v['audit_id'] = $adminRow['admin_real_name']?$adminRow['admin_real_name']:$adminRow['admin_name'];
+			}else{
+				$v['audit_id']=' ';
+			}
+			$dataDetail[$k]=$v;
+		}
+		$header = array();
+		$header['初审人'] = 'string';
+		$header['逾期总人数'] = 'integer';
+		$header['逾期总笔数'] = 'integer';
+		$header['逾期总期数'] = 'integer';
+		$header['逾期已还期数'] = 'integer';
+		$header['逾期总天数'] = 'integer';
+		//导出
+		$this -> log('导出初审人逾期统计(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('初审人逾期统计(' . $datestart . ' - ' . $dateend . ')', $header, $dataDetail);
 	}
 
 	//逾期排名 - 月排行
