@@ -299,4 +299,29 @@ class  business_loan_stat extends Business {
 		$sql=$this->getStatOverdueDetailDaySql($orderBy);
 		return \Core::db()->cache(C('stat_sql_cache_time'),__METHOD__.str_replace(' ','_',$orderBy))->execute($sql)->key('deal_day')->rows();
 	}
+	
+	//逾期排名-地区SQL
+	public function getStatOverdueDetailAreaSql($startDate,$endDate,$order="user_count",$sort="desc"){
+		$sql="select
+		(select CONCAT(aa.name,ab.name) from _tablePrefix_region_conf aa,_tablePrefix_region_conf ab where ab.pid=aa.id and aa.id=c.province_id and ab.id=c.city_id) region_name,
+		count(DISTINCT b.user_id) as user_count,
+		count(DISTINCT a.deal_id)  as deal_count,
+		count(DISTINCT a.id)  as repay_count,
+		count(DISTINCT if(a.has_repay = 1, a.id, null)) as has_repay_count,
+		sum(CEILING((if(a.has_repay=1,(a.true_repay_time-a.repay_time),(UNIX_TIMESTAMP(NOW())-a.repay_time)))/(3600*24))) expired_days
+			 from _tablePrefix_deal_repay as a inner join _tablePrefix_loan_base as b on a.deal_id=b.id
+					inner join _tablePrefix_user as c on b.user_id=c.id
+					left join _tablePrefix_user as d on d.id=c.pid
+		 where if(isnull(d.rpid),0,d.rpid)=0 and ((a.has_repay = 1 and a.true_repay_time > a.repay_time) or (a.has_repay = 0 and  a.repay_time <= ".time().")) 
+		 and a.repay_time>=$startDate and a.repay_time<=$endDate  group by region_name order by ".$order." ".$sort;
+		 return $sql;
+	}
+	
+	//逾期排名-地区
+	public function getStatOverdueDetailArea($page,$pagesize,$startDate,$endDate,$order="user_count",$sort="desc"){
+		$sql=$this->getStatOverdueDetailAreaSql($startDate,$endDate,$order,$sort);
+		$bussiness=\Core::business('common');
+		$datas=$bussiness->getPageList($page,$pagesize,$sql);
+		return $datas;
+	}
 }

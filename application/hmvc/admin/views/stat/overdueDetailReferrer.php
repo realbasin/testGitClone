@@ -81,8 +81,7 @@ $(function(){
        
         sortname: "user_count",
         sortorder: "desc",
-        title: '推荐人',
-        usepager:false
+        title: '推荐人'
    });
    
 });
