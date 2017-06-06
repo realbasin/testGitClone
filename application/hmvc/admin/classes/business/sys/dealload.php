@@ -63,9 +63,9 @@ class  business_sys_dealload extends Business {
 					$result['status'] = 1;
 				}
 			}
-			//TODO 管理员提成
+			//TODO 管理员提成 暂无
 			//获取投标用户的所属管理员id
-			addGerman('loanSuccess',array('user_id'=>$v['user_id']),'admin');
+			/*addGerman('loanSuccess',array('user_id'=>$v['user_id']),'admin');
 			$admin_id = \Core::dao('user_user')->getUser($v['user_id'],'id,admin_id,platform_code');
 			if($admin_id[$v['user_id']]) {
 				$loanBid = $loanBidDao->getOneLoanById($v['deal_id'],'load_money');
@@ -81,16 +81,17 @@ class  business_sys_dealload extends Business {
 			if($adminstatus['is_post_yott']) {
 				//记录优投用户id
 				$result['yott_users'][] = $v['user_id'];
-			}
+			}*/
 			//TODO 返利给用户
-			if(floatval($v['rebate_money']) != 0 || intval($v['bid_score']) != 0) {
+			$loanBase = $loanBaseDao->getloanbase($v['deal_id'],'id,name,repay_time_type,repay_time');
+			if((floatval($v['rebate_money']) != 0 || intval($v['bid_score']) != 0) && $v['is_rebate'] == 0 ) {
 				//修改is_rebate状态
 				$rebateStatus = \Core::dao('loan_dealload')->update(array('is_rebate'=>1),array('is_rebate'=>0,'id'=>$v['id'],'user_id'=>$v['user_id']));
 				//返利
 				if($rebateStatus !== false) {
 					//返利
 					if(floatval($v['rebate_money']) != 0) {
-						//记录日志
+						//返利并记录日志
 						$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
 						$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],投资返利";
 						$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($v['user_id'],floatval($v['rebate_money']),$log_msg,24);
@@ -102,7 +103,7 @@ class  business_sys_dealload extends Business {
 					//返积分
 					if(intval($v['bid_score']) != 0) {
 						$editScoreStatus = false;
-						//记录积分日志
+						//返积分并记录积分日志
 						$url = \Core::getUrl("deal","","deal", array("id" => $loanBase['id']));
 						$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],投资返积分";
 						$editScoreStatus = \Core::business('user_userinfo')->editUserScore($v['user_id'],intval($v['bid_score']),$log_msg,2);

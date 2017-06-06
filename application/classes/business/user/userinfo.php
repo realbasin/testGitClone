@@ -25,21 +25,45 @@ class  business_user_userinfo extends Business {
 		//TODO 加锁
 		$flag = false;
 		$userDb = \Core::db();
-		if($userDb->isLocked()) {
-			return false;
-		}
-		$userDb->lock();
-
-		$sql = "update _tablePrefix_user set money_encrypt = AES_ENCRYPT(ROUND(ifnull(AES_DECRYPT(money_encrypt,'".AES_DECRYPT_KEY."'),0) + ".floatval($money).",2),'".AES_DECRYPT_KEY."') where id =".$user_id;
-		$flag = $userDb -> execute($sql);
-		$userDb->unlock();
-		//修改金额后记录日志
-		if($flag === false){
-			return $flag;
-		}else {
+		//$loanBidDao = \Core::dao('loan_loanbid');
+		//$loanBaseDao = \Core::dao('loan_loanbase');
+		$userDao = \Core::dao('user_user');
+		//TODO 开启事务
+		$userDb->begin();
+		try{
+			//当前用户余额
+			$userMoney = $userDao->getUserMoney($user_id);
+			$sql = "update _tablePrefix_user ";
+			if($type == 3) {
+				//放款sql
+				$sql .= ",_tablePrefix_loan_bid,_tablePrefix_loan_base ";
+			}
+			$sql .= "set money_encrypt = AES_ENCRYPT
+(ROUND(ifnull(AES_DECRYPT(money_encrypt,'".AES_DECRYPT_KEY."'),0) + ".floatval
+				($money).",2),'".AES_DECRYPT_KEY."') where _tablePrefix_user.id =".$user_id." 
+			and AES_DECRYPT(money_encrypt,'".AES_DECRYPT_KEY."')='".
+				$userMoney."'";
+			if($type == 3) {
+				//放款sql
+				$sql .= " and _tablePrefix_loan_bid.is_has_loans = 0 
+					and _tablePrefix_loan_base.user_id = _tablePrefix_user.id 
+					and _tablePrefix_loan_bid.loan_id = _tablePrefix_loan_base.id";
+			}
+			$flag = $userDb -> execute($sql);
+			//修改金额后记录日志
 			\Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('money'=>$money));
 			\Core::business('user_userlog')->addUserMoneyLog($user_id,$log_msg,$money,$type);
-			return true;
+		}catch (\Exception $e){
+			$userDb->rollback();
+			return false;
+		}finally{
+			if($flag === false){
+				$userDb->rollback();
+				return $flag;
+			}else {
+				$userDb->commit();
+				return true;
+			}
 		}
 	}
 	/*
@@ -49,21 +73,34 @@ class  business_user_userinfo extends Business {
 	 * return 成功返回true 失败返回false
 	 *  */
 	public function editUserLockMoney($user_id,$money,$log_msg,$type){
+		//TODO 加锁
 		$flag = false;
-		$sql = 'update _tablePrefix_user set lock_money = lock_money + '.floatval($money).' where id ='.$user_id;
 		$userDb = \Core::db();
-		if($userDb->isLocked()) {
-			return false;
-		}
-		$userDb->lock();
-		$flag = $userDb -> execute($sql);
-		$userDb->unlock();
-		//修改后记录日志
-		if($flag === false){
-			return $flag;
-		}else {
+		$userDao = \Core::dao('user_user');
+		//TODO 开启事务
+		$userDb->begin();
+		try{
+			$userLockMoney = $userDao->getUserLockMoneyById($user_id);
+			$newmoney = $money + $userLockMoney;
+			$data = array();
+			$data['lock_money'] = $newmoney;
+			$where = array();
+			$where['lock_money'] = $userLockMoney;
+			$where['id'] = $user_id;
+			$flag = $userDao->update($data,$where);
+			//修改后记录日志
 			\Core::business('user_userlog')->addUserLockMoneyLog($user_id,$log_msg,$money,$type);
-			return true;
+		}catch (\Exception $e){
+			$userDb->rollback();
+			return false;
+		}finally{
+			if($flag === false){
+				$userDb->rollback();
+				return $flag;
+			}else {
+				$userDb->commit();
+				return true;
+			}
 		}
 	}
 	/*
@@ -73,22 +110,35 @@ class  business_user_userinfo extends Business {
 	 * return 成功返回true 失败返回false
 	 *  */
 	public function editUserScore($user_id,$score,$log_msg,$type){
+		//TODO 加锁
 		$flag = false;
-		$sql = 'update _tablePrefix_user set score = score + '.floatval($score).' where id ='.$user_id;
+		//TODO 开启事务
 		$userDb = \Core::db();
-		if($userDb->isLocked()) {
+		$userDao = \Core::dao('user_user');
+		$userDb->begin();
+		try{
+			$userScore = $userDao->getUserScoreById($user_id);
+			$newscore = $score + $userScore;
+			$data = array();
+			$data['score'] = $newscore;
+			$where = array();
+			$where['score'] = $userScore;
+			$where['id'] = $user_id;
+			$flag = $userDao->update($data,$where);
+			//修改后记录日志
+			\Core::business('user_userlog')->addUserScoreLog($user_id,$log_msg,$score,$type);
+			\Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('score'=>$score));
+		}catch (\Exception $e){
+			$userDb->rollback();
 			return false;
-		}
-		$userDb->lock();
-		$flag = $userDb -> execute($sql);
-		$userDb->unlock();
-		//修改后记录日志
-		if($flag === false){
-			return $flag;
-		}else {
-			 \Core::business('user_userlog')->addUserScoreLog($user_id,$log_msg,$score,2);
-			 \Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('score'=>$score));
-			return true;
+		}finally{
+			if($flag === false){
+				$userDb->rollback();
+				return $flag;
+			}else {
+				$userDb->commit();
+				return true;
+			}
 		}
 	}
 }
