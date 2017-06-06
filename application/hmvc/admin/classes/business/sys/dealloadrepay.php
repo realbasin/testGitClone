@@ -20,6 +20,8 @@ class  business_sys_dealloadrepay extends Business {
 		$return = false;
 		unset($load_repay['manage_money_rebate']);
 		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
+		//转让标表dao
+		$dealLoadTransferDao = \Core::dao('loan_dealloadtransfer');
 		foreach ($load_users as $k=>$v){
 			$load_repay['user_id'] = $v['user_id'];
 			$load_repay['repay_id'] = $repay_id;
@@ -43,6 +45,8 @@ class  business_sys_dealloadrepay extends Business {
 			if($v['is_winning']==1 && (int)$v['income_type']==2 && (float)$v['income_value']!=0){
 				$load_repay['reward_money'] = $load_repay['interest_money'] * (float)$v['income_value'] * 0.01;
 			}
+			//TODO 获取已转让的标
+
 			//判断是否存在该期回款计划
 			$is_plan = $dealLoadRepayDao->getSomeOneLkeyPlan($load_repay['deal_id'],$load_repay['l_key'],$v['user_id']);
 			if($is_plan){
@@ -62,8 +66,10 @@ class  business_sys_dealloadrepay extends Business {
 				$return = $dealLoadRepayDao->insert($load_repay);
 			}
 			$load_repay_plan[] = $load_repay;
+			$load_ids[] = $v['id'];
 		}
-		//TODO 获取已转让的标
+
+
 		if($return === false) {
 			return $return;
 		}else {

@@ -219,13 +219,16 @@ class  controller_loan_loan extends controller_sysBase {
 				//修改为已放款
 				$effectBidNumbers =$loanBidDao->update($loanbid_info,array('loan_id'=>$deal_id,'is_has_loans'=>0));
 				if($effectBidNumbers === false) {
-					$result['message'] = "放款失败";
+					$result['message'] = "放款失败1";
 				}else {
 					//TODO 是否存在优投用户，存在发送推送
 					if (isset($result['yott_users'])) {
 						$result['code'] = 200;
 						$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
 					}
+					//TODO 记录贷款状态变更日志
+					$dealStatusLogDao = \Core::dao('loan_dealstatuslog');
+					
 					//TODO 发借款成功邮件
 
 					//TODO 发借款成功站内信
@@ -240,7 +243,7 @@ class  controller_loan_loan extends controller_sysBase {
 				}
 			}else{
 				$result['code'] = '000';
-				$result['message'] = "放款失败";
+				$result['message'] = "放款失败，生成还款、回款计划失败";
 				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
