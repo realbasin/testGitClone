@@ -117,7 +117,7 @@
                 </dt>
                 <dd class="opt">
                     <?php foreach($dealUserTypeList as $dealUserType){?>
-                        <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' />".$dealUserType['name'];?>
+                        <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' datatype=\"*\" nullmsg=\"请选择借款用途\" />".$dealUserType['name'];?>
                     <?php }?>
                 </dd>
             </dl>
@@ -140,7 +140,7 @@
                 </dt>
                 <dd class="opt">
                     <?php foreach($loanTypeList as $loanType){?>
-                        <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' />".$loanType['name'];?>
+                        <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' datatype=\"n\" nullmsg=\"请选择类别\" />".$loanType['name'];?>
                     <?php }?>
                     <p class="notic">（理财端信用标、抵押标的区分，根据此处的选择来确定；学生贷+信用贷=信用贷）</p>
                 </dd>

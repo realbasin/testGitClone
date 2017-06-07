@@ -41,7 +41,7 @@
     <i class="arrow"></i>
     <span><a href="<?php echo adminUrl('loan_loan','index');?>"><?php echo \Core::L('loan_all');?></a></span>
     <i class="arrow"></i>
-    <span><?php echo '新增贷款类型';?></span>
+    <span><?php echo '修改贷款类型';?></span>
 </div>
 <div class="line10"></div>
 <div class="page">
@@ -129,9 +129,9 @@
                     <?php $selectedUserTypeList = explode(',',$dealLoanType['usetypes']); ?>
                     <?php foreach($dealUserTypeList as $dealUserType){?>
                         <?php if(in_array($dealUserType['id'],$selectedUserTypeList)){ ?>
-                            <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' checked />".$dealUserType['name'];?>
+                            <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' datatype=\"*\" nullmsg=\"请选择借款用途\" checked />".$dealUserType['name'];?>
                         <?php }else{ ?>
-                            <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."'  />".$dealUserType['name'];?>
+                            <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' datatype=\"*\" nullmsg=\"请选择借款用途\" />".$dealUserType['name'];?>
                         <?php } ?>
                     <?php }?>
                 </dd>
@@ -162,9 +162,9 @@
                     <?php $selectedLoanTypeList = explode(',',$dealLoanType['types']); ?>
                     <?php foreach($loanTypeList as $loanType){?>
                         <?php if(in_array($loanType['id'],$selectedLoanTypeList)){ ?>
-                            <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' checked />".$loanType['name'];?>
+                            <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' checked datatype=\"n\" nullmsg=\"请选择类别\" />".$loanType['name'];?>
                         <?php }else{ ?>
-                            <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' />".$loanType['name'];?>
+                            <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' datatype=\"n\" nullmsg=\"请选择类别\" />".$loanType['name'];?>
                         <?php } ?>
                     <?php }?>
                     <p class="notic">（理财端信用标、抵押标的区分，根据此处的选择来确定；学生贷+信用贷=信用贷）</p>

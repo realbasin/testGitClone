@@ -2,4 +2,4 @@
 .project
 application/config/development/
 storage/
-upload/
+/upload
