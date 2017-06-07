@@ -79,16 +79,26 @@ class  business_sys_dealrepay extends Business {
 			if($deal['loantype'] == 0 ) {
 				//月还本息
 				$return['month_repay_money'] = number_format($this->pl_it_formula($deal['borrow_amount'],$deal['rate']/12/100,$deal['repay_time']),2);
+				//实际还多少钱
+				$return['remain_repay_money'] = round($return['month_repay_money'] * $deal['repay_time'],2);
 			}
 			//付息还本
 			if($deal['loantype'] == 1 ) {
 				//月还本息
 				$return['month_repay_money'] = number_format($this->av_it_formula($deal['borrow_amount'],$deal['rate']/12/100));
+				//实际还多少钱
+				$return['remain_repay_money'] = round($deal['borrow_amount'] + $return['month_repay_money'] * $deal['repay_time'],2);
 			}
-			//实际还多少钱
-			$return['remain_repay_money'] = round($return['month_repay_money'] * $deal['repay_time'],2);
+			//等额本金
+			if($deal['loantype'] == 3) {
+				//月还本息
+				$return['month_repay_money'] = number_format(($deal['borrow_amount']/$deal['repay_time']) + $this->av_it_formula($deal['borrow_amount'],$deal['rate']/12/100));
+				//实际还多少钱
+				$return['remain_repay_money'] = $deal['borrow_amount'] + $this->av_it_formula($deal['borrow_amount'],$deal['rate']/12/100)*$deal['repay_time'];
+			}
 			//最后一期还款本息
 			$return['last_month_repay_money'] = $return['remain_repay_money'] - round($return['month_repay_money'],2)*($deal['repay_time']-1);
+			$return['is_check_impose'] = false;
 		}
 		return $return;
 	}
@@ -122,6 +132,10 @@ class  business_sys_dealrepay extends Business {
 					//管理费
 					//$load_repay['manage_money'] = $deal['all_manage_money'];
 				}
+				if($loan['loantype'] == 3) {
+					$load_repay['repay_money'] = $repaymoney['last_month_repay_money'];
+					$load_repay['self_money'] = $loan['borrow_amount'] - round($loan['borrow_amount']/$true_repay_time,2)*($true_repay_time -1);
+				}
 			} else {
 				if($loan['loantype'] == 0) {
 					$load_repay['repay_money'] = $repaymoney['month_repay_money'];
@@ -138,7 +152,10 @@ class  business_sys_dealrepay extends Business {
 					//管理费
 					//$load_repay['manage_money'] = 0;
 				}
-
+				if($loan['loantype'] == 3) {
+					$load_repay['repay_money'] = $repaymoney['month_repay_money'];
+					$load_repay['self_money'] = $loan['borrow_amount']/$true_repay_time;
+				}
 			}
 			//管理费率，从配置字段config_common中获取
 			$config_common = unserialize($loan['config_common']);

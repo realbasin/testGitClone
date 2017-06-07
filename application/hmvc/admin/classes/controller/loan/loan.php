@@ -51,36 +51,41 @@ class  controller_loan_loan extends controller_sysBase {
 	}
 	//手动还款
 	public function do_manual_repay(){
-		$data = array();
-		$data['code'] = 000;
+		$result = array();
+		$result['code'] = '000';
 		$loan_id = \Core::get('id',0);
 		if(!$loan_id) {
-			$data['message'] = \Core::L('fail');
-			echo @json_encode($data);
-			exit;
+			$result['message'] = \Core::L('fail');
+			return @json_encode($result);
 		}
-		$l_key = \Core::get('lkey',-1);
-		$user = \Core::dao('loan_loanbase')->getLoan($loan_id,'id,user_id');
-		if(!$user){
-			$data['message'] = \Core::L('no_loan');
-			echo @json_encode($data);
-			exit;
+		$l_key = \Core::get('l_key',-1);
+		$loanBase = \Core::dao('loan_loanbase')->getloanbase($loan_id,'id,user_id');
+		$loanBid = \Core::dao('loan_loanbid')->getOneLoanById($loan_id,'id,deal_status');
+		if(!$loanBase || !$loanBid){
+			$result['message'] = \Core::L('no_loan');
+			return @json_encode($result);
 		}
-		$user_id = $user[$loan_id]['user_id'];
-		//提前还款（批量所有（未还）期）
+		$user_id = $loanBase['user_id'];
+		if($loanBid['deal_status'] != 4) {
+			$result['message'] = '借款不是还款状态！';
+			return @json_encode($result);
+		}
+		//$user_total_money = \Core::dao('user_user')->getUserMoney($user_id);
+
+		//还款（批量所有（未还）期）
 		/*if($l_key < 0) {
 
 		}else {
-			//正常还款（单期）
+			//还款（单期）
 		}*/
 		//执行还款
 		$status = \Core::business('loan_loanenum')->repayLoanBills($loan_id,$l_key,$user_id);
-		if($status == 0) {
-			$data['code'] = 200;
-			echo @json_encode($data);
+		if($status['status'] == 1) {
+			$result['code'] = 200;
+			return @json_encode($result);
 		}else {
-			$data['message'] = $status['show_err'];
-			echo @json_encode($data);
+			$result['message'] = $status['show_err'];
+			return @json_encode($result);
 		}
 
 	}
@@ -210,6 +215,7 @@ class  controller_loan_loan extends controller_sysBase {
 			}
 			//更新贷款状态为已放款
 			$load_loan = \Core::dao('loan_dealload')->update(array('is_has_loans'=>1),array('deal_id'=>$deal_id));
+
 			//TODO 分销相关
 			//TODO 生成还款计划
 			$repayplan = \Core::business('sys_dealrepay')->makeRepayPlan($loanBase,$loanBid,$loanExt,$loanbid_info['loan_time']);
@@ -219,12 +225,24 @@ class  controller_loan_loan extends controller_sysBase {
 				//修改为已放款
 				$effectBidNumbers =$loanBidDao->update($loanbid_info,array('loan_id'=>$deal_id,'is_has_loans'=>0));
 				if($effectBidNumbers === false) {
-					$result['message'] = "放款失败";
+					$result['message'] = "放款失败1";
 				}else {
 					//TODO 是否存在优投用户，存在发送推送
 					if (isset($result['yott_users'])) {
 						$result['code'] = 200;
 						$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
+					}
+					//TODO 记录贷款状态变更日志
+					$dealStatusLogDao = \Core::dao('loan_dealstatuslog');
+					//TODO 记录贷款日志：满标放款
+					$dealStatusLogDao->insert(array('deal_id'=>$loanBase['id'],'user_id'=>$loanBid['user_id'],'type'=>9,'create_time'=>time()));
+					//TODO 记录贷款日志：借款协议生效
+					$dealStatusLogDao->insert(array('deal_id'=>$loanBase['id'],'user_id'=>$loanBid['user_id'],'type'=>10,'create_time'=>time()));
+					//TODO 借款分销返利
+					\Core::business('user_userinfo')->distributionRebate($deal_id,$loanBid['user_id'],1);
+					//TODO 理财分销返利
+					foreach ($load_list as $v){
+						\Core::business('user_userinfo')->bidDistributionRebate($deal_id,$v,$v['user_id'],1);
 					}
 					//TODO 发借款成功邮件
 
@@ -240,7 +258,7 @@ class  controller_loan_loan extends controller_sysBase {
 				}
 			}else{
 				$result['code'] = '000';
-				$result['message'] = "放款失败";
+				$result['message'] = "放款失败，生成还款、回款计划失败";
 				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
