@@ -37,16 +37,10 @@
   <i class="home"></i>
   <span>借入统计</span>
   <i class="arrow"></i>
-  <span>逾期排名</span>
+  <span>逾期数据分析</span>
 </div>
 <div class="line10"></div>
 <div class="page">
-	<div class="tab-bar">
-    <div class="tab-title">
-    	<div class="subject"></div>
-    	<?php if(isset($pagetabs)) echo $pagetabs;?>
-    </div>
-  </div>
 	<div class="form-default">
 		<form method="post" id="form1" name="form1">
     <input type="hidden" name="form_submit" value="ok" />
@@ -66,29 +60,31 @@
 <script>
 $(function(){
 	$("#flexitable").flexigrid({
-        url: '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_json');?>'+'&'+$("#form1").serialize(),
+        url: '<?php echo adminUrl('stat_borrow','overdueAnalyze_json');?>'+'&'+$("#form1").serialize(),
         colModel : [
-            {display: '行长', name : 'saleman_id', width : 150, sortable : true, align: 'center'}, 
-			{display: '逾期总人数', name : 'user_count', width : 120, sortable : true, align : 'center'},
-			{display: '逾期总笔数', name : 'deal_count', width : 120, sortable : true, align: 'center'},
-			{display: '逾期总期数', name : 'repay_count', width : 120, sortable : true, align: 'center'},
-			{display: '逾期已还期数', name : 'has_repay_count', width : 120, sortable : true, align: 'center'},
-			{display: '逾期总天数', name : 'expired_days', width : 120, sortable : true, align: 'center'}
+            {display: '日期', name : 'create_time', width : 100, sortable : true, align: 'center'}, 
+			{display: '逾期等级', name : 'level', width : 100, sortable : false, align : 'center'},
+			{display: '逾期管理费', name : 'sum_repay_manage_money', width : 100, sortable : false, align: 'center'},
+			{display: '逾期本息', name : 'sum_repay_money', width : 100, sortable : false, align: 'center'},
+			{display: '逾期本金', name : 'sum_self_money', width : 100, sortable : false, align: 'center'},
+			{display: '逾期笔数', name : 'sum_count_deal', width : 80, sortable : false, align: 'center'},
+			{display: '逾期期数', name : 'sum_over_times', width : 80, sortable : false, align: 'center'},
+			{display: '剩余未还本金', name : 'sum_over_money', width : 120, sortable : false, align: 'center'}
             ],
         buttons : [
             {display: '<i class="fa fa-file-excel-o"></i> 导出全部数据到Excel', name : 'csv', bclass : 'csv', title : '导出全部数据到Excel', onpress : flexPress }
         ],
        
-        sortname: "user_count",
-        sortorder: "desc",
-        title: '归属行长'
+        sortname: "create_time",
+        sortorder: "asc",
+        title: '逾期数据分析'
    });
    
 });
 	
 function flexPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_export',array('datestart'=>$datestart?$datestart:date('Y-m-d',strtotime('-30 day')),'dateend'=>$dateend?$dateend:date('Y-m-d',time())));?>';
+        window.location.href = '<?php echo adminUrl('stat_borrow','overdueAnalyze_export',array('datestart'=>$datestart?$datestart:date('Y-m-d',strtotime('-30 day')),'dateend'=>$dateend?$dateend:date('Y-m-d',time())));?>';
     }
 };
 	
@@ -119,7 +115,7 @@ $('#daterange').dateRangePicker({
 $('#btnsearch').on('click',function(){
 	var datestart=$('#datestart').val();
 	var dateend=$('#dateend').val();
-	$("#flexitable").flexOptions({url: '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_json');?>&datestart='+datestart+'&dateend='+dateend,query:'',qtype:''}).flexReload();
+	$("#flexitable").flexOptions({url: '<?php echo adminUrl('stat_borrow','overdueAnalyze_json');?>&datestart='+datestart+'&dateend='+dateend,query:'',qtype:''}).flexReload();
 });
 
 $('#syshelp').on("click",function(){

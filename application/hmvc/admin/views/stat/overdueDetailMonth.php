@@ -47,28 +47,14 @@
     	<?php if(isset($pagetabs)) echo $pagetabs;?>
     </div>
   </div>
-	<div class="form-default">
-		<form method="post" id="form1" name="form1">
-    <input type="hidden" name="form_submit" value="ok" />
-   <div class="title">
-         按时间段查询：
-         <span id="daterange">
-         <input class="s-input-txt" type="text" readonly="true" value="<?php echo $datestart?$datestart:date('Y-m-d',strtotime('-30 day'));?>" id="datestart" name="datestart">
-         	至
-         	<input class="s-input-txt" type="text" readonly="true" value="<?php echo $dateend?$dateend:date('Y-m-d',time());?>" id="dateend" name="dateend">
-         		</span>
-         	<input type="button" id="btnsearch" style="height: 26px;padding: 0 5px;margin-left: 20px;" value="提交查询"></button>
-      </div>
-      </form>
-   </div>
  	<div  id="flexitable" class="flexitable"></div>
 </div>
 <script>
 $(function(){
 	$("#flexitable").flexigrid({
-        url: '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_json');?>'+'&'+$("#form1").serialize(),
+        url: '<?php echo adminUrl('stat_borrow','overdueDetail_month_json');?>',
         colModel : [
-            {display: '行长', name : 'saleman_id', width : 150, sortable : true, align: 'center'}, 
+            {display: '借款月', name : 'deal_month', width : 150, sortable : true, align: 'center'}, 
 			{display: '逾期总人数', name : 'user_count', width : 120, sortable : true, align : 'center'},
 			{display: '逾期总笔数', name : 'deal_count', width : 120, sortable : true, align: 'center'},
 			{display: '逾期总期数', name : 'repay_count', width : 120, sortable : true, align: 'center'},
@@ -79,48 +65,19 @@ $(function(){
             {display: '<i class="fa fa-file-excel-o"></i> 导出全部数据到Excel', name : 'csv', bclass : 'csv', title : '导出全部数据到Excel', onpress : flexPress }
         ],
        
-        sortname: "user_count",
-        sortorder: "desc",
-        title: '归属行长'
+        sortname: "deal_month",
+        sortorder: "asc",
+        title: '按月逾期列表',
+        usepager:false
    });
    
 });
 	
 function flexPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_export',array('datestart'=>$datestart?$datestart:date('Y-m-d',strtotime('-30 day')),'dateend'=>$dateend?$dateend:date('Y-m-d',time())));?>';
+        window.location.href = '<?php echo adminUrl('stat_borrow','overdueDetail_month_export');?>';
     }
 };
-	
-$('#daterange').dateRangePicker({
-	shortcuts:
-			{
-				'prev-days': [1,3,5,7,30,60],
-				'prev' : null,
-			},
-	maxDays:60,
-	//startDate:'<?php echo date('Y-m-d',strtotime("-60 day"));?>',
-	endDate:'<?php echo date('Y-m-d',time());?>',
-	getValue: function()
-	{
-		if ($('#datestart').val() && $('#dateend').val() )
-			return $('#datestart').val() + ' to ' + $('#dateend').val();
-		else
-			return '';
-	},
-	setValue: function(s,s1,s2)
-	{
-		$('#datestart').val(s1);
-		$('#dateend').val(s2);
-	}
-});
-
-//查询
-$('#btnsearch').on('click',function(){
-	var datestart=$('#datestart').val();
-	var dateend=$('#dateend').val();
-	$("#flexitable").flexOptions({url: '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_json');?>&datestart='+datestart+'&dateend='+dateend,query:'',qtype:''}).flexReload();
-});
 
 $('#syshelp').on("click",function(){
 	var d = dialog({
