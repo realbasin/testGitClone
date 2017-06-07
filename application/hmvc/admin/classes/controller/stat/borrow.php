@@ -1115,7 +1115,63 @@ class  controller_stat_borrow extends controller_sysBase {
 
 	//逾期波动
 	public function do_overdueDay() {
-		
+		$datestart = \Core::get('datestart');
+		$dateend = \Core::get('dateend');
+		$datestart = $datestart ? $datestart : date('Y-m-d', strtotime('-7 day'));
+		$dateend = $dateend ? $dateend : date('Y-m-d', time());
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> load('stat_overdueDay');
+	}
+	
+	public function do_overdueDay_json() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			showJSON('100', '请选择日期范围');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			showJSON('101', '开始日期不能大于结束日期');
+		}
+		$pagesize = \Core::postGet('rp');
+		$page = \Core::postGet('curpage');
+		if (!$page || !is_numeric($page))
+			$page = 1;
+		if (!$pagesize || !is_numeric($pagesize))
+			$pagesize = 15;
+		$orderName='date_time';
+		$orderSort='desc';
+		if (\Core::postGet('sortorder')) {
+			$orderName=\Core::postGet('sortname');
+			$orderSort=\Core::postGet('sortorder');
+		}
+		$where=array();
+		$where['UNIX_TIMESTAMP(date_time) >=']=$startStamp;
+		$where['UNIX_TIMESTAMP(date_time) <=']=$endStamp;
+		$where['has_repay']=1;
+		$where['level']=0;
+		$daoAnalyze = \Core::dao('loan_dealRepayLateAnalysis');
+		$dataDetail = $daoAnalyze ->getFlexPage($page,$pagesize,'*',array('create_time >='=>$startStamp,'create_time <='=>$endStamp),array($orderName=>$orderSort));
+		foreach ($dataDetail['rows'] as $k => $v) {
+			$row['id'] = $k;
+			$row['cell'][]=date('Y-m-d',$v['create_time']);
+			$row['cell'][] = $v['level'];
+			$row['cell'][] = '￥'.$v['sum_repay_manage_money'];
+			$row['cell'][] = '￥'.$v['sum_repay_money'];
+			$row['cell'][] = '￥'.$v['sum_self_money'];
+			$row['cell'][] = $v['sum_count_deal'];
+			$row['cell'][] = $v['sum_over_times'];
+			$row['cell'][] = '￥'.$v['sum_over_money'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		$json['total']=$dataDetail['total'];
+		echo @json_encode($json);
+	}
+	
+	public function do_overdueDay_export() {
 	}
 
 }
