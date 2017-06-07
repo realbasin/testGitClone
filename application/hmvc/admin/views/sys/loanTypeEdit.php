@@ -21,10 +21,13 @@
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/laymain.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>switchery/switchery.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>moment.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/Validform_v5.3.2_min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.daterangepicker.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/flexigrid.js"></script>
+    <script charset="utf-8" src="<?php echo RS_PATH?>kindeditor-4.1.7/kindeditor.js"></script>
     <!--[if lt IE 9]>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5.js"></script>
     <![endif]-->
@@ -68,8 +71,7 @@
                     <label>分类名称</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="name" id="name" class="input-txt" value="<?php echo $dealLoanType['name']; ?>">
-                    <p class="notic"></p>
+                    <input type="text" name="name" id="name" class="input-txt" value="<?php echo $dealLoanType['name']; ?>" datatype="*" nullmsg="请填写分类名称！">
                 </dd>
             </dl>
             <dl class="row">
@@ -78,6 +80,10 @@
                 </dt>
                 <dd class="opt">
                     <input type="file" name="icon" >
+                    <?php if($dealLoanType['icon'] != ''){ ?>
+                        <?php $imgPath =  './upload/'.$dealLoanType['icon']; ?>
+                        <?php echo '<img src="'.$imgPath.'" width="30" height="30" />'; ?>
+                    <?php } ?>
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -104,7 +110,7 @@
                     <label>简单描述</label>
                 </dt>
                 <dd class="opt">
-                    <textarea name="brief" cols="80" style="height: 100px;"><?php echo $dealLoanType['brief']; ?></textarea>
+                    <textarea name="brief" cols="80" style="height: 100px;" datatype="*" nullmsg="请填写简单描述！"><?php echo $dealLoanType['brief']; ?></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -112,7 +118,7 @@
                     <label>申请条件</label>
                 </dt>
                 <dd class="opt">
-                    <textarea name="condition" cols="80" style="height: 100px;"><?php echo $dealLoanType['condition']; ?></textarea>
+                    <textarea name="condition" cols="80" style="height: 100px;" datatype="*" nullmsg="请填写申请条件！"><?php echo $dealLoanType['condition']; ?></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -250,8 +256,7 @@
                     <label>排序</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="sort" class="input-txt" value="<?php echo $dealLoanType['sort']; ?>">
-                    <p class="notic"></p>
+                    <input type="text" name="sort" class="input-txt" value="<?php echo $dealLoanType['sort']; ?>" datatype="n" nullmsg="请输入排序！">
                 </dd>
             </dl>
         </div>
@@ -347,7 +352,7 @@
                     <label>产品简介</label>
                 </dt>
                 <dd class="opt">
-                    <textarea name="content" cols="80" style="height: 100px;"><?php echo $dealLoanType['content']; ?></textarea>
+                    <textarea id="content" name="content" style="width:700px;height:300px;"><?php echo $dealLoanType['content']; ?></textarea>
                 </dd>
             </dl>
         </div>
@@ -433,6 +438,10 @@
                 </dt>
                 <dd class="opt">
                     <input type="file" name="banner">
+                    <?php if($dealLoanTypeExtern['banner'] != ''){ ?>
+                        <?php $imgPath =  './upload/'.$dealLoanTypeExtern['banner']; ?>
+                        <?php echo '<img src="'.$imgPath.'" width="30" height="30" />'; ?>
+                    <?php } ?>
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -642,8 +651,8 @@
                     <label>用户投标类型</label>
                 </dt>
                 <dd class="opt">
-                    按金额<input type="radio" name="uloadtype" value="1" <?php echo $dealLoanTypeExtern['uloadtype'] ? 'checked' : ''; ?>>
-                    按份数<input type="radio" name="uloadtype" value="0" <?php echo $dealLoanTypeExtern['uloadtype'] ? 'checked' : ''; ?>>
+                    按金额<input type="radio" name="uloadtype" value="0" <?php echo $dealLoanTypeExtern['uloadtype'] == 0 ? 'checked' : ''; ?>>
+                    按份数<input type="radio" name="uloadtype" value="1" <?php echo $dealLoanTypeExtern['uloadtype'] == 1 ? 'checked' : ''; ?>>
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -777,9 +786,10 @@
                     <label>学信网限制</label>
                 </dt>
                 <dd class="opt">
-                    <input type="checkbox" name="xuex_chk_status[]" value="1">未验证
-                    <input type="checkbox" name="xuex_chk_status[]" value="1">正确
-                    <input type="checkbox" name="xuex_chk_status[]" value="1">错误
+                    <?php $chkStatus = explode(',', $dealLoanType['xuex_chk_status']); ?>
+                    <input type="checkbox" name="xuex_chk_status[]" value="0" <?php echo in_array(0,$chkStatus) ? 'checked' : '' ?>>未验证
+                    <input type="checkbox" name="xuex_chk_status[]" value="1" <?php echo in_array(1,$chkStatus) ? 'checked' : '' ?>>正确
+                    <input type="checkbox" name="xuex_chk_status[]" value="2" <?php echo in_array(2,$chkStatus) ? 'checked' : '' ?>>错误
                     <p class="notic">学信网状态未勾选的将被自动拒绝</p>
                 </dd>
             </dl>
@@ -789,7 +799,7 @@
                     <label>芝麻信用限制</label>
                 </dt>
                 <dd class="opt">
-                    芝麻信用分<<input type="text" name="tongdun_limit_score" style="width: 80px;" value="<?php echo $dealLoanType['tongdun_limit_score']; ?>">
+                    芝麻信用分<<input type="text" name="zm_point_limit" style="width: 80px;" value="<?php echo $dealLoanType['zm_point_limit']; ?>">
                     <p class="notic">芝麻信用分低于此设定的将被自动拒绝</p>
                 </dd>
             </dl>
@@ -800,18 +810,7 @@
                 </dt>
                 <dd class="opt">
                     <div id="province_city_div">
-                        <div class="province_city_wrap" data-index="0">
-                            <select name="tongdun_limit_province[0]" onchange="loadCity(this);">
-                                <option>请选择省份</option>
-                                <?php foreach($provinceList as $province){ ?>
-                                    <option value="<?php echo $province['name'] ?>" data-province_id="<?php echo $province['id'] ?>"><?php echo $province['name'] ?></option>
-                                <?php } ?>
-                            </select>
-                            <select name="tongdun_limit_city[0]">
-                                <option>请选择城市</option>
-                            </select>
-                            <input type="button" value="删除" class="input-btn" onclick="province_city_del(this);">
-                        </div>
+
                     </div>
                     <input type="button" value="添加" class="input-btn" onclick="province_city_add();">
                     <p class="notic">身份证、同盾申请IP任一在此城市的将被自动拒绝</p>
@@ -827,25 +826,11 @@
     </form>
 </div>
 <script type="text/javascript">
-    var provinceCity = <?php echo $provinceCity; ?>
-
-    $('#uloadtype').on('change',function(){
-        var uloadtype = $("#uloadtype option:selected").val();
-        if(uloadtype == 0) {
-            $(".loan_money").css('display','block');
-            $(".loan_portion").css('display','none');
-        }else if(uloadtype == 1) {
-            $(".loan_money").css('display','none');
-            $(".loan_portion").css('display','block');
-        }else {
-            return false;
-        }
-    });
-    $(function () {
-        //初始化表单验证
-        $("#form1").initValidform();
+    KindEditor.ready(function(K) {
+        window.editor = K.create('#content');
     });
 
+    var provinceCity = <?php echo $provinceCity; ?>;
     $('#contact_add').on('click',function(){
         var maxIndex = 0;
         $.each( $('.contact_wrap'), function(i, obj){
@@ -872,7 +857,6 @@
     function loadCity(obj){
         var province = $(obj).find('option:selected');
         var provinceId = province.data('province_id');
-        console.log(provinceId);
         var cityList = null;
         for(var i=0;i<provinceCity.length;i++){
             if(provinceCity[i].id == provinceId){
@@ -881,7 +865,6 @@
             }
         }
 
-        console.log(cityList);
         var citySelectObj = $(obj).next();
         citySelectObj.empty();
 
@@ -904,13 +887,13 @@
         maxIndex +=1;
         var html = '<div class="province_city_wrap" data-index="'+maxIndex+'">'+
             '<select name="tongdun_limit_province['+maxIndex+']" onchange="loadCity(this);">'+
-        '<option>请选择省份</option>'+
+        '<option value="">请选择省份</option>'+
             <?php foreach($provinceList as $province){ ?>
         '<option value="<?php echo $province['name'] ?>" data-province_id="<?php echo $province['id'] ?>"><?php echo $province['name'] ?></option>'+
             <?php } ?>
         '</select>'+
         '<select name="tongdun_limit_city['+maxIndex+']">'+
-        '<option>请选择城市</option>'+
+        '<option value="">请选择城市</option>'+
         '</select>'+
         '<input type="button" value="删除" class="input-btn" onclick="province_city_del(this);">'+
         '</div>';
@@ -923,15 +906,16 @@
     }
 
     $(function(){
+        //初始化表单验证
+        $("#form1").initValidform();
+
         $('#daterange').dateRangePicker({
             shortcuts:
                 {
-                    'prev-days': [1,3,5,7,30,60],
-                    'prev' : null,
+                    'next-days':[365,1095,1825]
                 },
-            maxDays:60,
-            startDate:'<?php echo date('Y-m-d',strtotime("-60 day"));?>',
-            endDate:'<?php echo date('Y-m-d',time());?>',
+            startDate:'<?php echo date('Y-m-d',time());?>',
+            endDate:false,
             getValue: function()
             {
                 if ($('#start_time').val() && $('#end_time').val() )
@@ -945,6 +929,24 @@
                 $('#end_time').val(s2);
             }
         });
+
+        //加载高风险城市
+        var tongdun_limit_city = '<?php echo $dealLoanType['tongdun_limit_city'] ?>';
+        var tongdun_limit_province = '<?php echo $dealLoanType['tongdun_limit_province'] ?>';
+        if(tongdun_limit_province != '' && tongdun_limit_city != ''){
+            var provinceArr = tongdun_limit_province.split(',');
+            var cityArr = tongdun_limit_city.split(',');
+            for(var i=0;i<provinceArr.length;i++){
+                province_city_add()
+                var citySelect = $('#province_city_div select').last();
+                var provinceSelect = $(citySelect).prev();
+                provinceSelect.find("option[value='"+provinceArr[i]+"']").attr("selected",true);
+                loadCity(provinceSelect.get(0));
+                $(citySelect).find("option[value='"+cityArr[i]+"']").attr("selected",true);
+            }
+        }else{
+            province_city_add();
+        }
     });
 </script>
 </body>
