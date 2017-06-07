@@ -1,7 +1,7 @@
 <?php
 defined('IN_XIAOSHU') or exit('Access Invalid!');
 
-class dao_stat_dealRepayLateAnalysisDailyDetail extends Dao {
+class dao_loan_dealRepayLateAnalysisDailyDetail extends Dao {
 
 	public function getColumns() {
 		return array(

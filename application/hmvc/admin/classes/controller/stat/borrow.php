@@ -1110,7 +1110,7 @@ class  controller_stat_borrow extends controller_sysBase {
 		$header['逾期期数'] = 'integer';
 		$header['剩余未还本金'] = 'price';
 		$this -> log('导出逾期数据分析第'.$curPage.'页(' . $datestart . ' - ' . $dateend . ')', 'export');
-		$bComm->exportExcel($sql,'逾期数据分析第'.$curPage.'页(' . $datestart . ' - ' . $dateend . ')',$header,adminUrl('stat_borrow','overdueAnalyze'));
+		exportExcel('逾期数据分析第'.$curPage.'页(' . $datestart . ' - ' . $dateend . ')', $header, $dataDetail);
 	}
 
 	//逾期波动
@@ -1147,23 +1147,43 @@ class  controller_stat_borrow extends controller_sysBase {
 			$orderName=\Core::postGet('sortname');
 			$orderSort=\Core::postGet('sortorder');
 		}
+		$select="date_time,has_repay,COUNT(DISTINCT(deal_id)) count_deal,COUNT(id) over_times,SUM(repay_money)+SUM(manage_money) sum_repay_manage_money,SUM(repay_money) sum_repay_money,SUM(self_money) sum_self_money";
 		$where=array();
+		$multiWhere=array();
 		$where['UNIX_TIMESTAMP(date_time) >=']=$startStamp;
 		$where['UNIX_TIMESTAMP(date_time) <=']=$endStamp;
-		$where['has_repay']=1;
-		$where['level']=0;
-		$daoAnalyze = \Core::dao('loan_dealRepayLateAnalysis');
-		$dataDetail = $daoAnalyze ->getFlexPage($page,$pagesize,'*',array('create_time >='=>$startStamp,'create_time <='=>$endStamp),array($orderName=>$orderSort));
+		$multiWhere[]=array(array('has_repay'=>1),'and (','');
+		$multiWhere[]=array(array('level'=>0),'or',')');
+		$daoAnalyze = \Core::dao('loan_dealRepayLateAnalysisDailyDetail');
+		$dataDetail = $daoAnalyze ->getFlexPage($page,$pagesize,$select,$where,array($orderName=>$orderSort),"date_time,has_repay",array(),false,$multiWhere);
+		$json=array();
 		foreach ($dataDetail['rows'] as $k => $v) {
+			$row=array();
 			$row['id'] = $k;
-			$row['cell'][]=date('Y-m-d',$v['create_time']);
-			$row['cell'][] = $v['level'];
-			$row['cell'][] = '￥'.$v['sum_repay_manage_money'];
-			$row['cell'][] = '￥'.$v['sum_repay_money'];
-			$row['cell'][] = '￥'.$v['sum_self_money'];
-			$row['cell'][] = $v['sum_count_deal'];
-			$row['cell'][] = $v['sum_over_times'];
-			$row['cell'][] = '￥'.$v['sum_over_money'];
+			$row['cell'][]=$v['date_time'];
+			if($v['has_repay']==0){
+				$row['cell'][] = $v['count_deal'];
+				$row['cell'][] = $v['over_times'];
+				$row['cell'][] = '￥'.$v['sum_repay_manage_money'];
+				$row['cell'][] = '￥'.$v['sum_repay_money'];
+				$row['cell'][] = '￥'.$v['sum_self_money'];
+				$row['cell'][] = '';
+				$row['cell'][] = '';
+				$row['cell'][] = '';
+				$row['cell'][] = '';
+				$row['cell'][] = '';
+			}else{
+				$row['cell'][] = '';
+				$row['cell'][] = '';
+				$row['cell'][] = '';
+				$row['cell'][] = '';
+				$row['cell'][] = '';
+				$row['cell'][] = $v['count_deal'];
+				$row['cell'][] = $v['over_times'];
+				$row['cell'][] = '￥'.$v['sum_repay_manage_money'];
+				$row['cell'][] = '￥'.$v['sum_repay_money'];
+				$row['cell'][] = '￥'.$v['sum_self_money'];
+			}
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
@@ -1172,6 +1192,91 @@ class  controller_stat_borrow extends controller_sysBase {
 	}
 	
 	public function do_overdueDay_export() {
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			\Core::message('请选择日期范围', adminUrl('stat_borrow', 'overdueDay'), 'fail', 3, 'message');
+		}
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		if($startStamp>$endStamp){
+			\Core::message('开始日期不能大于结束日期', adminUrl('stat_borrow', 'overdueDay'), 'fail', 3, 'message');
+		}
+		$orderName='date_time';
+		$orderSort='desc';
+		$select="date_time,has_repay,COUNT(DISTINCT(deal_id)) count_deal,COUNT(id) over_times,SUM(repay_money)+SUM(manage_money) sum_repay_manage_money,SUM(repay_money) sum_repay_money,SUM(self_money) sum_self_money";
+		$where=array();
+		$multiWhere=array();
+		$where['UNIX_TIMESTAMP(date_time) >=']=$startStamp;
+		$where['UNIX_TIMESTAMP(date_time) <=']=$endStamp;
+		$multiWhere[]=array(array('has_repay'=>1),'and (','');
+		$multiWhere[]=array(array('level'=>0),'or',')');
+		$daoAnalyze = \Core::dao('loan_dealRepayLateAnalysisDailyDetail');
+		$curPage=\Core::getPost('curpage');
+		if (!is_numeric($curPage)){
+			$count=$daoAnalyze->getCount($where,$multiWhere);
+			//超过最大数据，需要分页，跳转到分页页面
+			if($count>C('export_perpage')){
+				$page = ceil($count/C('export_perpage'));
+                for ($i=1;$i<=$page;$i++){
+                    $limit1 = ($i-1)*C('export_perpage') + 1;
+                    $limit2 = $i*C('export_perpage') > $count ? $count : $i*C('export_perpage');
+                    $array[$i] = $limit1.' ~ '.$limit2 ;
+                }
+                Core::view()->set('list',$array);
+                Core::view()->set('murl',adminUrl('stat_borrow', 'overdueDay'));
+                Core::view()->load('export.excel');
+				exit;
+			}
+		}
+		$curPage=$curPage?$curPage:1;
+		$dataDetail = $daoAnalyze ->getFlexPage($curPage,C('export_perpage'),$select,$where,array($orderName=>$orderSort),"date_time,has_repay",array(),false,$multiWhere);
+		$header=array();
+		$header['统计时间'] = 'date';
+		$header['新增笔数'] = 'integer';
+		$header['新增期数'] = 'integer';
+		$header['新增管理费'] = 'price';
+		$header['新增本息'] = 'price';
+		$header['新增本金'] = 'price';
+		$header['减少笔数'] = 'integer';
+		$header['减少期数'] = 'integer';
+		$header['减少管理费'] = 'price';
+		$header['减少本息'] = 'price';
+		$header['减少本金'] = 'price';
+		
+		//数据处理
+		$exportData=array();
+		foreach($dataDetail as $k=>$v){
+			$row=array();
+			$row[]=$v['date_time'];
+			if($v['has_repay']==0){
+				$row[] = $v['count_deal'];
+				$row[] = $v['over_times'];
+				$row[] = '￥'.$v['sum_repay_manage_money'];
+				$row[] = '￥'.$v['sum_repay_money'];
+				$row[] = '￥'.$v['sum_self_money'];
+				$row[] = '0';
+				$row[] = '0';
+				$row[] = '0';
+				$row[] = '0';
+				$row[] = '0';
+			}else{
+				$row[] = '0';
+				$row[] = '0';
+				$row[] = '0';
+				$row[] = '0';
+				$row[] = '0';
+				$row[] = $v['count_deal'];
+				$row[] = $v['over_times'];
+				$row[] = '￥'.$v['sum_repay_manage_money'];
+				$row[] = '￥'.$v['sum_repay_money'];
+				$row[] = '￥'.$v['sum_self_money'];
+			}
+			$exportData[]=$row;
+		}
+		
+		$this -> log('导出逾期波动第'.$curPage.'页(' . $datestart . ' - ' . $dateend . ')', 'export');
+		exportExcel('逾期波动第'.$curPage.'页(' . $datestart . ' - ' . $dateend . ')', $header, $exportData);
 	}
 
 }
