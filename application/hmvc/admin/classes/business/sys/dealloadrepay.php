@@ -20,6 +20,9 @@ class  business_sys_dealloadrepay extends Business {
 		$return = false;
 		unset($load_repay['manage_money_rebate']);
 		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
+		//转让标表dao
+		$dealLoadTransferDao = \Core::dao('loan_dealloadtransfer');
+
 		foreach ($load_users as $k=>$v){
 			$load_repay['user_id'] = $v['user_id'];
 			$load_repay['repay_id'] = $repay_id;
@@ -43,6 +46,20 @@ class  business_sys_dealloadrepay extends Business {
 			if($v['is_winning']==1 && (int)$v['income_type']==2 && (float)$v['income_value']!=0){
 				$load_repay['reward_money'] = $load_repay['interest_money'] * (float)$v['income_value'] * 0.01;
 			}
+			//TODO 获取已转让的标
+			$transfer = $dealLoadTransferDao->getTransInfoByLoanId($v['id']);
+			if($transfer) {
+				//存在转让标
+				$load_repay['t_user_id'] = $transfer['t_user_id'];
+				$repay_data['loantype'] = $loan['loantype'];
+				//VIP利息管理费
+				//$deal =  get_user_load_fee((int)$vv['t_user_id'] > 0 ? $vv['t_user_id'] : $vv['user_id'],0,$deal);
+				//$repay_data['manage_interest_money'] = $repay_data['interest_money']*floatval($deal["user_loan_interest_manage_fee"])/100;
+
+				//投资者 授权服务机构获取的利息管理费抽成
+				//$rebate_rs = get_rebate_fee((int)$vv['t_user_id'] > 0 ? $vv['t_user_id'] : $vv['user_id'],"invest");
+				$repay_data['manage_interest_money_rebate'] = $repay_data['manage_interest_money']* floatval(C('INVESTORS_COMMISSION_RATIO'))/100;
+			}
 			//判断是否存在该期回款计划
 			$is_plan = $dealLoadRepayDao->getSomeOneLkeyPlan($load_repay['deal_id'],$load_repay['l_key'],$v['user_id']);
 			if($is_plan){
@@ -62,8 +79,10 @@ class  business_sys_dealloadrepay extends Business {
 				$return = $dealLoadRepayDao->insert($load_repay);
 			}
 			$load_repay_plan[] = $load_repay;
+			$load_ids[] = $v['id'];
 		}
-		//TODO 获取已转让的标
+
+
 		if($return === false) {
 			return $return;
 		}else {

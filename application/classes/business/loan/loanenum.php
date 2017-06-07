@@ -114,8 +114,10 @@ class  business_loan_loanenum extends Business {
 			return ($status!='')?\Core::arrayGet($repayType, $status,''):'';
 		}
 		//手动还款
-		public function repayLoanBills($id='',$l_key='',$user_id=''){
+		public function repayLoanBills($id,$l_key,$user_id){
 			$id = intval($id);
+			$l_key = intval($l_key);
+			$user_id = intval($user_id);
 			$root = array();
 			$root["status"] = 0;//0:出错;1:正确;
 			if ($id == 0) {
@@ -126,17 +128,27 @@ class  business_loan_loanenum extends Business {
 				$root["show_err"] = "用户不存在！";
 				return $root;
 			}
-			if($l_key < 0){
+			if($l_key == -1){
+				//批量还款
 				$lkeys = \Core::dao('loan_dealloadrepay')->getLkeys($id);
 				$ids = $lkeys;
+				//获取未还完期数
 			}else {
-				$ids = explode(",", $l_key);
-				sort($ids);
+				//单期
+				$load = \Core::dao('loan_dealloadrepay')->getSomeOneLkeyPlan($id,$l_key,$user_id);
+				if(!$load) {
+					$root['show_err'] = '该期借款不存在';
+					return $root;
+				}
+
 			}
 			//当前用户余额
-			$user_total_money = \Core::dao('user_user')->getUser($user_id,'id,AES_DECRYPT(money_encrypt,'."'__FANWEP2P__'".') AS money');
-			if ($user_total_money[$user_id]['money'] <= 0) {
-				$root["show_err"] = "余额不足";
+			$user_total_money = \Core::dao('user_user')->getUserMoney($user_id);
+			if ($user_total_money <= 0 || $user_total_money > ($load['repay_money'] + $load['manage_money'])) {
+				$root["show_err"] = "余额不足，请先充值";
+				return $root;
+			}else {
+				$root["show_err"] = "余额充足";
 				return $root;
 			}
 

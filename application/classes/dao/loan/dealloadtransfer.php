@@ -51,4 +51,9 @@ class dao_loan_dealloadtransfer extends Dao {
 	public function getStatTransferSuc($startDate,$endDate){
 		return $this->getDb()->select("FROM_UNIXTIME(transfer_time,'%Y-%m-%d') as transferdate,count(*) as successnum,sum(transfer_amount) as successmoney")->from($this->getTable())->where(array('transfer_time >='=>$startDate,'transfer_time <='=>$endDate))->groupBy('transferdate')->execute()->key('transferdate')->rows();
 	}
+	//根据loan_id 获取转让信息 add by zlz 201706061547
+	public function getTransInfoByLoanId($deal_id,$field="*"){
+		return $this->getDb()->select($field)->from($this->getTable())->where(array('loan_id'=>$deal_id))->execute()->row();
+	}
+	//根据deal_id 获取转让信息 add by zlz 201706061547 end
 }
