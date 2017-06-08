@@ -241,27 +241,8 @@ class dao_user_user extends Dao {
 		return $this->getDb()->select($field)->from($this->getTable())->where(array('user_name like'=>'%'.$userName.'%'))->limit(0,$limit)->execute()->rows();
 	}
 	/*
-	 * 通过用户名模糊获取用户ID
+	 * 通过用户名或手机号模糊获取用户ID
 	 * @userName 用户名
-	 * @field ID
-	 * @limit 限制取多少条，默认20条
-	 */
-	/*public function getUsersIdsByName($userName,$field='id',$limit=20){
-		return $this->getDb()->from($this->getTable())->where(array("AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"=>'%'.$userName.'%'))->limit(0,$limit)->execute()->values($field);
-	}*/
-	/*
-	 * 通过用户手机号模糊获取用户ID
-	 * @userName 用户名
-	 * @field ID
-	 * @limit 限制取多少条，默认20条
-	 */
-	/*public function getUsersIdsByMobile($userMobile,$field='id',$limit=20){
-		return $this->getDb()->from($this->getTable())->where(array("AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"=>'%'.$userMobile.'%'))->limit(0,$limit)->execute()->values($field);
-	}*/
-	//add by zlz 201705191123 通过条件拼接
-	/*
-	 * 通过用户手机号he姓名组合模糊获取用户ID
-	 * @where 条件
 	 * @field ID
 	 * @limit 限制取多少条，默认20条
 	 */
