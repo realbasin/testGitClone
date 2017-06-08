@@ -112,6 +112,7 @@ class  business_sys_dealrepay extends Business {
 		$has_use_self_money = 0;
 		$dealRepayDao = \Core::dao('loan_dealrepay');
 		$dealLoadRepayBusiness = \Core::business('sys_dealloadrepay');
+		$total_money  = array();
 		for ($i=0;$i<$true_repay_time;$i++) {
 			//还款时间
 			$load_repay['repay_time'] = $repay_day = strtotime(date('Y-m-d', $repay_day) . '+1 month');
@@ -176,6 +177,8 @@ class  business_sys_dealrepay extends Business {
 			//借款者 授权服务机构获取的管理费抽成
 			$rebate = C('BORROWER_COMMISSION_RATIO');
 			$load_repay['manage_money_rebate'] = $load_repay['manage_money']* floatval($rebate)/100;
+			//还款类型
+			$load_repay['loantype'] = $loan['loantype'];
 			//判断是否存在该期还款计划
 			if ($repayInfo = $dealRepayDao->getOneRepayPlan($loan['loan_id'], $i)) {
 				$repay_id = $repayInfo['id'];
@@ -202,7 +205,7 @@ class  business_sys_dealrepay extends Business {
 				$repay_id = $dealRepayDao->insert($load_repay);
 			}
 			$repay_plan[] = $load_repay;
-			$load_repay_plan = $dealLoadRepayBusiness->makeLoadRepayPlan($loan,$load_repay, $repay_id);
+			$load_repay_plan = $dealLoadRepayBusiness->makeLoadRepayPlan($loan,$load_repay, $i, $repay_id,$total_money);
 			if($load_repay_plan === false){
 				return false;
 			}
@@ -210,5 +213,9 @@ class  business_sys_dealrepay extends Business {
 		$plan['repay_plan'] = $repay_plan;
 		$plan['load_repay_plan'] = $load_repay_plan;
 		return $plan;
+	}
+	//TODO 还款计划逾期处理
+	public function repayPlanImpose($deal_id,$l_key){
+
 	}
 }
