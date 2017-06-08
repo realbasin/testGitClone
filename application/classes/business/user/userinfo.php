@@ -24,12 +24,9 @@ class  business_user_userinfo extends Business {
 	public function editUserMoney($user_id,$money,$log_msg,$type){
 		//TODO 加锁
 		$flag = false;
-		$userDb = \Core::db();
-		//$loanBidDao = \Core::dao('loan_loanbid');
-		//$loanBaseDao = \Core::dao('loan_loanbase');
 		$userDao = \Core::dao('user_user');
 		//TODO 开启事务
-		$userDb->begin();
+		$userDao->getDb()->begin();
 		try{
 			//当前用户余额
 			$userMoney = $userDao->getUserMoney($user_id);
@@ -49,19 +46,19 @@ class  business_user_userinfo extends Business {
 					and _tablePrefix_loan_base.user_id = _tablePrefix_user.id 
 					and _tablePrefix_loan_bid.loan_id = _tablePrefix_loan_base.id";
 			}
-			$flag = $userDb -> execute($sql);
+			$flag = $userDao->getDb() -> execute($sql);
 			//修改金额后记录日志
 			\Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('money'=>$money));
 			\Core::business('user_userlog')->addUserMoneyLog($user_id,$log_msg,$money,$type);
 		}catch (\Exception $e){
-			$userDb->rollback();
+			$userDao->getDb()->rollback();
 			return false;
 		}finally{
 			if($flag === false){
-				$userDb->rollback();
+				$userDao->getDb()->rollback();
 				return $flag;
 			}else {
-				$userDb->commit();
+				$userDao->getDb()->commit();
 				return true;
 			}
 		}
@@ -75,10 +72,9 @@ class  business_user_userinfo extends Business {
 	public function editUserLockMoney($user_id,$money,$log_msg,$type){
 		//TODO 加锁
 		$flag = false;
-		$userDb = \Core::db();
 		$userDao = \Core::dao('user_user');
 		//TODO 开启事务
-		$userDb->begin();
+		$userDao->getDb()->begin();
 		try{
 			$userLockMoney = $userDao->getUserLockMoneyById($user_id);
 			$newmoney = $money + $userLockMoney;
@@ -91,14 +87,14 @@ class  business_user_userinfo extends Business {
 			//修改后记录日志
 			\Core::business('user_userlog')->addUserLockMoneyLog($user_id,$log_msg,$money,$type);
 		}catch (\Exception $e){
-			$userDb->rollback();
+			$userDao->getDb()->rollback();
 			return false;
 		}finally{
 			if($flag === false){
-				$userDb->rollback();
+				$userDao->getDb()->rollback();
 				return $flag;
 			}else {
-				$userDb->commit();
+				$userDao->getDb()->commit();
 				return true;
 			}
 		}
@@ -113,9 +109,8 @@ class  business_user_userinfo extends Business {
 		//TODO 加锁
 		$flag = false;
 		//TODO 开启事务
-		$userDb = \Core::db();
 		$userDao = \Core::dao('user_user');
-		$userDb->begin();
+		$userDao->getDb()->begin();
 		try{
 			$userScore = $userDao->getUserScoreById($user_id);
 			$newscore = $score + $userScore;
@@ -129,14 +124,14 @@ class  business_user_userinfo extends Business {
 			\Core::business('user_userlog')->addUserScoreLog($user_id,$log_msg,$score,$type);
 			\Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('score'=>$score));
 		}catch (\Exception $e){
-			$userDb->rollback();
+			$userDao->getDb()->rollback();
 			return false;
 		}finally{
 			if($flag === false){
-				$userDb->rollback();
+				$userDao->getDb()->rollback();
 				return $flag;
 			}else {
-				$userDb->commit();
+				$userDao->getDb()->commit();
 				return true;
 			}
 		}
@@ -153,7 +148,6 @@ class  business_user_userinfo extends Business {
 			$result['message'] = '分销深度超出配置';
 			return $result;
 		}
-		echo $depth;
 		//获取贷款信息
 		$deal_info = \Core::dao('loan_loanbase')->getloanbase($deal_id,'id,create_time,borrow_amount,is_referral_award');
 		if(!$deal_info) {
@@ -248,7 +242,6 @@ class  business_user_userinfo extends Business {
 	public function bidDistributionRebate($deal_id,$load_info,$user_id,$depth=1){
 		if (!$deal_id || !$user_id || !$load_info) return;
 		if($depth > C('DISTRIBUTION_DEPTH')) return;
-		echo $depth;
 		//获取贷款信息
 		$deal_info = \Core::dao('loan_loanbase')->getloanbase($deal_id,'id,create_time,borrow_amount,is_referral_award');
 		if(!$deal_info) return;
@@ -293,7 +286,6 @@ class  business_user_userinfo extends Business {
 			$p_user = $userDao->getUser($user_info['pid'],'id,referral_time,create_time');
 			if(!$p_user) return;
 			$p_user_info  = $p_user[$user_info['pid']];
-			\Core::dump($p_user_info);
 			if($p_user_info) {
 				$rebate = C('DISTRIBUTION_DEPTH_REBATE_'.$depth);
 				if(!$rebate) return;
