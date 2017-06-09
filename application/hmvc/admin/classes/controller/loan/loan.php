@@ -379,14 +379,57 @@ class  controller_loan_loan extends controller_sysBase {
 	//贷款详细信息编辑
 	public function do_loan_show_edit(){
 		if(chksubmit()) {
-			\Core::dump('test');die();
-			//提交保存
+			$loan_base = array();
+			$loan_bid = array();
+			$loan_ext = array();
+			$loan_id = \Core::post('loan_id',0);
+			if(!$loan_id) {
+				\Core::redirect(adminUrl('loan_loan','all'),'贷款不存在');
+			}
+			$loan_base['name'] = \Core::post('name','');
+			$loan_base['type_id'] = \Core::post('type_id',0);
+			$loan_base['loantype'] = \Core::post('loantype',0);
+			$loan_ext['contract_id'] = \Core::post('contract_id',0);
+			$loan_ext['scontract_id'] = \Core::post('scontract_id',0);
+			$loan_ext['tcontract_id'] = \Core::post('tcontract_id',0);
+			$loan_bid['uloadtype'] = \Core::post('uloadtype',0);
+			$loan_bid['min_loan_money'] = \Core::post('min_loan_money',0);
+			$loan_bid['max_loan_money'] = \Core::post('max_loan_money',0);
+			$loan_bid['portion'] = \Core::post('portion',0);
+			$loan_bid['max_portion'] = \Core::post('max_portion',0);
+			$loan_bid['end_time'] = \Core::post('enddate',0);
+			$loan_bid['use_ecv'] = \Core::post('use_ecv',0);
+			$loan_base['description'] = \Core::post('description','');
+			$loan_bid['risk_rank'] = \Core::post('risk_rank',0);
+			$loan_bid['risk_security'] = \Core::post('risk_security','');
+			$loan_base['use_type'] = \Core::post('use_type',0);
 
+			//提交保存.多表更新
+			$loanBaseDao = \Core::dao('loan_loanbase');
+			$loanBidDao = \Core::dao('loan_loanbid');
+			$loanExtDao = \Core::dao('loan_loanext');
+			//TODO 开启事务
+			$loanBaseDao->getDb()->begin();
+			try{
+				$base_flag = $loanBaseDao->update($loan_base,array('id'=>$loan_id));
+				$bid_flag = $loanBidDao->update($loan_bid,array('loan_id'=>$loan_id));
+				$ext_flag = $loanExtDao->update($loan_ext,array('loan_id'=>$loan_id));
+			}catch (\Exception $e){
+				\Core::redirect(adminUrl('loan_loan','all'),'系统错误');
+			}finally{
+				if($base_flag === false || $bid_flag === false || $ext_flag === false) {
+					$loanBaseDao->getDb()->rollback();
+					\Core::redirect(adminUrl('loan_loan','all'),'保存失败');
+				}else {
+					$loanBaseDao->getDb()->commit();
+					\Core::redirect(adminUrl('loan_loan','loan_show_edit',array('loan_id'=>$loan_id)),'保存成功');
+				}
+			}
 		}else {
 			$loan_id = \Core::get('loan_id',0);
 			$loanBusiness=\Core::business('loan_loanenum');
 			//根据借款id，获取贷款基本信息
-			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type';
+			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,description';
 			$loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
 			//获取会员名称
 			$user_id = $loanbase['user_id'];
