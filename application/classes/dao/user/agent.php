@@ -25,5 +25,10 @@ class dao_user_agent extends Dao {
 	public function getTable() {
 		return 'agent';
 	}
+	
+	//获取全部业务员列表
+	public function getAgentList(){
+		return $this->getDb()->select("agent_id,agent_name,real_name,mobile,admin_id")->from($this->getTable())->execute()->key('agent_id')->rows();
+	}
 
 }

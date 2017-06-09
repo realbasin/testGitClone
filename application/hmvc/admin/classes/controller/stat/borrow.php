@@ -380,6 +380,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=1;
 		$json['total']=count($dataDetail);
 		echo @json_encode($json);
 	}
@@ -403,7 +404,6 @@ class  controller_stat_borrow extends controller_sysBase {
 		$agents = $daoAgent -> findAll(null, array(), null, 'agent_id,agent_name,real_name');
 		$bStat = \Core::business('loan_stat');
 		$dataDetail = $bStat -> getStatOverdueDetailAgent(strtotime($datestart), strtotime($dateend),$orderBy);
-		$json=array();
 		foreach ($dataDetail as $k => $v) {
 			if(\Core::arrayKeyExists($k, $agents)){
 				$agentRow=$agents[$k];
@@ -473,6 +473,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=$page;
 		$json['total']=$dataDetail['total'];
 		echo @json_encode($json);
 	}
@@ -556,6 +557,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=$page;
 		$json['total']=$dataDetail['total'];
 		echo @json_encode($json);
 	}
@@ -633,6 +635,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=1;
 		$json['total']=count($dataDetail);
 		echo @json_encode($json);
 	}
@@ -656,7 +659,6 @@ class  controller_stat_borrow extends controller_sysBase {
 		$admins = $daoAdmin -> findAll(null, array(), null, 'admin_id,admin_name,admin_real_name');
 		$bStat = \Core::business('loan_stat');
 		$dataDetail = $bStat -> getStatOverdueDetailChecker(strtotime($datestart), strtotime($dateend),$orderBy);
-		$json=array();
 		foreach ($dataDetail as $k => $v) {
 			if(\Core::arrayKeyExists($k, $admins)){
 				$adminRow=$admins[$k];
@@ -704,6 +706,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=1;
 		$json['total']=count($dataDetail);
 		echo @json_encode($json);
 	}
@@ -754,6 +757,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=1;
 		$json['total']=count($dataDetail);
 		echo @json_encode($json);
 	}
@@ -828,6 +832,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$json['rows'][] = $row;
 			$i+=1;
 		}
+		$json['page']=$page;
 		$json['total']=$dataDetail['total'];
 		echo @json_encode($json);
 	}
@@ -907,6 +912,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$json['rows'][] = $row;
 			$i+=1;
 		}
+		$json['page']=$page;
 		$json['total']=$dataDetail['total'];
 		echo @json_encode($json);
 	}
@@ -984,6 +990,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=$page;
 		$json['total']=$dataDetail['total'];
 		echo @json_encode($json);
 	}
@@ -1062,6 +1069,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=$page;
 		$json['total']=$dataDetail['total'];
 		echo @json_encode($json);
 	}
@@ -1187,6 +1195,7 @@ class  controller_stat_borrow extends controller_sysBase {
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
+		$json['page']=$page;
 		$json['total']=$dataDetail['total'];
 		echo @json_encode($json);
 	}

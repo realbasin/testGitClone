@@ -159,4 +159,20 @@ class dao_loan_dealloadrepay extends Dao {
 		$where['user_id'] = $user_id;
 		return $this->getDb()->select($field)->from($this->getTable())->where($where)->execute()->row();
 	}
+
+	//某期已还款统计 add by zlz 201706081601
+	public function getHasRepayTotal($deal_id,$l_key){
+		$field="deal_id,l_key,sum(true_self_money) as	total_self_money,
+		sum(true_interest_money) as	total_interest_money,
+		sum(true_repay_money) as total_repay_money,
+		sum(impose_money) as total_impose_money,
+		sum(true_repay_manage_money) as total_repay_manage_money,
+		sum(repay_manage_impose_money) as total_repay_manage_impose_money,
+		sum(true_mortgage_fee) as total_mortgage_fee,
+		is_site_repay";
+		$this->getDb()->select($field,false);
+		$this->getDb()->from($this->getTable());
+		$this->getDb()->where(array('deal_id'=>$deal_id,'l_key'=>$l_key,'has_repay'=>1));
+		return $this->getDb()->execute()->row();
+	}
 }

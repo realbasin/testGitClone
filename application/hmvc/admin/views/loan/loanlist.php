@@ -188,7 +188,9 @@ $(function(){
 			{display: '初审人', name : 'first_audit_admin_id', width : 80, sortable : true, align: 'center'},
 			{display: '复审人', name : 'second_audit_admin_id', width : 80, sortable : true, align: 'center'}
             ],
-        
+        buttons : [
+            {display: '<i class="fa fa-file-excel-o"></i> 导出贷款列表', name : 'cvs', bclass : 'csv',title : '导出贷款列表', onpress : flexPress },
+        ],
         searchitems : [
             {display: '编号', name : 'id'},
             {display: '贷款名称', name : 'name'},
@@ -212,7 +214,11 @@ $(function(){
     });
     
 });
-
+function flexPress(name, grid) {
+    if(name=='cvs'){
+        window.location.href = '<?php echo adminUrl('loan_loan','loanlist_export');?>';
+    }
+}
 //还款计划
 function loan_repay_plan(id){
 	location.href='<?php echo adminUrl('loan_loan','repay_plan');?>'+'&loan_id='+id;

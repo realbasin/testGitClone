@@ -35,7 +35,7 @@ $(function(){
 	$("#flexitable").flexigrid({
         url: '<?php echo adminUrl('loan_loan','all_loaditem_json',array('id'=>$id,'lkey'=>$lkey));?>',
         colModel : [
-            {display: '贷款编号', name : 'deal_id', width : 50, sortable : false, align: 'center'},
+            {display: '贷款编号', name : 'id', width : 50, sortable : false, align: 'center'},
 			{display: '会员', name : 'user_id', width : 60, sortable : false, align : 'center'},
 			{display: '承接人', name : 't_user_id', width : 60, sortable : false, align: 'left'},
             {display: '还款金额', name : 'repay_money', width : 60, sortable : false, align: 'left'},
@@ -51,7 +51,7 @@ $(function(){
         usepager: false,
         reload: false,
         columnControl: false,
-        sortname: "deal_id",
+        sortname: "id",
         sortorder: "desc",
         title: ''
     });

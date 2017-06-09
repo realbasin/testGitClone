@@ -42,6 +42,11 @@ $cache = array(
 				'cache_name'=>'当前使用的贷款类型列表',
 				'cache_des'=>'当前使用的贷款类型列表'
 			),
+			array(
+				'id' => 'agents',
+				'cache_name'=>'业务员列表',
+				'cache_des'=>'业务员列表'
+			),
 		);
 
 return $cache;
