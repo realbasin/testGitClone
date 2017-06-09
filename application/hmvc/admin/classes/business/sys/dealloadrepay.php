@@ -104,14 +104,14 @@ class  business_sys_dealloadrepay extends Business {
 				//存在转让标
 				$load_repay['t_user_id'] = $transfer['t_user_id'];
 				//$repay_data['loantype'] = $loan['loantype'];
-				//VIP利息管理费
-				//$deal =  get_user_load_fee((int)$vv['t_user_id'] > 0 ? $vv['t_user_id'] : $vv['user_id'],0,$deal);
-				//$repay_data['manage_interest_money'] = $repay_data['interest_money']*floatval($deal["user_loan_interest_manage_fee"])/100;
 
-				//投资者 授权服务机构获取的利息管理费抽成
-				//$rebate_rs = get_rebate_fee((int)$vv['t_user_id'] > 0 ? $vv['t_user_id'] : $vv['user_id'],"invest");
-				$load_repay['manage_interest_money_rebate'] = $load_repay['manage_interest_money']* floatval(C('INVESTORS_COMMISSION_RATIO'))/100;
 			}
+			//VIP利息管理费
+			$config_common = unserialize($loan['config_common']);
+			$user_loan_interest_manage_fee = \Core::arrayKeyExists('user_loan_interest_manage_fee',$config_common)?\Core::arrayGet($config_common,'user_loan_interest_manage_fee'):0;
+			$load_repay['manage_interest_money'] = $load_repay['interest_money']*floatval($user_loan_interest_manage_fee)/100;
+			//投资者 授权服务机构获取的利息管理费抽成
+			$load_repay['manage_interest_money_rebate'] = $load_repay['manage_interest_money']* floatval(C('INVESTORS_COMMISSION_RATIO'))/100;
 			//判断是否存在该期回款计划
 			$is_plan = $dealLoadRepayDao->getSomeOneLkeyPlan($load_repay['deal_id'],$load_repay['l_key'],$v['user_id']);
 			if($is_plan){
@@ -141,5 +141,55 @@ class  business_sys_dealloadrepay extends Business {
 			return $load_repay_plan;
 		}
 
+	}
+	//更新回款计划
+	public function updateLoadRepayPlan($user_load,$money,$status=0,$impose_money=0,$manage_impose_money=0){
+		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
+		//$user_load = $dealLoadRepayDao->getSomeOneLkeyPlan($deal_id,$l_key,$user_id);
+		if(!$user_load) {
+			return false;
+		}
+		//整合更新数据
+		$user_load_data = array();
+		//确认还款时间
+		$user_load_data['true_repay_time'] = time();
+		//是否网站代还
+		$user_load_data['is_site_repay'] = 0;
+		//是否收到还款
+		$user_load_data['has_repay'] = 1;
+		//还款是否逾期状态
+		$user_load_data['status'] = $status;
+		//真实还款金额
+		$user_load_data['true_repay_money'] = (float)$user_load['repay_money'];
+		//真实还本金
+		$user_load_data['true_self_money'] = (float)$user_load['self_money'];
+		//真实利息
+		$user_load_data['true_interest_money'] = (float)$user_load['interest_money'];
+		//真实管理费
+		$user_load_data['true_manage_money'] = (float)$user_load['manage_money'];
+		//利息管理费
+		$user_load_data['true_manage_interest_money'] = (float)$user_load['manage_interest_money'];
+		//从借款者均摊下来的管理费
+		$user_load_data['true_repay_manage_money'] = (float)$user_load['repay_manage_money'];
+		//实际收到：利息管理费,是在还款时生成
+		$user_load_data['true_manage_interest_money_rebate'] = (float)$user_load['manage_interest_money_rebate'];
+		//逾期罚息
+		$user_load_data['impose_money'] = number_format($impose_money*($user_load['repay_money']/$money),2);
+		//罚息管理费
+		$user_load_data['repay_manage_impose_money'] = number_format($manage_impose_money*($user_load['repay_money']/$money),2);
+		//实际奖励收益
+		$user_load_data['true_reward_money'] = (float)$user_load['reward_money'];
+		//抵押物管理费
+		$user_load_data['true_mortgage_fee'] = (float)$user_load['mortgage_fee'];
+		$update_status = $dealLoadRepayDao ->update($user_load_data,array('deal_id'=>$user_load['deal_id'],'l_key'=>$user_load['l_key'],'user_id'=>$user_load['user_id']));
+		return $update_status;
+	}
+	//判断当前期是否还款完毕
+	public function isRepayedByLkey($deal_id,$l_key){
+		$where_no_repay = array();
+		$where_no_repay['deal_id'] = $deal_id;
+		$where_no_repay['l_key'] = $l_key;
+		$where_no_repay['has_repay'] = 0;
+		return \Core::dao('loan_dealloadrepay')->getCount($where_no_repay);
 	}
 }

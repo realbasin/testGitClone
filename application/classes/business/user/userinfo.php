@@ -48,13 +48,13 @@ class  business_user_userinfo extends Business {
 			}
 			$flag = $userDao->getDb() -> execute($sql);
 			//修改金额后记录日志
-			\Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('money'=>$money));
-			\Core::business('user_userlog')->addUserMoneyLog($user_id,$log_msg,$money,$type);
+			$user_log_id = \Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('money'=>$money));
+			$user_money_log_id = \Core::business('user_userlog')->addUserMoneyLog($user_id,$log_msg,$money,$type);
 		}catch (\Exception $e){
 			$userDao->getDb()->rollback();
 			return false;
 		}finally{
-			if($flag === false){
+			if($flag === false || $user_log_id === false || $user_money_log_id === false){
 				$userDao->getDb()->rollback();
 				return $flag;
 			}else {
@@ -136,6 +136,44 @@ class  business_user_userinfo extends Business {
 			}
 		}
 	}
+
+	/*
+	 *修改用户point
+	 * @param $user_id 用户id
+	 * @param $point 要变动的分数，带负号为减少，正数为增加
+	 * return 成功返回true 失败返回false
+	 *  */
+	public function editUserPoint($user_id,$point,$log_msg,$type){
+		//TODO 加锁
+		$flag = false;
+		//TODO 开启事务
+		$userDao = \Core::dao('user_user');
+		$userDao->getDb()->begin();
+		try{
+			$userPoint = $userDao->findCol('point',array('id'=>$user_id));
+			$newpoint = $point + $userPoint;
+			$data = array();
+			$data['point'] = $newpoint;
+			$where = array();
+			$where['point'] = $userPoint;
+			$where['id'] = $user_id;
+			$flag = $userDao->update($data,$where);
+			//修改后记录日志
+			\Core::business('user_userlog')->addUserPointLog($user_id,$log_msg,$point,$type);
+		}catch (\Exception $e){
+			$userDao->getDb()->rollback();
+			return false;
+		}finally{
+			if($flag === false){
+				$userDao->getDb()->rollback();
+				return $flag;
+			}else {
+				$userDao->getDb()->commit();
+				return true;
+			}
+		}
+	}
+
 	//借款三级分销
 	public function distributionRebate($deal_id,$user_id,$depth=1){
 		$result = array();

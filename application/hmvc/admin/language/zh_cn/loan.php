@@ -24,6 +24,7 @@ $lang['loan_repay_nomal']='<font style="color:blue">正常还款</font>';
 $lang['loan_repay_overdue']='<font style="color:purple">逾期还款</font>';
 $lang['loan_repay_serious_overdue']='<font style="color:red">严重逾期</font>';
 $lang['loan_repay_overdue_nopay']='<font style="color:darkred">逾期待还</font>';
+$lang['loan_repay_serious_overdue_nopay']='<font style="color:orangered">严重逾期待还</font>';
 //投标详情
 $lang['loan_detail_loan_name']='贷款名称';
 $lang['loan_detail_up_time']='上标时间';
