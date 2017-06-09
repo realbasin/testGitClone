@@ -36,4 +36,8 @@ $lang['loan_detail_repay_start_time']='开始还款时间';
 $lang['loan_detail_loan_list']='投标列表';
 
 $lang['no_loan']='借款不存在';
+$lang['loan_name_empty_tip'] = '借款名称不能为空';
+$lang['loan_sub_name_empty_tip'] = '借款简短名称不能为空';
+
+
 ?>

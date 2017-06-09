@@ -393,4 +393,91 @@ function getDateFromRange($startdate, $enddate,$unixdate=false){
     }
     return $date;
 }
+
+function get_image_cdn_host()
+{
+	$cdn_host = '';
+	$domain_suffix = get_domain_suffix();
+	$app_env = \Core::config()->getEnvironment();
+	switch ($app_env) {
+		case 'production': //正式环境
+			$cdn_host = 'image.' . $domain_suffix;
+			break;
+		case 'test':  //测试环境
+			$cdn_host = 'image.' . $domain_suffix;
+			break;
+		case 'development': //开发环境
+		default:
+			$cdn_host = 'image.' . $domain_suffix;
+			break;
+	}
+	return $cdn_host;
+}
+
+function get_domain_suffix()
+{
+	$domain_suffix = '';  // xiaoshushidai.com  |  xiaoshushidai.cn  |  xs2buy.com
+	$host_parts = explode('.', get_domain());
+	foreach ($host_parts as $k => $host_part) {
+		$l_host_part = strtolower($host_part);
+		if ($l_host_part == 'com' || $l_host_part == 'cn') {
+			$domain_suffix = $host_parts[$k - 1] . '.' . $host_part;
+		}
+	}
+	return $domain_suffix;
+}
+
+function get_domain(){
+	/* 协议 */
+	$protocol = get_http();
+
+	$host = get_host();
+
+	$port = $_SERVER['SERVER_PORT'];
+
+	if ($port == 80 || $port == 443) {
+		$port = '';
+	} else {
+		$port = ':' . $port;
+	}
+	return $protocol . $host . $port;
+}
+
+function get_http(){
+	return (isset($_SERVER['HTTPS']) && (strtolower($_SERVER['HTTPS']) != 'off')) ? 'https://' : 'http://';
+}
+
+function get_host(){
+	$host = $_SERVER['SERVER_NAME'];
+	if (empty($host))
+		$host = $_SERVER['HTTP_HOST'];
+	return $host;
+}
+
+// 修改图片的CDN地址
+function set_cdn_host($url)
+{
+	$url = trim($url);
+	if ($url == '')
+		return '';
+
+	$cdn_host = get_image_cdn_host();
+
+	if (strpos($url, '.com') !== false) {
+		$url_parts = explode('.com', $url);
+		$url = $cdn_host . $url_parts[1];
+	} else if (strpos($url, '.cn') !== false) {
+		$url_parts = explode('.cn', $url);
+		$url = $cdn_host . $url_parts[1];
+	} else {
+		$url = $cdn_host . '/' . $url;
+	}
+
+	$url = str_replace('/./', '/', $url);
+	$url = str_replace('//', '/', $url);
+	//$url = 'http://' . $url;
+	$url = get_http() . $url;
+
+	return $url;
+}
 ?>

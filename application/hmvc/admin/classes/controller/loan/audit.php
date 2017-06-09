@@ -100,6 +100,11 @@ class  controller_loan_audit extends controller_sysBase {
             $orderby[\Core::postGet('sortname')] = \Core::postGet('sortorder');
         }
 
+        //未认领
+        if (intval(\Core::get('unclaimed')) == 1) {
+            $where['first_audit_admin_id <'] = 1;
+        }
+
         $data = \Core::dao('loan_loanbase') -> getFlexPage($page, $pagesize, $fields, $where, $orderby,'id');
         //处理返回结果
         $json = array();
@@ -680,19 +685,147 @@ class  controller_loan_audit extends controller_sysBase {
     //初审操作
     public function do_first_publish_update()
     {
+        $loanbaseDao = \Core::dao('loan_loanbase');
+        $loanextDao = \Core::dao('loan_loanext');
+        $dealsatuslogBusiness = \Core::business('loan_dealstatuslog');
+
+        $loan_id = intval(\Core::post('loan_id'));
+        $user_id = intval(\Core::post('user_id'));
         
+        $loanbase['borrow_amount'] = trim(\Core::post('borrow_amount'));
+        $loanbase['loantype'] = intval(\Core::post('loantype'));
+        $loanbase['description'] = trim(\Core::post('description'));
+        $loanbase['use_type'] = intval(\Core::post('use_type'));
+        $loanbase['is_delete'] = intval(\Core::post('is_delete'));
+        $loanbase['risk_rank'] = intval(\Core::post('risk_rank'));
+        $loanbase['risk_security'] = trim(\Core::post('risk_security'));
+        $loanbase['publish_wait'] = intval(\Core::post('publish_wait'));
+        $loanbase['first_audit_admin_id'] = $this->admininfo['id'];
+        $loanbase['name'] = trim(\Core::post('name'));
+        $loanbase['sub_name'] = trim(\Core::post('sub_name'));
+        $loanbase['is_referral_award'] = intval(\Core::post('is_referral_award'));
+        $loanbase['repay_time'] = intval(\Core::post('repay_time'));
+        $loanbase['repay_time_type'] = intval(\Core::post('epay_time_type'));
+        $loanbase['rate'] = trim(\Core::post('rate'));
+        $loanbase['delete_msg'] = trim(\Core::post('delete_msg'));
+        $loanbase['delete_real_msg'] = trim(\Core::post('delete_real_msg'));
+        $loanbase['sort'] = trim(\Core::post('sort'));
+        $loanbase['type_id'] = intval(\Core::post('type_id'));
+
+        $loanext['contract_id'] = intval(\Core::post('contract_id'));
+        $loanext['scontract_id'] = intval(\Core::post('scontract_id'));
+        $loanext['tcontract_id'] = intval(\Core::post('tcontract_id'));
+
+        $update_time = intval(\Core::post('update_time'));
+
+        $url = adminUrl('loan_audit','first_publish_edit',array('loan_id'=>$loan_id));
+
+        $loan = $loanbaseDao->getloanbase($loan_id,'update_time,type_id,publish_wait,name'); //获取更新前的数据
+
+        if ($update_time != $loan['update_time']) {
+            \Core::message('当前借款资料在提交的时候发现已经被其他同事变更,请重新点击操作!',$url,'fail',3,'message');
+        }
+        $loanbase['update_time'] = time();
+        if ($loanbase['is_delete'] == 3) { //初审失败
+            $loanbase['publish_wait'] = 1;
+            $loanbase['first_audit_time'] = 0;  //初审通过时间重置为0
+            $loanbase['first_failure_time'] = time();  //初审失败时间
+        } else {
+            $loanbase['publish_wait'] = 2;
+            $loanbase['delete_msg'] = ''; //初审通过，设为空
+            $loanbase['first_audit_time'] = $loanbase['update_time'];  //初审通过时间为当前时间
+        }
+
+        $userDao = \Core::dao('user_user');
+        $userInfo = $userDao->getUser($user_id,'idno_encrypt,\''.AES_DECRYPT_KEY.'\' as idno');
+        if ($userInfo[0]['idno'] != '') {
+            $user = array();
+            $user['byear'] = substr($userInfo[0]['idno'], 6, 4);
+            $user['bmonth'] = substr($userInfo[0]['idno'], 10, 2);
+            $user['bday'] = substr($userInfo[0]['idno'], 12, 2);
+            $user['sex'] = (intval(substr($userInfo[0]['idno'], 16, 1)) % 2) > 0 ? 1 : 0;
+            $userDao->update($user,$user_id);
+        }
+        if(!$loanbase['type_id']) {
+            $loanbase['type_id'] = $loan['type_id'];
+        }
+
+        //TODO 事务
+        // 贷款所在城市修改(根据学信网获取的院校信息匹配院校数据库所在城市绑定贷款所在城市)
+        $region_link = \Core::dao('loan_dealregionlink')->findCol('id',array('deal_id'=>$loan_id));
+        if (empty($region_link) && $loanbase['publish_wait'] == 2) {
+            $user_extend = \Core::dao('user_userextend')->findCol('value',array('user_id'=>$user_id,'field_id'=>24));
+            if (!empty($user_extend)) {
+                $school_data = \Core::dao('user_school')->getSchoolData($user_extend);
+                if(!empty($school_data['province_id']) && !empty($school_data['city_id'])) {
+                    $deal_city_link['deal_id'] = $loan_id;
+                    $deal_city_link['region_pid'] = $school_data['province_id'];
+                    $deal_city_link['region_id'] = $school_data['city_id'];
+                    \Core::dao('loan_dealregionlink')->insert($deal_city_link);
+                }
+            }
+        }
+        $loanext['mortgage_infos'] = $this->mortgage_info();
+        $loanext['mortgage_contract'] = $this->mortgage_info("contract");
+        $loanext['view_info'] = $this->mortgage_info("view_info");//认证资料修改
+        $loan_type_list = \Core::dao('loan_dealloantype')->getDealLoanTypeList($loanbase['type_id']);
+        $loan_type = $loan_type_list[$loanbase['type_id']];
+
+        //重新获取返利配置
+        $loanbase['is_referral_award'] = $loan_type['is_referral_award'];
+
+        //记录更改相关数据
+
+        $data = $loanbase;
+        $data['user_id'] = $user_id;
+        $data['admin_id'] = $this->admininfo['id'];
+        $log_id = \Core::business('loan_publish')->updateDealOpLog($data,1);
+
+        //更新数据
+        $loanbase_result = $loanbaseDao->update($loanbase,$loan_id);
+        if($loanbase_result) {
+            if ($loanextDao->findCol('loan_id', $loan_id)) {
+                $loanext_result = $loanextDao->update($loanext, $loan_id);
+            } else {
+                $loanext['loan_id'] = $loan_id;
+                $loanext_result = $loanextDao->insert($loanext);
+            }
+            if ($loanbase['is_delete'] == 3) { //初审失败
+                $result = $dealsatuslogBusiness->saveDealStatusMsg($user_id, $loan_id, 6);
+            } else if ($loanbase['publish_wait'] == 2) { //初审通过
+                if ($loan['publish_wait'] == 3) { //复审失败后再通过
+                    $result = $dealsatuslogBusiness->saveDealStatusMsg($user_id, $loan_id, 5);
+                } else {
+                    $result = $dealsatuslogBusiness->saveDealStatusMsg($user_id, $loan_id, 4);
+                }
+            }
+
+            if ($loanbase['is_delete'] == 3) {
+
+                //TODO 失败短信通知
+            }
+
+            $this->saveLog("编号：" . $data['id'] . "，" . $loan['name'] . "初审更新成功", 1);
+            //mlog('test.'.intval($_REQUEST['first_yn']));
+            $this->update_deal_op_log($log_id, 1, 1);
+
+        }
+
     }
+    
 
     //复审操作页面
     public function do_true_publish_edit()
     {
         $this->publish_edit();
+        \Core::view() -> load('loan_firstPublishEdit');
+
     }
 
     //复审操作
     public function do_true_publish_update()
     {
-
+        
     }
 
 
@@ -708,7 +841,7 @@ class  controller_loan_audit extends controller_sysBase {
             $usercreditBusiness = \Core::business('user_usercredit');
 
             //根据借款id，获取贷款基本信息
-            $basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type';
+            $basefields = 'id,deal_sn,name,cate_id,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,risk_rank,risk_security';
             $loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
             //获取会员名称
             $user_id = Core::arrayGet($loanbase,'user_id');
@@ -731,8 +864,12 @@ class  controller_loan_audit extends controller_sysBase {
             $commonConfig = $loanextDao->getCommonconfig($loan_id);
             //获取合同范本
             $contract =  \Core::dao('loan_contract')->getContractList('id,title');
+            if (!empty($contract)) {
+                
+            }
+            
             //根据借款id，获取标基本信息
-            $bidfields = 'loan_id,min_loan_money,max_loan_money,deal_status,start_time,end_time,uloadtype,portion,max_portion,use_ecv,risk_rank,risk_security';
+            $bidfields = 'loan_id,min_loan_money,max_loan_money,deal_status,start_time,end_time,uloadtype,portion,max_portion,use_ecv';
             $loanbid = \Core::dao('loan_loanbid')->getOneLoanById($loan_id,$bidfields);
             \Core::view()->set('loantype',$loanBusiness->enumLoanType())
                 ->set('dealcate',$loanBusiness->enumDealCate())
@@ -750,5 +887,21 @@ class  controller_loan_audit extends controller_sysBase {
                 ->set('user_detail',$loanBusiness->userDetail($user_id))
                 ->set('sorcode',$loanBusiness->enumSorCode());
         }
+    }
+
+    private function mortgage_info($type = "infos")
+    {
+        $mortgage_infos = array();
+        $cdn_img_host = get_image_cdn_host();
+        for ($i = 1; $i <= 20; $i++) {
+            if (strim($_REQUEST['mortgage_' . $type . '_img_' . $i]) != "") {
+                $vv['name'] = strim($_REQUEST['mortgage_' . $type . '_name_' . $i]);
+                $img = strim($_REQUEST['mortgage_' . $type . '_img_' . $i]);
+                $vv['img'] = str_replace("http://" . $cdn_img_host, "", $img);
+                $mortgage_infos[] = $vv;
+            }
+        }
+
+        return serialize($mortgage_infos);
     }
 }

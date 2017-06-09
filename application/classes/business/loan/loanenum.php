@@ -186,4 +186,13 @@ class  business_loan_loanenum extends Business {
 			}
 			return $dealLoanTypeList;
 		}
+
+		//还款方式列表
+		public function loanTypeList() {
+			$loanTypeList[0] = array('name'=>'等额本息','repay_time_type'=>array(1));
+			$loanTypeList[1] = array('name'=>'先息后本','repay_time_type'=>array(1));
+			$loanTypeList[2] = array('name'=>'到期还本息','repay_time_type'=>array(0,1));
+			$loanTypeList[3] = array('name'=>'等额本金','repay_time_type'=>array(1));
+		}
+
 }

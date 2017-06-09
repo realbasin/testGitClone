@@ -50,7 +50,7 @@ class dao_loan_loanext extends Dao {
 	 * 获取保证金配置
 	 * */
 	public function getAmtconfig($id) {
-		return $this->getDb()->from($this->getTable())->where(array('loan_id'=>$id))->execute()->value('config_amt');
+		return unserialize($this->getDb()->from($this->getTable())->where(array('loan_id'=>$id))->execute()->value('config_amt'));
 	}
 	/*
 	 * 获取普通配置
