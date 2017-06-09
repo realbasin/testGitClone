@@ -418,4 +418,163 @@ class controller_stat_distributor extends controller_sysBase {
 		echo @json_encode(array('info' => \Core::L('verify_fail'), 'status' => 'n'));
 		exit ;
 	}
+	
+	//行长业绩
+	public function do_schoolDistributorPerformance(){
+		//获取业务员列表
+		$bAgent=\Core::business('agent_agentEnum');
+		$agents=$bAgent->enumAgent();
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view()->set('agents',$agents) -> load('stat_schoolDistributorPerformance');
+	}
+	
+	//列表
+	public function do_schoolDistributorPerformance_json(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		$user_name=\Core::getPost('user_name');
+		$real_name=\Core::getPost('real_name');
+		$mobile=\Core::getPost('mobile');
+		$admin_id=\Core::getPost('admin_id');
+		$pagesize = \Core::postGet('rp');
+		$page = \Core::postGet('curpage');
+		if (!$page || !is_numeric($page))
+			$page = 1;
+		if (!$pagesize || !is_numeric($pagesize))
+			$pagesize = 15;
+		$orderName='id';
+		$orderSort='desc';
+		if (\Core::postGet('sortname') && \Core::postGet('sortorder')) {
+			$orderName=\Core::postGet('sortname');
+			$orderSort=\Core::postGet('sortorder');
+		}
+		$bStat=\Core::business('loan_stat');
+		$bAgent=\Core::business('agent_agentEnum');
+		$datas=$bStat->getStatSchoolDistributorPerformance($page,$pagesize,$user_name,$real_name,$mobile,$admin_id,$startStamp,$endStamp,$orderName,$orderSort);
+		$json = array();
+		$json['page'] = $page;
+		$json['total'] = $datas['total'];
+		foreach ($datas['rows'] as $v) {
+			$row = array();
+			$row['id'] = $v['id'];
+			$opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
+			$opration.="<li><a href='javascript:list_day(".$v['id'].")'>日业绩</a></li>";
+			$opration.="<li><a href='javascript:list_month(".$v['id'].")'>月业绩</a></li>";
+			$opration.="<li><a href='javascript:list_sub(".$v['id'].")'>下级名单</a></li>";
+			$opration.="</ul></span>";
+			$row['cell'][] = $opration;
+			$row['cell'][] = $v['id'];
+			$row['cell'][] = $v['user_name'];
+			$row['cell'][] = $v['real_name'];
+			$row['cell'][] = $v['admin_id']?$bAgent->enumAgent($v['admin_id']):'';
+			$row['cell'][] = $v['affiliates_count'];
+			$row['cell'][] = $v['total_amount'];
+			$row['cell'][] = $v['first_amount'];
+			$row['cell'][] = $v['more_amount'];
+			$row['cell'][] = $v['first_repay'];
+			$row['cell'][] = $v['more_repay'];
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		//返回JSON
+		echo @json_encode($json);
+	}
+	
+	//导出
+	public function do_schoolDistributorPerformance_export(){
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		$user_name=\Core::getPost('user_name');
+		$real_name=\Core::getPost('real_name');
+		$mobile=\Core::getPost('mobile');
+		$admin_id=\Core::getPost('admin_id');
+		
+		$businessStat=\Core::business('loan_stat');
+		$businessComm=\Core::business('common');
+		$bAgent=\Core::business('agent_agentEnum');
+		
+		$curPage=\Core::getPost('curpage');
+		
+		$sql=$businessStat->getStatSchoolDistributorPerformanceSql($user_name,$real_name,$mobile,$admin_id,$startStamp,$endStamp);
+		
+		if (!is_numeric($curPage)){
+			$count=$businessComm->getCount($sql);
+			//超过最大数据，需要分页，跳转到分页页面
+			if($count>C('export_perpage')){
+				$page = ceil($count/C('export_perpage'));
+                for ($i=1;$i<=$page;$i++){
+                    $limit1 = ($i-1)*C('export_perpage') + 1;
+                    $limit2 = $i*C('export_perpage') > $count ? $count : $i*C('export_perpage');
+                    $array[$i] = $limit1.' ~ '.$limit2 ;
+                }
+                Core::view()->set('list',$array);
+                Core::view()->set('murl',adminUrl('stat_distributor', 'schoolDistributorPerformance'));
+                Core::view()->load('export.excel');
+				exit;
+			}
+		}
+		$curPage=$curPage?$curPage:1;
+		$datas=$businessStat->getStatSchoolDistributorPerformance($curPage,C('export_perpage'),$user_name,$real_name,$mobile,$admin_id,$startStamp,$endStamp);
+        //Excel头部
+		$header = array();
+		$header['ID'] = 'integer';
+		$header['用户名'] = 'string';
+		$header['真实姓名'] = 'string';
+		$header['归属'] = 'string';
+		$header['总客户数量'] = 'integer';
+		$header['总放款金额'] = 'price';
+		$header['首借放款额'] = 'price';
+		$header['续借放款额'] = 'price';
+		$header['首借还款额'] = 'price';
+		$header['续借还款额'] = 'price';
+		
+		$export=array();
+		foreach($datas['rows'] as $v){
+			$row=array();
+			$row[] = $v['id'];
+			$row[] = $v['user_name'];
+			$row[] = $v['real_name'];
+			$row[] = $v['admin_id']?$bAgent->enumAgent($v['admin_id']):'';
+			$row[] = $v['affiliates_count'];
+			$row[] = $v['total_amount'];
+			$row[] = $v['first_amount'];
+			$row[] = $v['more_amount'];
+			$row[] = $v['first_repay'];
+			$row[] = $v['more_repay'];
+			$export[]=$row;
+		}
+		//导出
+		$this -> log('导出行长业绩汇总(第'.$curPage.'页)', 'export');
+		exportExcel('行长业绩汇总(第'.$curPage.'页)', $header, $export);
+	}
+	
+	//日业绩
+	public function do_schoolDistributorPerformance_day(){
+	}
+	
+	//日业绩
+	public function do_schoolDistributorPerformance_day_json(){
+	}
+	
+	//月业绩
+	public function do_schoolDistributorPerformance_month(){
+	}
+	
+	public function do_schoolDistributorPerformance_month_json(){
+	}
+	
+	//下级用户
+	public function do_schoolDistributorPerformance_subordinate(){
+	}
 }

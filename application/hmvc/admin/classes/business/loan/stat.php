@@ -394,4 +394,49 @@ class  business_loan_stat extends Business {
 		$sql.=" where id=$id";
 		return \Core::Db()->execute($sql);
 	}
+	
+	//获取行长业绩Sql
+	public function getStatSchoolDistributorPerformanceSql($userName,$realName,$mobile,$adminId,$startStamp,$endStamp,$order="id",$sort="desc"){
+		$where=array();
+		$select='';
+		$select="
+		sta.user_id as id,
+		user.user_name as user_name,
+		AES_DECRYPT(user.real_name_encrypt,'" . AES_DECRYPT_KEY . "') as real_name,
+		user.admin_id as admin_id,
+		SUM(user_borrow) as affiliates_count,
+		SUM(borrow_amount) as total_amount,
+		SUM(borrow_first) as first_amount,
+		SUM(borrow_more) as more_amount,
+		SUM(repay_fisrt) as first_repay,
+		SUM(repay_more) as more_repay,
+		SUM(repay_amount) as total_repay
+		";
+		if($userName){
+			$where[]="user.user_name like '%$userName%'";
+		}
+		if($realName){
+			$where[]="AES_DECRYPT(user.real_name_encrypt,'".AES_DECRYPT_KEY."') like '%$realName%'";
+		}
+		if($mobile){
+			$where[]="AES_DECRYPT(user.mobile_encrypt,'".AES_DECRYPT_KEY."') like '%$mobile%'";
+		}
+		if($adminId>-1){
+			$where[]="user.admin_id=$adminId";
+		}
+		if($startStamp && $endStamp &&  is_numeric($startStamp) && is_numeric($endStamp)){
+			$where[]="UNIX_TIMESTAMP(sta.sta_date)>=$startStamp";
+			$where[]="UNIX_TIMESTAMP(sta.sta_date)<=$endStamp";
+		}
+		$sql="select $select from _tablePrefix_banker_statistics sta left join _tablePrefix_user user on sta.user_id=user.id where ".implode(" and ", $where)." group by sta.user_id order by $order $sort";
+		return $sql;
+	}
+	
+	//获取行长业绩
+	public function getStatSchoolDistributorPerformance($page,$pagesize,$userName,$realName,$mobile,$adminId,$startDate,$endDate,$order="id",$sort="desc"){
+		$sql=$this->getStatSchoolDistributorPerformanceSql($userName,$realName,$mobile,$adminId,$startDate,$endDate,$order,$sort);
+		$bussiness=\Core::business('common');
+		$datas=$bussiness->getPageList($page,$pagesize,$sql);
+		return $datas;
+	}
 }
