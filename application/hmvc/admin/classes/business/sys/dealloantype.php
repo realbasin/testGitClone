@@ -78,13 +78,16 @@ class  business_sys_dealloantype extends Business
             'tongdun_limit_maxage' => isset($data['tongdun_limit_maxage']) && $data['tongdun_limit_maxage'] ? $data['tongdun_limit_maxage'] : 0,
             'tongdun_limit_city' => isset($data['tongdun_limit_city']) && $data['tongdun_limit_city'] ? implode(',', $data['tongdun_limit_city']) : '',
             'tongdun_limit_province' => isset($data['tongdun_limit_province']) && $data['tongdun_limit_province'] ? implode(',', $data['tongdun_limit_province']) : '',
-            'xuex_chk_status' => isset($data['xuex_chk_status']) && $data['xuex_chk_status'] ? implode(',', $data['tongdun_limit_minage']) : '0,1,2',
+            'xuex_chk_status' => isset($data['xuex_chk_status']) && $data['xuex_chk_status'] ? implode(',', $data['xuex_chk_status']) : '0,1,2',
             'tongdun_three_month_idno_relevance' => isset($data['tongdun_three_month_idno_relevance']) && $data['tongdun_three_month_idno_relevance'] ? $data['tongdun_limit_minage'] : 0,
             'tongdun_seven_day_apply_num' => isset($data['tongdun_seven_day_apply_num']) && $data['tongdun_seven_day_apply_num'] ? $data['tongdun_seven_day_apply_num'] : 0,
             'tongdun_one_month_apply_num' => isset($data['tongdun_one_month_apply_num']) && $data['tongdun_one_month_apply_num'] ? $data['tongdun_one_month_apply_num'] : 0,
             'tongdun_three_month_apply_num' => isset($data['tongdun_three_month_apply_num']) && $data['tongdun_three_month_apply_num'] ? $data['tongdun_three_month_apply_num'] : 0,
             'zm_point_limit' => isset($data['zm_point_limit']) && $data['zm_point_limit'] ? $data['zm_point_limit'] : 0
         ];
+        if (isset($data['id']) && $data['id']) {
+            $dealLoanType['id'] = $data['id'];
+        }
 
         if (empty($dealLoanType['name']) || empty($dealLoanType['brief'])) {
             $this->msg = "参数错误";
@@ -92,9 +95,21 @@ class  business_sys_dealloantype extends Business
         }
 
         if (isset($_FILES['icon']) && !empty($_FILES['icon'])) {
-            $fileUpload = new FileUpload('icon');
-            if ($fileUpload->upload()) {
-                $dealLoanType['icon'] = $fileUpload->move_uploaded_to . $fileUpload->new_file_name;
+            $upload = \Core::library("FileUpload");
+            $upload -> setInputFileName("icon");
+            $upload -> setFileName(getRandString());
+
+            $dir = ROOT_PATH . '/upload/';
+            if(!is_dir($dir)){
+                mkdir($dir);
+            }
+
+            $upload -> setSavePath($dir);
+            $upload -> setExtensions(array('jpg'));
+
+            $upload_result = $upload -> upload();
+            if($upload_result){
+                $dealLoanType['icon'] = $upload->new_file_name . '.jpg';
             }
         }
 
@@ -104,7 +119,7 @@ class  business_sys_dealloantype extends Business
     private function getDealLoanTypeExtern($data)
     {
         $dealLoanTypeExtern = [
-            'city_ids' => $data['city_ids'],
+            'city_ids' => isset($data['city_ids']) && $data['city_ids'] ? $data['city_ids'] : '',
             'start_time' => strtotime($data['start_time']),
             'end_time' => strtotime($data['end_time']),
             'min_deadline' => $data['min_deadline'] ? $data['min_deadline'] : 0,
@@ -139,12 +154,63 @@ class  business_sys_dealloantype extends Business
         ];
 
         if (isset($_FILES['banner']) && !empty($_FILES['banner'])) {
-            $fileUpload = new FileUpload('banner');
-            if ($fileUpload->upload()) {
-                $dealLoanType['banner'] = $fileUpload->move_uploaded_to . $fileUpload->new_file_name;
+            $upload = \Core::library("FileUpload");
+            $upload -> setInputFileName("banner");
+            $upload -> setFileName(getRandString());
+
+            $dir = ROOT_PATH . '/upload/';
+            if(!is_dir($dir)){
+                mkdir($dir);
+            }
+
+            $upload -> setSavePath($dir);
+            $upload -> setExtensions(array('jpg'));
+
+            $upload_result = $upload -> upload();
+            if($upload_result){
+                $dealLoanTypeExtern['banner'] = $upload->new_file_name . '.jpg';
             }
         }
 
+        return $dealLoanTypeExtern;
+    }
+
+    public function getEmptyDealLoanTypeExtern()
+    {
+        $dealLoanTypeExtern = [
+            'city_ids' => '',
+            'start_time' => time(),
+            'end_time' => time(),
+            'min_deadline' => 0,
+            'deadline' => 0,
+            'is_recommend' => 0,
+            'seo_title' => '',
+            'seo_keyword' => '',
+            'seo_description' => '',
+            'guarantees_amt' => 0,
+            'guarantor_amt' => 0,
+            'guarantor_pro_fit_amt' => 0,
+            'manage_fee' => 0,
+            'user_loan_manage_fee' => 0,
+            'manage_impose_fee_day1' => 0,
+            'manage_impose_fee_day2' => 0,
+            'impose_fee_day1' => 0,
+            'impose_fee_day2' => 0,
+            'minimum' => 0,
+            'maximum' => 0,
+            'user_load_transfer_fee' => 0,
+            'compensate_fee' => 0,
+            'user_bid_rebate' => 0,
+            'min_loan_money' => 0,
+            'max_loan_money' => 0,
+            'limit_loan_money' => 0,
+            'limit_bid_money' => 0,
+            'loan_limit_time' => 0,
+            'generation_position' => 0,
+            'uloadtype' => 0,
+            'portion' => 0,
+            'max_portion' => 0
+        ];
         return $dealLoanTypeExtern;
     }
 
@@ -187,12 +253,14 @@ class  business_sys_dealloantype extends Business
         }
 
         $dealLoanTypeDao = \Core::dao('loan_dealloantype');
-        $effectRowNum = $dealLoanTypeDao->update($dealLoanType, ['id' => $dealLoanType['id']]);
-        if ($effectRowNum && $dealLoanTypeExtern) {
+        $dealLoanTypeDao->update($dealLoanType, ['id' => $dealLoanType['id']]);
+
+        if ($dealLoanTypeExtern) {
             $externDao = \Core::dao('dealloantypeextern');
             if ($externDao->exists($dealLoanType['id'])) {
                 $externDao->update($dealLoanTypeExtern, ['loan_type_id' => $dealLoanType['id']]);
             } else {
+                $dealLoanTypeExtern['loan_type_id'] = $dealLoanType['id'];
                 $externDao->insert($dealLoanTypeExtern);
             }
 

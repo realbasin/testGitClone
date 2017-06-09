@@ -407,6 +407,7 @@ class  controller_stat_loan extends controller_sysBase {
 				}
 			}
 		}
+		$dataReturn['page']=$page;
         $dataReturn['total']=count($dataReturn['rows']);
 		echo @json_encode($dataReturn);
 	}

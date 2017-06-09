@@ -682,7 +682,7 @@ class  controller_stat_platform extends controller_sysBase {
 			$row['cell'][] = $v['max_period'];
 			$row['cell'][] = $v['use_bonus']?'是':'否';
 			$row['cell'][] = $v['is_effect']?'是':'否';
-			$row['cell'][] = date('Y-m-d',$v['last_bid_time']);
+			$row['cell'][] = $v['last_bid_time']?date('Y-m-d',$v['last_bid_time']):'';
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
 		}
