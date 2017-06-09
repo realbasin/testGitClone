@@ -11,6 +11,7 @@
     <link href="<?php echo RS_PATH?>admin/css/style.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>switchery/switchery.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?php echo RS_PATH?>jquery/jquery.datetimepicker.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery-1.8.3.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.nicescroll.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>artdialog/dialog-plus-min.js"></script>
@@ -19,6 +20,7 @@
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/Validform_v5.3.2_min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.datetimepicker.full.min.js"></script>
     <!--[if lt IE 9]>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5.js"></script>
     <![endif]-->
@@ -380,7 +382,25 @@
                     <a href="<?php echo adminUrl('loan_loan','detail',array('loan_id'=>$loanbid['loan_id']));?>">投标详情</a>
                 </dd>
             </dl>
-            
+            <?php if( $loanbid['deal_status'] == 1){?>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>开始时间</label>
+                    </dt>
+                    <dd class="opt">
+                         <span id="daterange">
+                             <input type="text" plugin="datepicker" class="s-input-txt" id="datestart" name="time" placeholder="点击选择时间" value="<?php echo $loanbid['start_time']?date('Y-m-d H:i:s',$loanbid['start_time']):'';?>"/>
+                         </span>
+                                <input type="button" class="input-btn" value="清空时间" onclick="clear_time();">
+                                <br>
+                        <span style="color:#ff9600;">
+                           如有同步：时间只能是当天或者前一天
+                        </span>
+
+                    </dd>
+                </dl>
+            <?php }?>
+
         </div>
         <!--相关参数-->
         <div class="tab-content" style="display: none;">
@@ -572,6 +592,12 @@
         }
         $("#"+type).append(str);
     }
+    function clear_time() {
+        $("#datestart").val('');
+
+    }
+    $.datetimepicker.setLocale('ch');
+    $('#datestart').datetimepicker({format:"Y-m-d H:i:s",timepicker:true,todayButton:true});
 </script>
 </body>
 </html>

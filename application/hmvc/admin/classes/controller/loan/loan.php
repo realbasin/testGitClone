@@ -403,6 +403,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$loan_bid['risk_rank'] = \Core::post('risk_rank',0);
 			$loan_bid['risk_security'] = \Core::post('risk_security','');
 			$loan_base['use_type'] = \Core::post('use_type',0);
+			$loan_bid['start_time'] = strtotime(\Core::post('time',''));
 
 			//提交保存.多表更新
 			$loanBaseDao = \Core::dao('loan_loanbase');
@@ -1058,7 +1059,7 @@ class  controller_loan_loan extends controller_sysBase {
 		$curPage=$curPage?$curPage:1;
 
 		//TODO 获取数据源
-		$data = $loanBaseDao->getPage($curPagege,C('export_perpage'));
+		$nase_data = $loanBaseDao->getPage($curPage,C('export_perpage'),'','id,name,user_id,borrow_amount,rate,repay_time,loantype,loan_status,sor_code,first_audit_admin_id,second_audit_admin_id');
 		//Excel头部
 		$header = array();
 		$header['贷款编号'] = 'integer';
