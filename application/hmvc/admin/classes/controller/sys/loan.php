@@ -78,9 +78,9 @@ class  controller_sys_loan extends controller_sysBase
 
             $dealLoanTypeBusiness = \Core::business('sys_dealloantype');
             $flag = $dealLoanTypeBusiness->insert($data);
-            if($flag){
+            if ($flag) {
                 \Core::redirect(\Core::getUrl('sys_loan', 'type_list', \Core::config()->getAdminModule()));
-            }else{
+            } else {
                 \Core::message($dealLoanTypeBusiness->getMsg());
             }
         } else {
@@ -101,23 +101,28 @@ class  controller_sys_loan extends controller_sysBase
         }
     }
 
-    public function do_type_edit(){
+    public function do_type_edit()
+    {
         if (chksubmit()) {
             $data = \Core::post();
 
             $dealLoanTypeBusiness = \Core::business('sys_dealloantype');
             $flag = $dealLoanTypeBusiness->update($data);
-            if($flag){
+            if ($flag) {
                 \Core::redirect(\Core::getUrl('sys_loan', 'type_list', \Core::config()->getAdminModule()));
-            }else{
+            } else {
                 \Core::message($dealLoanTypeBusiness->getMsg());
             }
-        }else{
+        } else {
             $id = \Core::get('id');
             $dealLoanType = \Core::dao('loan_dealloantype')->getDealLoanType($id);
             \Core::view()->set('dealLoanType', $dealLoanType);
 
+            $dealLoanTypeBusiness = \Core::business('sys_dealloantype');
             $dealLoanTypeExtern = \Core::dao('dealloantypeextern')->getRowByTypeId($dealLoanType['id']);
+            if (empty($dealLoanTypeExtern)) {
+                $dealLoanTypeExtern = $dealLoanTypeBusiness->getEmptyDealLoanTypeExtern();
+            }
             \Core::view()->set('dealLoanTypeExtern', $dealLoanTypeExtern);
 
             //获取贷款类型信用等级
@@ -139,7 +144,6 @@ class  controller_sys_loan extends controller_sysBase
             $maxSort = \Core::dao('loan_dealloantype')->getMaxSort() + 1;
             \Core::view()->set('maxSort', $maxSort);
 
-            $dealLoanTypeBusiness = \Core::business('sys_dealloantype');
             $collateralList = $dealLoanTypeBusiness->getCollateralList();
             \Core::view()->set('collateralList', $collateralList);
 
@@ -147,6 +151,21 @@ class  controller_sys_loan extends controller_sysBase
             \Core::view()->set('loanTypeList', $loanTypeList);
 
             \Core::view()->load("sys_loanTypeEdit");
+        }
+    }
+
+    public function do_loan_type_user_level_edit()
+    {
+        if (chksubmit()) {
+            \Core::dao('dealloantypeuserlevel')->updateData(\Core::post());
+
+            $loanTypeId = \Core::post('loan_type_id');
+            \Core::redirect(\Core::getUrl('sys_loan', 'type_edit', \Core::config()->getAdminModule(), ['id' => $loanTypeId]));
+        } else {
+            $id = \Core::get('id');
+            $userLevel = \Core::dao('dealloantypeuserlevel')->getRowById($id);
+            \Core::view()->set('userLevel', $userLevel);
+            \Core::view()->load("sys_loanTypeUserLevelEdit");
         }
     }
 
