@@ -244,7 +244,7 @@
                     <label>最低投标金额</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbid['min_loan_money'];?>">
+                    <input type="text" name="min_loan_money" id="min_loan_money" class="input-txt" value="<?php echo $loanbid['min_loan_money'];?>">
                 </dd>
             </dl>
             <dl class="row loan_money" <?php echo $loanbid['uloadtype']?'style="display:none;"':'';?>>
@@ -252,7 +252,7 @@
                     <label>最高投标金额</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbid['max_loan_money'];?>">
+                    <input type="text" name="max_loan_money" id="max_loan_money" class="input-txt" value="<?php echo $loanbid['max_loan_money'];?>">
                 </dd>
             </dl>
             <dl class="row loan_portion" <?php echo $loanbid['uloadtype']?'':'style="display:none;"';?>>
@@ -260,7 +260,7 @@
                     <label>分成多少份</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbid['portion'];?>">
+                    <input type="text" name="portion" id="portion" class="input-txt" value="<?php echo $loanbid['portion'];?>">
                 </dd>
             </dl>
             <dl class="row loan_portion" <?php echo $loanbid['uloadtype']?'':'style="display:none;"';?>>
@@ -268,7 +268,7 @@
                     <label>最高买多少份</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbid['max_portion'];?>">
+                    <input type="text" name="max_portion" id="max_portion" class="input-txt" value="<?php echo $loanbid['max_portion'];?>">
                 </dd>
             </dl>
             <dl class="row">
@@ -294,7 +294,7 @@
                     <label>筹标期限</label>
                 </dt>
                 <dd class="opt">
-                    <?php echo ($loanbid['start_time'] == 0 || $loanbid['end_time'] == 0)?0:ceil(($loanbid['start_time'] - $loanbid['end_time'])/(24*60*60));?>天
+                    <input tyep="text" name="enddate" value="<?php echo ($loanbid['start_time'] == 0 || $loanbid['end_time'] == 0)?0:ceil(($loanbid['start_time'] - $loanbid['end_time'])/(24*60*60));?>"/>天
                 </dd>
             </dl>
             <dl class="row">
@@ -322,7 +322,7 @@
                     <label>贷款描述</label>
                 </dt>
                 <dd class="opt">
-                    <textarea  cols="80" style="height: 100px;"></textarea>
+                    <textarea  cols="80" style="height: 100px;" name="description"><?php echo $loanbase['description'];?></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -342,7 +342,7 @@
                     <label>风险控制</label>
                 </dt>
                 <dd class="opt">
-                    <textarea  cols="80" style="height: 100px;"></textarea>
+                    <textarea  cols="80" style="height: 100px; " name="risk_security" ><?php echo $loanbid['risk_security'];?></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -380,14 +380,7 @@
                     <a href="<?php echo adminUrl('loan_loan','detail',array('loan_id'=>$loanbid['loan_id']));?>">投标详情</a>
                 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>排序</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="sort" id="sort" style="width: 80px;"  value="0">
-                </dd>
-            </dl>
+            
         </div>
         <!--相关参数-->
         <div class="tab-content" style="display: none;">

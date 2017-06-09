@@ -75,7 +75,13 @@ class  controller_loan_loan extends controller_sysBase {
 		$user_total_money = \Core::dao('user_user')->getUserMoney($borrow_user_id);
 		if ($user_total_money <= 0) {
 			$result["message"] = "余额不足,请先充值";
-			return $result;
+			return @json_encode($result);
+		}
+		$no_repay_befor_lkey = \Core::dao('loan_dealrepay')->getCount(array('deal_id'=>$loan_id,'has_repay'=>0,'l_key < '=>$l_key));
+		if($no_repay_befor_lkey > 0){
+			$result["message"] = "请先将往期的借款还完";
+
+			return @json_encode($result);
 		}
 		//执行还款
 		$status = \Core::business('loan_loanenum')->repayLoanBills($loan_id,$l_key,$borrow_user_id);
@@ -373,14 +379,57 @@ class  controller_loan_loan extends controller_sysBase {
 	//贷款详细信息编辑
 	public function do_loan_show_edit(){
 		if(chksubmit()) {
-			\Core::dump('test');die();
-			//提交保存
+			$loan_base = array();
+			$loan_bid = array();
+			$loan_ext = array();
+			$loan_id = \Core::post('loan_id',0);
+			if(!$loan_id) {
+				\Core::redirect(adminUrl('loan_loan','all'),'贷款不存在');
+			}
+			$loan_base['name'] = \Core::post('name','');
+			$loan_base['type_id'] = \Core::post('type_id',0);
+			$loan_base['loantype'] = \Core::post('loantype',0);
+			$loan_ext['contract_id'] = \Core::post('contract_id',0);
+			$loan_ext['scontract_id'] = \Core::post('scontract_id',0);
+			$loan_ext['tcontract_id'] = \Core::post('tcontract_id',0);
+			$loan_bid['uloadtype'] = \Core::post('uloadtype',0);
+			$loan_bid['min_loan_money'] = \Core::post('min_loan_money',0);
+			$loan_bid['max_loan_money'] = \Core::post('max_loan_money',0);
+			$loan_bid['portion'] = \Core::post('portion',0);
+			$loan_bid['max_portion'] = \Core::post('max_portion',0);
+			$loan_bid['end_time'] = \Core::post('enddate',0);
+			$loan_bid['use_ecv'] = \Core::post('use_ecv',0);
+			$loan_base['description'] = \Core::post('description','');
+			$loan_bid['risk_rank'] = \Core::post('risk_rank',0);
+			$loan_bid['risk_security'] = \Core::post('risk_security','');
+			$loan_base['use_type'] = \Core::post('use_type',0);
 
+			//提交保存.多表更新
+			$loanBaseDao = \Core::dao('loan_loanbase');
+			$loanBidDao = \Core::dao('loan_loanbid');
+			$loanExtDao = \Core::dao('loan_loanext');
+			//TODO 开启事务
+			$loanBaseDao->getDb()->begin();
+			try{
+				$base_flag = $loanBaseDao->update($loan_base,array('id'=>$loan_id));
+				$bid_flag = $loanBidDao->update($loan_bid,array('loan_id'=>$loan_id));
+				$ext_flag = $loanExtDao->update($loan_ext,array('loan_id'=>$loan_id));
+			}catch (\Exception $e){
+				\Core::redirect(adminUrl('loan_loan','all'),'系统错误');
+			}finally{
+				if($base_flag === false || $bid_flag === false || $ext_flag === false) {
+					$loanBaseDao->getDb()->rollback();
+					\Core::redirect(adminUrl('loan_loan','all'),'保存失败');
+				}else {
+					$loanBaseDao->getDb()->commit();
+					\Core::redirect(adminUrl('loan_loan','loan_show_edit',array('loan_id'=>$loan_id)),'保存成功');
+				}
+			}
 		}else {
 			$loan_id = \Core::get('loan_id',0);
 			$loanBusiness=\Core::business('loan_loanenum');
 			//根据借款id，获取贷款基本信息
-			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type';
+			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,description';
 			$loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
 			//获取会员名称
 			$user_id = $loanbase['user_id'];
@@ -985,5 +1034,47 @@ class  controller_loan_loan extends controller_sysBase {
 		exportExcel('投标列表', $header, $data);
 		unset($where);
 		unset($data);
+	}
+	//导出全部贷款列表
+	public function do_loanlist_export(){
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$loanBidDao = \Core::dao('loan_loanbid');
+		$loanExtDao = \Core::dao('loan_loanext');
+		$count = $loanBaseDao->getCount(array('is_delete'=>0,'is_effect'=>1));
+		$curPage=\Core::getPost('curpage');
+		$count = 4000;
+		if($count > C('export_perpage')) {
+			$page = ceil($count/C('export_perpage'));
+			for ($i=1;$i<=$page;$i++){
+				$limit1 = ($i-1)*C('export_perpage') + 1;
+				$limit2 = $i*C('export_perpage') > $count ? $count : $i*C('export_perpage');
+				$array[$i] = $limit1.' ~ '.$limit2 ;
+			}
+			Core::view()->set('list',$array);
+			Core::view()->set('murl',adminUrl('loan_loan', 'all'));
+			Core::view()->load('export.excel');
+			exit;
+		}
+		$curPage=$curPage?$curPage:1;
+
+		//TODO 获取数据源
+		$data = $loanBaseDao->getPage($curPagege,C('export_perpage'));
+		//Excel头部
+		$header = array();
+		$header['贷款编号'] = 'integer';
+		$header['贷款名称'] = 'string';
+		$header['借款人'] = 'string';
+		$header['推荐人'] = 'string';
+		$header['借款金额'] = 'price';
+		$header['利率'] = 'string';
+		$header['期数'] = 'string';
+		$header['还款方式'] = 'string';
+		$header['投标状态'] = 'string';
+		$header['是否放款'] = 'string';
+		$header['流标返还'] = 'string';
+		$header['投标数'] = 'integer';
+		$header['客户端'] = 'string';
+		$header['初审人'] = 'string';
+		$header['复审人'] = 'string';
 	}
 }
