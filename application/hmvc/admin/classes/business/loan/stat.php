@@ -122,7 +122,7 @@ class  business_loan_stat extends Business {
 			a.min_period as min_period,
 			a.max_period as max_period,
 			a.is_use_bonus as use_bonus,
-			a.is_effect as auto_bid,
+			a.is_effect as is_effect,
 			a.last_bid_time as last_bid_time 
 			from _tablePrefix_user_autobid a  
 			right join 
@@ -373,5 +373,25 @@ class  business_loan_stat extends Business {
 		$bussiness=\Core::business('common');
 		$datas=$bussiness->getPageList($page,$pagesize,$sql);
 		return $datas;
+	}
+	
+	//增加校园行长
+	public function insertSchoolDistributor(Array $insert=array()){
+		$sql="insert into _tablePrefix_user";
+		$sql1=implode(",", array_keys($insert));
+		$sql2=implode(",", array_values($insert));
+		$sql=$sql."(".$sql1.")values(".$sql2.")";
+		return \Core::Db()->execute($sql);
+	}
+	
+	//编辑校园行长
+	public function editSchoolDistributor($id,Array $update=array()){
+		$sql="update _tablePrefix_user set ";
+		foreach($update as $k=>$v){
+			$sql.="$k=$v,";
+		}
+		$sql=rtrim($sql,",");
+		$sql.=" where id=$id";
+		return \Core::Db()->execute($sql);
 	}
 }

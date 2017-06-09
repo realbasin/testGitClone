@@ -231,6 +231,18 @@ class dao_user_user extends Dao {
 		return $this->getDb()->select($field)->from($this->getTable())->where(array('id'=>$userId))->execute()->key('id')->rows();
 	}
 	
+	//获取用户列表
+	public function getUserList($fileds,$where,Array $order=array()){
+		$this->getDb()->select($fileds)->from($this->getTable());
+		$this->getDb()->where($where);
+		if($order){
+			foreach($order as $k=>$v){
+				$this->getDb()->orderBy($k,$v);
+			}
+		}
+		return $this->getDb()->execute()->rows();
+	}
+	
 	/*
 	 * 通过用户名模糊获取用户
 	 * @userName 用户名
