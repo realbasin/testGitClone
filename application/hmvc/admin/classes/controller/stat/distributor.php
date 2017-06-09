@@ -680,24 +680,134 @@ class controller_stat_distributor extends controller_sysBase {
 	//月业绩
 	public function do_schoolDistributorPerformance_month(){
 		$id=\Core::getPost("id");
-		\Core::view()->set("id",$id);
-		\Core::view()->load('stat_schoolDistributorPerformanceMonth');
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		if (!$datestart || !$dateend) {
+			$datestart = 0;
+			$dateend = 0;
+		}
+		//查询是否存在该用户
+		if(!$id || !is_numeric($id)){
+			\Core::message('参数错误', adminUrl('stat_distributor','schoolDistributorPerformance'), 'fail', 3, 'message');
+		}
+		$daoUser=\Core::dao('user_user');
+		$userName=$daoUser->getUserNameById($id);
+		if(!$userName){
+			\Core::message('系统不存在id为'.$id.'的用户信息', adminUrl('stat_distributor','schoolDistributorPerformance'), 'fail', 3, 'message');
+		}
+		\Core::view() -> set('datestart', $datestart);
+		\Core::view() -> set('dateend', $dateend);
+		\Core::view() -> set("id",$id);
+		\Core::view() -> set("userName",$userName);
+		\Core::view() -> load('stat_schoolDistributorPerformanceMonth');
 	}
 	
 	public function do_schoolDistributorPerformance_month_json(){
 		$id=\Core::getPost("id");
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
 		$pagesize = \Core::postGet('rp');
 		$page = \Core::postGet('curpage');
 		if (!$page || !is_numeric($page))
 			$page = 1;
 		if (!$pagesize || !is_numeric($pagesize))
 			$pagesize = 15;
-		$orderName='id';
-		$orderSort='desc';
+		$order=array('id'=>'desc');
 		if (\Core::postGet('sortname') && \Core::postGet('sortorder')) {
-			$orderName=\Core::postGet('sortname');
-			$orderSort=\Core::postGet('sortorder');
+			$order=array(\Core::postGet('sortname')=>\Core::postGet('sortorder'));
 		}
+		
+		$fields="
+		DATE_FORMAT(sta_date,'%Y-%m') as sta_month,
+		sum(user_new) as sum_user_new,
+		sum(user_borrow) as sum_user_borrow,
+		sum(borrow_amount) as sum_borrow_amount,
+		sum(repay_amount) as sum_repay_amount,
+		sum(repay_fisrt) as sum_repay_fisrt,
+		sum(repay_more) as sum_repay_more
+		";
+		$where=array('user_id'=>$id,'UNIX_TIMESTAMP(sta_date) >='=>$startStamp,'UNIX_TIMESTAMP(sta_date) <='=>$endStamp);
+		
+		$daoStat=\Core::dao('loan_bankerStatistics');
+		$datas=$daoStat->getFlexPage($page,$pagesize,$fields,$where,$order,"DATE_FORMAT(sta_date,'%Y-%m')");
+		$json = array();
+		$json['page'] = $page;
+		$json['total'] = $datas['total'];
+		foreach ($datas['rows'] as $k=>$v) {
+			$row = array();
+			$row['id'] = $k;
+			$row['cell'][] = $v['sta_month'];
+			$row['cell'][] = $v['sum_user_new'];
+			$row['cell'][] = $v['sum_user_borrow'];
+			$row['cell'][] = priceFormat($v['sum_borrow_amount']);
+			$row['cell'][] = priceFormat($v['sum_repay_amount']);
+			$row['cell'][] = priceFormat($v['sum_repay_fisrt']);
+			$row['cell'][] = priceFormat($v['sum_repay_more']);
+			$row['cell'][] = '';
+			$json['rows'][] = $row;
+		}
+		echo @json_encode($json);
+	}
+	
+	public function do_schoolDistributorPerformance_month_export(){
+		$id=\Core::getPost("id");
+		$userName=\Core::getPost("user_name",'');
+		$datestart = \Core::postGet('datestart');
+		$dateend = \Core::postGet('dateend');
+		$startStamp=strtotime($datestart);
+		$endStamp=strtotime($dateend);
+		
+		if(!$id || !is_numeric($id)){
+			\Core::message('参数错误', '', 'fail', 3, 'message');
+		}
+		
+		$fields="
+		DATE_FORMAT(sta_date,'%Y-%m') as sta_month,
+		sum(user_new) as sum_user_new,
+		sum(user_borrow) as sum_user_borrow,
+		sum(borrow_amount) as sum_borrow_amount,
+		sum(repay_amount) as sum_repay_amount,
+		sum(repay_fisrt) as sum_repay_fisrt,
+		sum(repay_more) as sum_repay_more
+		";
+		$where=array('user_id'=>$id,'UNIX_TIMESTAMP(sta_date) >='=>$startStamp,'UNIX_TIMESTAMP(sta_date) <='=>$endStamp);
+		
+		$daoStat=\Core::dao('loan_bankerStatistics');
+		$curPage=\Core::getPost('curpage');
+		
+		if (!is_numeric($curPage)){
+			$count=$daoStat->getCount($where,null,"DATE_FORMAT(sta_date,'%Y-%m')");
+			//超过最大数据，需要分页，跳转到分页页面
+			if($count>C('export_perpage')){
+				$page = ceil($count/C('export_perpage'));
+                for ($i=1;$i<=$page;$i++){
+                    $limit1 = ($i-1)*C('export_perpage') + 1;
+                    $limit2 = $i*C('export_perpage') > $count ? $count : $i*C('export_perpage');
+                    $array[$i] = $limit1.' ~ '.$limit2 ;
+                }
+                Core::view()->set('list',$array);
+                Core::view()->set('murl',adminUrl('stat_distributor', 'schoolDistributorPerformance_month',array('id'=>$id)));
+                Core::view()->load('export.excel');
+				exit;
+			}
+		}
+		$curPage=$curPage?$curPage:1;
+		$datas=$daoStat->getFlexPage($curPage,C('export_perpage'),$fields,$where,array(),"DATE_FORMAT(sta_date,'%Y-%m')");
+        //Excel头部
+		$header = array();
+		$header['月份'] = 'string';
+		$header['新增客户'] = 'integer';
+		$header['借款客户'] = 'integer';
+		$header['借款总额'] = 'price';
+		$header['还款总额'] = 'price';
+		$header['首借还款'] = 'price';
+		$header['续借还款'] = 'price';
+
+		//导出
+		$this -> log('导出行长'.$userName.'月业绩汇总'.$datestart.'-'.$dateend.'(第'.$curPage.'页)', 'export');
+		exportExcel('行长'.$userName.'月业绩汇总'.$datestart.'-'.$dateend.'(第'.$curPage.'页)', $header, $datas['rows']);
 	}
 	
 	//下级用户

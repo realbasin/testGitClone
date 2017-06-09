@@ -175,7 +175,7 @@ abstract class Dao {
 	 * 获得指定条件的记录条数
 	 * @param type $where 查询条件
 	 */ 
-	public function getCount(Array $where = null,Array $mutiWhere=null){
+	public function getCount(Array $where = null,Array $mutiWhere=null,$groupBy=null){
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
 		}
@@ -186,7 +186,18 @@ abstract class Dao {
 				}
 			}
 		}
-		$total = $this -> getDb() -> select('count(*) as total') -> from($this -> getTable()) -> execute() -> value('total');
+		if($groupBy){
+			$groupFields='';
+			if(strpos($groupBy,',')===false){
+				$groupFields=$this->getDb()->wrap($groupBy);
+			}else{
+				$groupFields=$groupBy;
+			}
+			$this -> getDb() -> select('count(DISTINCT '.$groupFields.') as total') -> from($this -> getTable());
+		}else{
+			$this -> getDb() -> select('count(*) as total') -> from($this -> getTable());
+		}
+		$total =  $this -> getDb() -> execute() -> value('total');
 		return $total;
 	}
 
