@@ -74,7 +74,7 @@ class  business_user_userlog extends Business {
 		return $insert_id;
 	}
 	/*
-	 *记录用户冻结资金日志
+	 *记录用户积分日志
 	 * @param $user_id 用户id
 	 * @param $log_msg 日志信息
 	 * return 成功返回true 失败返回false
@@ -91,6 +91,27 @@ class  business_user_userlog extends Business {
 		//$score_log_info['create_time_y'] = to_date(TIME_UTC,"Y");
 		$score_log_info['type'] = $type;
 		$insert_id = \Core::dao('user_userscorelog')->insert($score_log_info);
+		return $insert_id;
+	}
+	/*
+	 *记录用户信用积分日志
+	 * @param $user_id 用户id
+	 * @param $log_msg 日志信息
+	 * return 成功返回true 失败返回false
+	 *  */
+	public function addUserPointLog($user_id,$log_msg,$point=0,$type=0){
+		$userDao = \Core::dao('user_user');
+		$point_log_info = array();
+		$point_log_info['memo'] = $log_msg;
+		$point_log_info['point'] = floatval($point);
+		$point_log_info['account_point'] = $userDao->findCol('point',array('id'=>$user_id));
+		$point_log_info['user_id'] = $user_id;
+		$point_log_info['create_time'] = time();
+		//$score_log_info['create_time_ymd'] = to_date(TIME_UTC,"Y-m-d");
+		//$score_log_info['create_time_ym'] = to_date(TIME_UTC,"Ym");
+		//$score_log_info['create_time_y'] = to_date(TIME_UTC,"Y");
+		$point_log_info['type'] = $type;
+		$insert_id = \Core::dao('user_userscorelog')->insert($point_log_info);
 		return $insert_id;
 	}
 }

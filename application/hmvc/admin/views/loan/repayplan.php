@@ -108,6 +108,7 @@
                     data: "id="+id+"&l_key="+lkey,
                     success: function(data){
                         if (data.code==200){
+                            jsprint(data.message);
                             $("#flexitable").flexReload();
                         } else {
                             jsprint(data.message);
