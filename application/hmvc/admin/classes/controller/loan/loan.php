@@ -403,6 +403,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$loan_bid['risk_rank'] = \Core::post('risk_rank',0);
 			$loan_bid['risk_security'] = \Core::post('risk_security','');
 			$loan_base['use_type'] = \Core::post('use_type',0);
+			$loan_bid['start_time'] = strtotime(\Core::post('time',''));
 
 			//提交保存.多表更新
 			$loanBaseDao = \Core::dao('loan_loanbase');
@@ -1037,12 +1038,11 @@ class  controller_loan_loan extends controller_sysBase {
 	}
 	//导出全部贷款列表
 	public function do_loanlist_export(){
-		$loanBaseDao = \Core::dao('loan_loanbase');
-		$loanBidDao = \Core::dao('loan_loanbid');
-		$loanExtDao = \Core::dao('loan_loanext');
-		$count = $loanBaseDao->getCount(array('is_delete'=>0,'is_effect'=>1));
+		$fields = 'id,name,user_id,borrow_amount,rate,repay_time,loantype,loan_status,sor_code,first_audit_admin_id,second_audit_admin_id,is_has_received,buy_count,is_has_loans';
+		$sql = 'select '. $fields. ' from _tablePrefix_loan_base base left join _tablePrefix_loan_bid bid on base.id = bid.loan_id where is_delete = 0 and is_effect = 1 order by base.id';
+		$businessComm=\Core::business('common');
+		$count = $businessComm->getCount($sql);
 		$curPage=\Core::getPost('curpage');
-		$count = 4000;
 		if($count > C('export_perpage')) {
 			$page = ceil($count/C('export_perpage'));
 			for ($i=1;$i<=$page;$i++){
@@ -1058,7 +1058,8 @@ class  controller_loan_loan extends controller_sysBase {
 		$curPage=$curPage?$curPage:1;
 
 		//TODO 获取数据源
-		$data = $loanBaseDao->getPage($curPagege,C('export_perpage'));
+		//$nase_data = $loanBaseDao->getPage($curPage,C('export_perpage'),'','id,name,user_id,borrow_amount,rate,repay_time,loantype,loan_status,sor_code,first_audit_admin_id,second_audit_admin_id');
+		$datas = $businessComm->getPageList($curPage,C('export_perpage'),$sql);
 		//Excel头部
 		$header = array();
 		$header['贷款编号'] = 'integer';
@@ -1076,5 +1077,45 @@ class  controller_loan_loan extends controller_sysBase {
 		$header['客户端'] = 'string';
 		$header['初审人'] = 'string';
 		$header['复审人'] = 'string';
+		$export=array();
+		foreach ($datas['rows'] as $v) {
+			$userIds[]=$v['user_id'];
+			$adminFirstIds[]=$v['first_audit_admin_id'];
+			$adminSecondIds[]=$v['second_audit_admin_id'];
+		}
+
+		$adminDao = \Core::dao('sys_admin_admin');
+		$userDao = \Core::dao('user_user');
+		$userNames = $userDao->getUser($userIds,'id,user_name,real_name,pid');
+		$firstAdminNames = $adminDao->getAdmin($adminFirstIds,'admin_id,admin_name,admin_real_name,admin_mobile');
+		$secondAdminNames = $adminDao->getAdmin($adminSecondIds,'admin_id,admin_name,admin_real_name,admin_mobile');
+		$loanBusiness = \Core::business('loan_loanenum');
+
+		foreach ($userNames as $v) {
+			$userPids[] = $v['pid'];
+		}
+		$pidNames = $userDao->getUser($userPids,'id,user_name,real_name');
+		foreach($datas['rows'] as $v){
+			$row=array();
+			$row[] = $v['id'];
+			$row[] = $v['name'];
+			$row[] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
+			$row[] = \Core::arrayKeyExists($v['user_id'], $pidNames)?\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'real_name').')':'';
+			$row[] = $v['borrow_amount'];
+			$row[] = $v['rate'].'%';
+			$row[] = $v['repay_time'];
+			$row[] = $loanBusiness->enumLoanType($v['loantype']);
+			$row[] = strip_tags($loanBusiness->enumDealStatus($v['loan_status']));
+			$row[] = $v['is_has_loans']?strip_tags(\Core::L('yes')):strip_tags(\Core::L('no'));
+			$row[] = $v['is_has_received']?strip_tags(\Core::L('yes')):strip_tags(\Core::L('no'));
+			$row[] = $v['buy_count'];
+			$row[] = $loanBusiness->enumSorCode($v['sor_code']);
+			$row[] = \Core::arrayKeyExists($v['first_audit_admin_id'], $firstAdminNames)?\Core::arrayGet(\Core::arrayGet($firstAdminNames, $v['first_audit_admin_id'],''),'admin_real_name'):($v['first_audit_admin_id']=='-1'?'自动审核':'');
+			$row[] = \Core::arrayKeyExists($v['second_audit_admin_id'], $secondAdminNames)?\Core::arrayGet(\Core::arrayGet($secondAdminNames, $v['second_audit_admin_id'],''),'admin_real_name'):'';
+			$export[]=$row;
+		}
+
+		$this -> log('导出所有贷款列表(第'.$curPage.'页)', 'export');
+		exportExcel('有贷款列表(第'.$curPage.'页)', $header, $export);
 	}
 }
