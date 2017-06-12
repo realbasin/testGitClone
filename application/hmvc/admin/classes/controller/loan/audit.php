@@ -20,11 +20,8 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealcate',$loanBusiness->enumDealCate())
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
-            ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('action','first_publish_json')
-            ->set('way',1)
-            ->set('title',\Core::L('first_publish'));
-        \Core::view() -> load('loan_publish');
+            ->set('dealstatus',$loanBusiness->enumDealStatus());
+        \Core::view() -> load('loan_firstpublish');
     }
 
 
@@ -94,6 +91,31 @@ class  controller_loan_audit extends controller_sysBase {
         if(\Core::get('user_id')!=null && is_numeric(\Core::get('user_id'))){
             $where['user_id like']="%".\Core::get('user_id')."%";
         }
+        $userDao=\Core::dao('user_user');
+        //贷款人姓名模糊查询
+        if(\Core::get('user_name')!=null && (\Core::get('user_mobile') == null && !is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //TODO贷款人手机查询
+        if(\Core::get('user_name') == null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+
+        }
+        //手机号和姓名组合
+        if(\Core::get('user_name') != null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_mobile')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //推荐人
+        if(\Core::get('p_user_name')!=null) {
+            $where['user_id '] = $userDao->getUsersIdsByPuser(\Core::get('p_user_name'));
+        }
 
         //简易排序条件
         if (\Core::postGet('sortorder')) {
@@ -120,7 +142,6 @@ class  controller_loan_audit extends controller_sysBase {
             $userIds[]=$v['user_id'];
             $adminFirstIds[]=$v['first_audit_admin_id'];
         }
-        $userDao=\Core::dao('user_user');
         $adminDao=\Core::dao('sys_admin_admin');
 
         $userNames=$userDao->getUser($userIds,'id,user_name,real_name');
@@ -163,10 +184,7 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealcate',$loanBusiness->enumDealCate())
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
-            ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('title',\Core::L('my_publish'))
-            ->set('way',2)
-            ->set('action','my_publish_json');
+            ->set('dealstatus',$loanBusiness->enumDealStatus());
         \Core::view() -> load('loan_mypublish');
     }
     //我的待审核列表分页的JSON数据
@@ -235,6 +253,31 @@ class  controller_loan_audit extends controller_sysBase {
         if(\Core::get('user_id')!=null && is_numeric(\Core::get('user_id'))){
             $where['user_id like']="%".\Core::get('user_id')."%";
         }
+        $userDao=\Core::dao('user_user');
+
+        //贷款人姓名模糊查询
+        if(\Core::get('user_name')!=null && (\Core::get('user_mobile') == null && !is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //TODO贷款人手机查询
+        if(\Core::get('user_name') == null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //手机号和姓名组合
+        if(\Core::get('user_name') != null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_mobile')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //推荐人
+        if(\Core::get('p_user_name')!=null) {
+            $where['user_id '] = $userDao->getUsersIdsByPuser(\Core::get('p_user_name'));
+        }
 
         //简易排序条件
         if (\Core::postGet('sortorder')) {
@@ -256,7 +299,6 @@ class  controller_loan_audit extends controller_sysBase {
             $userIds[]=$v['user_id'];
             $adminFirstIds[]=$v['first_audit_admin_id'];
         }
-        $userDao=\Core::dao('user_user');
 
         $userNames=$userDao->getUser($userIds,'id,user_name,real_name');
 
@@ -297,10 +339,7 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealcate',$loanBusiness->enumDealCate())
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
-            ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('title',\Core::L('publish'))
-            ->set('way',1)
-            ->set('action','publish_json');
+            ->set('dealstatus',$loanBusiness->enumDealStatus());
         \Core::view() -> load('loan_publish');
     }
 
@@ -370,6 +409,31 @@ class  controller_loan_audit extends controller_sysBase {
         if(\Core::get('user_id')!=null && is_numeric(\Core::get('user_id'))){
             $where['user_id like']="%".\Core::get('user_id')."%";
         }
+        $userDao=\Core::dao('user_user');
+
+        //贷款人姓名模糊查询
+        if(\Core::get('user_name')!=null && (\Core::get('user_mobile') == null && !is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //TODO贷款人手机查询
+        if(\Core::get('user_name') == null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //手机号和姓名组合
+        if(\Core::get('user_name') != null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_mobile')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //推荐人
+        if(\Core::get('p_user_name')!=null) {
+            $where['user_id '] = $userDao->getUsersIdsByPuser(\Core::get('p_user_name'));
+        }
 
         //简易排序条件
         if (\Core::postGet('sortorder')) {
@@ -409,6 +473,8 @@ class  controller_loan_audit extends controller_sysBase {
             $row['cell'][] = "<a href='javascript:loan_preview(".$v['id'].")'>".$v['name']."</a></li>";
             $row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
             $row['cell'][] = "￥".$v['borrow_amount'];
+            $row['cell'][] = $loanBusiness->enumDealTimes($v['user_id']);
+            $row['cell'][] = $loanBusiness->enumOverRepayTimes($v['user_id']);
             $row['cell'][] = $v['rate']."%";
             $row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
             $row['cell'][] = $loanBusiness->enumDealUseType($v['use_type']);
@@ -434,8 +500,7 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealcate',$loanBusiness->enumDealCate())
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
-            ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('action','true_publish_json');
+            ->set('dealstatus',$loanBusiness->enumDealStatus());
         \Core::view() -> load('loan_truepublish');
     }
 
@@ -504,6 +569,31 @@ class  controller_loan_audit extends controller_sysBase {
         if(\Core::get('user_id')!=null && is_numeric(\Core::get('user_id'))){
             $where['user_id like']="%".\Core::get('user_id')."%";
         }
+        $userDao=\Core::dao('user_user');
+
+        //贷款人姓名模糊查询
+        if(\Core::get('user_name')!=null && (\Core::get('user_mobile') == null && !is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //TODO贷款人手机查询
+        if(\Core::get('user_name') == null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //手机号和姓名组合
+        if(\Core::get('user_name') != null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
+            $searchIdsWhere["AES_DECRYPT(real_name_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+            $searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_mobile')."%";
+            $searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
+            $where['user_id '] = $searchuserIds;
+        }
+        //推荐人
+        if(\Core::get('p_user_name')!=null) {
+            $where['user_id '] = $userDao->getUsersIdsByPuser(\Core::get('p_user_name'));
+        }
 
         //简易排序条件
         if (\Core::postGet('sortorder')) {
@@ -545,6 +635,8 @@ class  controller_loan_audit extends controller_sysBase {
             $row['cell'][] = $v['name'];
             $row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
             $row['cell'][] = "￥".$v['borrow_amount'];
+            $row['cell'][] = $loanBusiness->enumDealTimes($v['user_id']);
+            $row['cell'][] = $loanBusiness->enumOverRepayTimes($v['user_id']);
             $row['cell'][] = $dealRepayDao->getOverdueTimes($v['user_id']);
             $row['cell'][] = $v['rate']."%";
             $row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
@@ -569,8 +661,7 @@ class  controller_loan_audit extends controller_sysBase {
             ->set('dealcate',$loanBusiness->enumDealCate())
             ->set('dealusetype',$loanBusiness->enumDealUseType())
             ->set('sorcode',$loanBusiness->enumSorCode())
-            ->set('dealstatus',$loanBusiness->enumDealStatus())
-            ->set('action','my_publish_json');
+            ->set('dealstatus',$loanBusiness->enumDealStatus());
         \Core::view() -> load('loan_mypublish');
     }
 
