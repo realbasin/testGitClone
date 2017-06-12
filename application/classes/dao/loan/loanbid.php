@@ -41,8 +41,6 @@ class dao_loan_loanbid extends Dao {
 				,'is_send_half_msg'//是否已发送筹标过半信息
 				,'send_half_msg_time'//发送筹标过半通知时间
 				,'send_three_msg_time'//发送3天内需还款的通知时间
-				,'risk_rank'//风险等级
-				,'risk_security'//风险描述
 				,'collec_times'//总计催收次数
 				,'collec_last_time'//最后一次催收时间
 				,'collec_allocation'//是否已做了催收分配

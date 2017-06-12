@@ -100,7 +100,7 @@
                     <dt>推荐码</dt>
                     <dd>
                         <label>
-                            <input type="text" value="" name="id" id="id" class="s-input-txt" placeholder="输入推荐码">
+                            <input type="text" value="" name="work_id" id="work_id" class="s-input-txt" placeholder="输入推荐码">
                         </label>
                     </dd>
                 </dl>
@@ -170,20 +170,35 @@
                     </dd>
                 </dl>
                 <dl>
-                    <dt>流标返还</dt>
-                    <dd>
-                        <select class="class-select" id="is_has_received" name="is_has_received" value="-1">
-                            <option value="-1">-全部类型-</option>
-                            <option value="0">未返还</option>
-                            <option value="1">已返还</option>
-                        </select>
-                    </dd>
-                </dl>
-                <dl>
                     <dt>贷款人ID</dt>
                     <dd>
                         <label>
                             <input type="text" value="" name="user_id" id="user_id" class="s-input-txt" placeholder="输入贷款人id">
+                        </label>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>手机号</dt>
+                    <dd>
+                        <label>
+                            <input type="text" value="" name="user_mobile" id="user_mobile" class="s-input-txt" placeholder="输入手机号">
+                        </label>
+                    </dd>
+                </dl>
+
+                <dl>
+                    <dt>贷款人名称</dt>
+                    <dd>
+                        <label>
+                            <input type="text" value="" name="user_name" id="user_name" class="s-input-txt" placeholder="输入贷款人名称">
+                        </label>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>推荐人名称</dt>
+                    <dd>
+                        <label>
+                            <input type="text" value="" name="p_user_name" id="p_user_name" class="s-input-txt" placeholder="输入推荐人名称">
                         </label>
                     </dd>
                 </dl>
@@ -195,13 +210,15 @@
 <script>
     $(function(){
         $("#flexitable").flexigrid({
-            url: '<?php echo adminUrl('loan_audit',$action);?>',
+            url: '<?php echo adminUrl('loan_audit','my_publish_json');?>',
             colModel : [
                 {display: '<?php echo \Core::L("operate");?>', name : 'operation', width : 80, sortable : false, align: 'center', className: 'handle-m'},
                 {display: '编号', name : 'id', width : 50, sortable : true, align: 'center'},
                 {display: '贷款名称', name : 'name', width : 60, sortable : true, align : 'center'},
                 {display: '借款人', name : 'user_id', width : 100, sortable : true, align: 'left'},
                 {display: '贷款金额', name : 'borrow_amount', width : 80, sortable : true, align: 'center'},
+                {display: '贷款次数', name : 'deal_times', width : 50, sortable : true, align: 'center'},
+                {display: '逾期记录', name : 'over_repay_times', width : 50, sortable : true, align: 'center'},
                 {display: '利率(%)', name : 'rate', width : 50, sortable : true, align: 'center'},
                 {display: '期数', name : 'repay_time', width : 40, sortable : true, align: 'center'},
                 {display: '借款用途', name : 'use_type', width : 60, sortable : true, align: 'center'},
@@ -225,11 +242,11 @@
         });
 
         $('#submit').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit',$action);?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit','my_publish_json');?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
         });
 
         $('#reset').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit',$action);?>'}).flexReload();
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit','my_publish_json');?>'}).flexReload();
             $("#formSearch")[0].reset();
         });
 

@@ -398,4 +398,28 @@ class  business_loan_loanenum extends Business {
 			}
 			return $dealLoanTypeList;
 		}
+
+		//还款方式列表
+		public function loanTypeList() {
+			$loanTypeList[0] = array('name'=>'等额本息','repay_time_type'=>array(1));
+			$loanTypeList[1] = array('name'=>'先息后本','repay_time_type'=>array(1));
+			$loanTypeList[2] = array('name'=>'到期还本息','repay_time_type'=>array(0,1));
+			$loanTypeList[3] = array('name'=>'等额本金','repay_time_type'=>array(1));
+		}
+	
+		//当前用户贷款次数
+		public function enumDealTimes($user_id) {
+			$loan_ids = \Core::dao('loan_loanbid')->findCol('loan_id',array('deal_status'=>3),true); //流标的贷款
+			$flow_loan_ids = \Core::dao('loan_loanbase')->findCol('id',array('user_id'=>$user_id,'is_delete <>'=>3),true);
+			$ids = array_diff($loan_ids,$flow_loan_ids);
+			return count($ids);
+		}
+
+		//当前用户逾期记录逾期
+		public function enumOverRepayTimes($user_id) {
+			return \Core::dao('loan_dealloadrepay')->getCount(array('user_id'=>$user_id,'status >'=>1));
+		}
+
+	
+
 }

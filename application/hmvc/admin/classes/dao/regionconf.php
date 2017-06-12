@@ -23,7 +23,8 @@ class dao_regionconf extends Dao
         return 'region_conf';
     }
 
-    public function getProvinceList(){
+    public function getProvinceList()
+    {
         //TODO    设置缓存
         $provinceList = $this->getDb()->select('*')->from($this->getTable())->where(['pid' => 1, 'region_level' => 2])->execute()->rows();
         return $provinceList;
@@ -45,6 +46,19 @@ class dao_regionconf extends Dao
         }
 
         return $result;
+    }
+
+    /**
+     * 获取区域名称
+     * @param $regionId
+     * @return mixed|null
+     */
+    public function getRegionName($regionId)
+    {
+        if (empty($regionId)) {
+            return '';
+        }
+        return $this->getDb()->select('name')->from($this->getTable())->where(['id' => $regionId])->execute()->value('name');
     }
 
 

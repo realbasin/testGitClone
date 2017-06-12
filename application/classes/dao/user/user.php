@@ -293,4 +293,13 @@ class dao_user_user extends Dao {
 	public function getUserScoreById($user_id){
 		return $this->getDb()->from($this->getTable())->where(array('id'=>$user_id))->execute()->value('score');
 	}
+	//通过推荐人获取用户id
+	public function getUsersIdsByPuser($p_user_name) {
+		$pids = $this->getDb()->from($this->getTable())->where(array('user_name like'=>'%'.$p_user_name.'%'))->where(array("AES_DECRYPT('real_name_decrypt','__FANWEP2P__') like"=>'%'.$p_user_name.'%'),'OR')->execute()->values('id');
+		if($pids){
+			return $this->getDb()->from($this->getTable())->where(array('pid'=>$pids))->execute()->values('id');
+		} else {
+			return array();
+		}
+	}
 }
