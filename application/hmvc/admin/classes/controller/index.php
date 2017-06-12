@@ -4,7 +4,7 @@ defined('IN_XIAOSHU') or exit('Access Invalid!');
 class  controller_index extends controller_sysBase {
 
 	public function before($method, $args) {
-
+		
 	}
 
 	public function do_index() {
