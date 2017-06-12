@@ -7,7 +7,6 @@ class  business_sys_dealload extends Business {
 	//处理投标人投标金额-满标放款
 	public function dealLoadUserLoanMoney($load_list){
 		$result = array();
-		$result['yott_users'] = array();
 		$result['status'] = 0;
 		$result['code'] = '000';
 		$userDao = \Core::dao('user_user');
