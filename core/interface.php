@@ -301,6 +301,11 @@ class I_Cache_Memcached implements Xs_Cache {
 		$this -> _init();
 		return $this -> handle -> set($key, $value, $cacheTime > 0 ? (time() + $cacheTime) : 0);
 	}
+	
+	public function add($key, $value, $cacheTime = 0) {
+		$this -> _init();
+		return $this -> handle -> add($key, $value, $cacheTime > 0 ? (time() + $cacheTime) : 0);
+	}
 
 	public function & instance($key = null, $isRead = true) {
 		$this -> _init();
@@ -489,6 +494,32 @@ class I_Cache_Redis implements Xs_Cache {
 		}
 	}
 
+	public function setnx($key, $value) {
+		$redis = $this -> selectNode($key, false);
+		$value = serialize($value);
+		return $redis -> setnx($key, $value);
+	}
+	
+	public function getSet($key,$value){
+		$redis = $this -> selectNode($key, false);
+		$value = serialize($value);
+		if ($rawData=$redis -> getSet($key, $value)) {
+			$data = @unserialize($rawData);
+			return $data ? $data : $rawData;
+		}
+		return null;
+	}
+	
+	public function expire($key,$cacheTime){
+		$redis = $this -> selectNode($key, false);
+		$redis -> expire($key, $cacheTime);
+	}
+	
+	public function ttl($key){
+		$redis = $this -> selectNode($key, false);
+		return $redis -> ttl($key);
+	}
+
 	public function & instance($key = null, $isRead = true) {
 		return $this -> selectNode($key, $isRead);
 	}
@@ -548,6 +579,32 @@ class I_Cache_Redis_Cluster implements Xs_Cache {
 		} else {
 			return $this -> handle -> set($key, $value);
 		}
+	}
+
+	public function setnx($key, $value) {
+		$this -> _init();
+		$value = serialize($value);
+		return $this -> handle -> setnx($key, $value);
+	}
+	
+	public function getSet($key,$value){
+		$this -> _init();
+		$value = serialize($value);
+		if ($rawData=$this -> handle -> getSet($key, $value)) {
+			$data = @unserialize($rawData);
+			return $data ? $data : $rawData;
+		}
+		return null;
+	}
+	
+	public function expire($key,$cacheTime){
+		$this -> _init();
+		$this -> handle -> expire($key, $cacheTime);
+	}
+	
+	public function ttl($key){
+		$this -> _init();
+		return $this -> handle -> ttl($key);
 	}
 
 	public function & instance($key = null, $isRead = true) {

@@ -486,9 +486,15 @@ function set_cdn_host($url)
  * @option $taskArgs 任务执行参数 eg:array('deal_id'=>1000)
  * @option $hmvc 要执行的task所在的MVC，如果留空，默认主mvc
  */
-function addGerman($taskName,Array $taskArgs=array(),$hmvc=''){
-	//TODO 增加german队列
-
+function addGerman($taskName,Array $taskArgs=array(),$hmvc='',$sync = false){
+    $gearmanClient = \Core::library('XSGearmanClient');
+    $gearmanClient->setFunctionNameAndArgs($taskName,$taskArgs);
+    $flag = $gearmanClient->send($sync);
+    if($flag){
+        return $gearmanClient->getTaskId();
+	}else{
+    	return false;
+	}
 }
 
 /*
