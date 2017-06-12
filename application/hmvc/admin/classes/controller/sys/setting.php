@@ -1061,4 +1061,148 @@ class  controller_sys_setting extends controller_sysBase {
 		}
 	}
 
+    public function do_school_list(){
+        $regionConfDao = \Core::dao('regionconf');
+        $provinceList = $regionConfDao->getProvinceList();
+        \Core::view() -> set('provinceList',$provinceList);
+
+        $provinceCityList = $regionConfDao->getProvinceCityList();
+        \Core::view() -> set('provinceCityList',json_encode($provinceCityList));
+
+        \Core::view() ->  load('sys_schoolList');
+    }
+
+    public function do_school_list_json(){
+        //每页显示行数
+        $pageSize = \Core::postGet('rp');
+        //当前页
+        $page = \Core::postGet('curpage');
+        if (!$page || !is_numeric($page))
+            $page = 1;
+
+        if (!$pageSize || !is_numeric($pageSize))
+            $pageSize = 15;
+
+        $where = [];
+        $name = trim(\Core::postGet('name'));
+        if($name){
+            $where['name like']="%$name%";
+        }
+
+        $gradeType = (int)\Core::postGet('grade_type');
+        if($gradeType){
+            $where['grade_type']= $gradeType;
+        }
+
+        $provinceId = (int)\Core::postGet('province_id');
+        if($provinceId){
+            $where['province_id']= $provinceId;
+        }
+
+        $regionId = (int)\Core::postGet('region_id');
+        if($regionId){
+            $where['region_id']= $regionId;
+        }
+
+        //简易排序条件
+        $orderBy = [];
+        if (\Core::postGet('sortorder')) {
+            $orderBy[\Core::postGet('sortname')] = \Core::postGet('sortorder');
+        }
+
+        $data = \Core::dao('school')->getFlexPage($page, $pageSize, '*', $where, $orderBy);
+        if (!($data['rows'])) {
+            echo @json_encode([]);
+            exit;
+        }
+
+        //处理返回结果
+        $json = ['page' => $page, 'total' => $data['total']];
+
+        $schoolBusiness = \Core::business('school');
+        $regionConfDao = \Core::dao('regionconf');
+
+        foreach ($data['rows'] as $v) {
+            $row = array();
+            $row['id'] = $v['id'];
+            $operateStr = "<span class='btn'><em><i class='fa fa-edit'></i>" . \Core::L('operate') . " <i class='arrow'></i></em><ul>";
+            $operateStr .= "<li><a href='javascript:school_edit(" . $v['id'] . ")'>编辑</a></li>";
+            $operateStr .= "</ul></span>";
+            $row['cell'][] = $operateStr;
+            $row['cell'][] = $v['id'];
+            $row['cell'][] = $v['name'];
+            $row['cell'][] = $regionConfDao->getRegionName($v['province_id']);
+            $row['cell'][] = $regionConfDao->getRegionName($v['region_id']);
+            $row['cell'][] = $schoolBusiness->getGradeTypeDesc($v['grade_type']);
+            $row['cell'][] = $schoolBusiness->getInvestTypeDesc($v['invest_type']);
+            $row['cell'][] = $schoolBusiness->getOwnerTypeDesc($v['owner_type']);
+            $row['cell'][] = $schoolBusiness->getLevelTypeDesc($v['level_type']);
+            $row['cell'][] = '';
+            $json['rows'][] = $row;
+        }
+
+        //返回JSON
+        echo @json_encode($json);
+
+    }
+
+    public function do_school_edit(){
+        $id = \Core::getPost('id');
+        $isEdit = isset($id) && $id;
+
+        $schoolDao = \Core::dao('school');
+        if(chksubmit()){
+            $data = [
+                'id' => \Core::post('id'),
+                'name' => trim(\Core::post('name')),
+                'province_id' => intval(\Core::post('province_id')),
+                'region_id' => intval(\Core::post('region_id')),
+                'grade_type' => intval(\Core::post('grade_type')),
+                'invest_type' => intval(\Core::post('invest_type')),
+                'owner_type' => intval(\Core::post('owner_type')),
+                'level_type' => intval(\Core::post('level_type')),
+                'student_scale' => trim(\Core::post('student_scale')),
+                'url' => trim(\Core::post('url')),
+                'description' => trim(\Core::post('description')),
+            ];
+            if($isEdit){
+                $schoolDao->update($data,['id' => $id]);
+            }else{
+                $id = $schoolDao->insert($data);
+                if(!$id){
+                    \Core::message('添加院校失败', adminUrl('sys_setting', 'school_list'), 'fail', 3, 'message');
+                }
+            }
+            \Core::redirect(adminUrl('sys_setting', 'school_list'));
+        }else{
+            $regionConfDao = \Core::dao('regionconf');
+            $provinceList = $regionConfDao->getProvinceList();
+            \Core::view() -> set('provinceList',$provinceList);
+
+            $provinceCityList = $regionConfDao->getProvinceCityList();
+            \Core::view() -> set('provinceCityList',json_encode($provinceCityList));
+
+            if($isEdit){
+                $school = $schoolDao->getRowById($id);
+            }else{
+                $school = [
+                    'id' => '',
+                    'province_id' => 0,
+                    'region_id' => 0,
+                    'name' => '',
+                    'owner_type' => 0,
+                    'invest_type' => 0,
+                    'level_type'  => 0,
+                    'student_scale' => '',
+                    'description' => '',
+                    'url' => '',
+                    'grade_type' => 0
+                ];
+            }
+            \Core::view() -> set('school',$school);
+            \Core::view() ->  load('sys_schoolEdit');
+        }
+    }
+
+
 }
