@@ -17,10 +17,14 @@
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>artdialog/dialog-plus-min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/laymain.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>switchery/switchery.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>moment.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/Validform_v5.3.2_min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.daterangepicker.js"></script>
+    <script charset="utf-8" src="<?php echo RS_PATH?>kindeditor-4.1.7/kindeditor.js"></script>
+
     <!--[if lt IE 9]>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5.js"></script>
     <![endif]-->
@@ -53,7 +57,6 @@
     </div>
     <form method="post" id="form1" name="form1" action="?c=sys_loan&a=type_add&m=admin" enctype="multipart/form-data">
         <input type="hidden" name="form_submit" value="ok" />
-        <input type="hidden" name="loan_id" value="" />
 
         <!--借款类型编辑start-->
         <div class="tab-content">
@@ -62,8 +65,7 @@
                     <label>分类名称</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="name" id="name" class="input-txt" value="">
-                    <p class="notic"></p>
+                    <input type="text" name="name" id="name" class="input-txt" value="" datatype="*" nullmsg="请填写分类名称！">
                 </dd>
             </dl>
             <dl class="row">
@@ -71,7 +73,7 @@
                     <label>贷款缩略图</label>
                 </dt>
                 <dd class="opt">
-                    <input type="file" name="name" id="name" value="">
+                    <input type="file" name="icon" >
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -98,7 +100,7 @@
                     <label>简单描述</label>
                 </dt>
                 <dd class="opt">
-                    <textarea name="brief" cols="80" style="height: 100px;"></textarea>
+                    <textarea name="brief" cols="80" style="height: 100px;" datatype="*" nullmsg="请填写简单描述！"></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -106,7 +108,7 @@
                     <label>申请条件</label>
                 </dt>
                 <dd class="opt">
-                    <textarea name="condition" cols="80" style="height: 100px;"></textarea>
+                    <textarea name="condition" cols="80" style="height: 100px;" datatype="*" nullmsg="请填写申请条件！"></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -115,7 +117,7 @@
                 </dt>
                 <dd class="opt">
                     <?php foreach($dealUserTypeList as $dealUserType){?>
-                        <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' />".$dealUserType['name'];?>
+                        <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' datatype=\"*\" nullmsg=\"请选择借款用途\" />".$dealUserType['name'];?>
                     <?php }?>
                 </dd>
             </dl>
@@ -138,7 +140,7 @@
                 </dt>
                 <dd class="opt">
                     <?php foreach($loanTypeList as $loanType){?>
-                        <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' />".$loanType['name'];?>
+                        <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' datatype=\"n\" nullmsg=\"请选择类别\" />".$loanType['name'];?>
                     <?php }?>
                     <p class="notic">（理财端信用标、抵押标的区分，根据此处的选择来确定；学生贷+信用贷=信用贷）</p>
                 </dd>
@@ -229,8 +231,7 @@
                     <label>排序</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="sort" class="input-txt" value="<?php echo $maxSort; ?>">
-                    <p class="notic"></p>
+                    <input type="text" name="sort" class="input-txt" value="<?php echo $maxSort; ?>" datatype="n" nullmsg="请输入排序！">
                 </dd>
             </dl>
         </div>
@@ -283,25 +284,25 @@
                     <div id="contact_div">
                         <div class="contact_wrap" data-index="1">
                             第1联系人&nbsp;
-                            <input type="text" placeholder="父亲">&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="text" name="contact_arr[0]" value="父亲">&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="company_arr[0]" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="contact_norequired_arr[0]" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
                             <input type="button" class="input-btn" value="删除" onclick="contact_del(this);">
                         </div>
 
                         <div class="contact_wrap" data-index="2">
                             第2联系人&nbsp;
-                            <input type="text" placeholder="母亲">&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="text" name="contact_arr[1]" value="母亲">&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="company_arr[1]" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="contact_norequired_arr[1]" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
                             <input type="button" class="input-btn" value="删除" onclick="contact_del(this);">
                         </div>
 
                         <div class="contact_wrap" data-index="3">
                             第3联系人&nbsp;
-                            <input type="text" placeholder="直属主管">&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
-                            <input type="checkbox" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="text" name="contact_arr[2]" value="直属主管">&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="company_arr[2]" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;
+                            <input type="checkbox" name="contact_norequired_arr[2]" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;
                             <input type="button" class="input-btn" value="删除" onclick="contact_del(this);">
                         </div>
                     </div>
@@ -335,7 +336,7 @@
                     <label>产品简介</label>
                 </dt>
                 <dd class="opt">
-                    <textarea name="condition" cols="80" style="height: 100px;"></textarea>
+                    <textarea id="content" name="content" style="width:700px;height:300px;"></textarea>
                 </dd>
             </dl>
         </div>
@@ -420,7 +421,7 @@
                     <label>Banner图</label>
                 </dt>
                 <dd class="opt">
-                    <input type="file" name="name" id="name" value="">
+                    <input type="file" name="banner">
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -440,7 +441,7 @@
                     <label>担保金额</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="guarantees_amt" style="width: 80px;" value="">
+                    <input type="text" name="guarantor_amt" style="width: 80px;" value="">
                     <p class="notic">担保方，担保金额(代偿金额累计不能大于担保金额)</p>
                 </dd>
             </dl>
@@ -697,29 +698,18 @@
     </form>
 </div>
 <script type="text/javascript">
+    KindEditor.ready(function(K) {
+        window.editor = K.create('#content');
+    });
     var help_content="<?php echo \Core::L('loan_add_help');?>";
-    var contractnum = 1;
-    var infosnum = 1;
     function help(ctrl){
         var d = dialog({
             content: help_content,
             quickClose: true
         });
         d.show(ctrl);
-    };
+    }
 
-    $('#uloadtype').on('change',function(){
-        var uloadtype = $("#uloadtype option:selected").val();
-        if(uloadtype == 0) {
-            $(".loan_money").css('display','block');
-            $(".loan_portion").css('display','none');
-        }else if(uloadtype == 1) {
-            $(".loan_money").css('display','none');
-            $(".loan_portion").css('display','block');
-        }else {
-            return false;
-        }
-    });
     $(function () {
         //初始化表单验证
         $("#form1").initValidform();
@@ -736,9 +726,9 @@
         maxIndex+=1;
         var html = '<div class="contact_wrap" data-index="'+maxIndex+'">'+
             '第'+maxIndex+'联系人&nbsp;'+
-        '<input type="text" placeholder="">&nbsp;&nbsp;&nbsp;&nbsp;'+
-        '<input type="checkbox" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;'+
-        '<input type="checkbox" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;'+
+        '<input type="text" name="contact_arr['+maxIndex+']" placeholder="">&nbsp;&nbsp;&nbsp;&nbsp;'+
+        '<input type="checkbox" name="company_arr['+maxIndex+']" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;'+
+        '<input type="checkbox" name="contact_norequired_arr['+maxIndex+']" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;'+
         '<input type="button" class="input-btn" value="删除" onclick="contact_del(this);">'+
         '</div>';
         $('#contact_div').append(html);
@@ -752,12 +742,10 @@
         $('#daterange').dateRangePicker({
             shortcuts:
                 {
-                    'prev-days': [1,3,5,7,30,60],
-                    'prev' : null,
+                    'next-days':[365,1095,1825]
                 },
-            maxDays:60,
-            startDate:'<?php echo date('Y-m-d',strtotime("-60 day"));?>',
-            endDate:'<?php echo date('Y-m-d',time());?>',
+            startDate:'<?php echo date('Y-m-d',time());?>',
+            endDate:false,
             getValue: function()
             {
                 if ($('#start_time').val() && $('#end_time').val() )

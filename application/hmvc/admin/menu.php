@@ -31,6 +31,7 @@ $menu = array(
                             array('link'=>'sys_setting,variablessys','text'=>'系统变量'),
                             array('link'=>'sys_setting,variables','text'=>$lang['variables_setting']),
                             array('link'=>'sys_setting,cache','text'=>$lang['cache_setting']),
+                            array('link'=>'sys_setting,school_list','text'=>'院校管理'),
                             //array('link'=>'sys_setting,dbbackup','text'=>$lang['database_backup']),
                             //array('link'=>'sys_setting,dbrestore','text'=>$lang['database_restore']),
 						]

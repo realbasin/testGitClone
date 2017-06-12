@@ -55,7 +55,7 @@ class  controller_sys_loan extends controller_sysBase
             $row = array();
             $row['id'] = $v['id'];
             $operateStr = "<span class='btn'><em><i class='fa fa-edit'></i>" . \Core::L('operate') . " <i class='arrow'></i></em><ul>";
-            $operateStr .= "<li><a href='javascript:loan_detail(" . $v['id'] . ")'>编辑</a></li>";
+            $operateStr .= "<li><a href='javascript:type_edit(" . $v['id'] . ")'>编辑</a></li>";
             $operateStr .= "</ul></span>";
             $row['cell'][] = $operateStr;
             $row['cell'][] = $v['id'];
@@ -71,38 +71,18 @@ class  controller_sys_loan extends controller_sysBase
         echo @json_encode($json);
     }
 
-    /**
-     * 获取抵押物列表
-     */
-    private function getCollateralList()
-    {
-        $collateralList = [
-            ["id" => 1, "name" => "住房(信)"],
-            ["id" => 2, "name" => "住房(押)"],
-        ];
-
-        return $collateralList;
-    }
-
-    /**
-     * 获取借款类别列表
-     * @return array
-     */
-    private function getLoanTypeList()
-    {
-        $result = array(
-            ["id" => 0, "name" => "学生贷"],
-            ["id" => 1, "name" => "信用贷"],
-            ["id" => 2, "name" => "抵押贷"],
-            ['id' => 3, 'name' => '普惠贷']
-        );
-        return $result;
-    }
-
     public function do_type_add()
     {
         if (chksubmit()) {
-            print_r($_POST);
+            $data = \Core::post();
+
+            $dealLoanTypeBusiness = \Core::business('sys_dealloantype');
+            $flag = $dealLoanTypeBusiness->insert($data);
+            if ($flag) {
+                \Core::redirect(\Core::getUrl('sys_loan', 'type_list', \Core::config()->getAdminModule()));
+            } else {
+                \Core::message($dealLoanTypeBusiness->getMsg());
+            }
         } else {
             //获取借款类型列表
             $dealUserTypeList = \Core::dao('loan_dealusetype')->getAllDealUseType();
@@ -111,12 +91,81 @@ class  controller_sys_loan extends controller_sysBase
             $maxSort = \Core::dao('loan_dealloantype')->getMaxSort() + 1;
             \Core::view()->set('maxSort', $maxSort);
 
-            $collateralList = $this->getCollateralList();
+            $dealLoanTypeBusiness = \Core::business('sys_dealloantype');
+            $collateralList = $dealLoanTypeBusiness->getCollateralList();
             \Core::view()->set('collateralList', $collateralList);
 
-            $loanTypeList = $this->getLoanTypeList();
+            $loanTypeList = $dealLoanTypeBusiness->getLoanTypeList();
             \Core::view()->set('loanTypeList', $loanTypeList);
             \Core::view()->load("sys_loanTypeAdd");
+        }
+    }
+
+    public function do_type_edit()
+    {
+        if (chksubmit()) {
+            $data = \Core::post();
+
+            $dealLoanTypeBusiness = \Core::business('sys_dealloantype');
+            $flag = $dealLoanTypeBusiness->update($data);
+            if ($flag) {
+                \Core::redirect(\Core::getUrl('sys_loan', 'type_list', \Core::config()->getAdminModule()));
+            } else {
+                \Core::message($dealLoanTypeBusiness->getMsg());
+            }
+        } else {
+            $id = \Core::get('id');
+            $dealLoanType = \Core::dao('loan_dealloantype')->getDealLoanType($id);
+            \Core::view()->set('dealLoanType', $dealLoanType);
+
+            $dealLoanTypeBusiness = \Core::business('sys_dealloantype');
+            $dealLoanTypeExtern = \Core::dao('dealloantypeextern')->getRowByTypeId($dealLoanType['id']);
+            if (empty($dealLoanTypeExtern)) {
+                $dealLoanTypeExtern = $dealLoanTypeBusiness->getEmptyDealLoanTypeExtern();
+            }
+            \Core::view()->set('dealLoanTypeExtern', $dealLoanTypeExtern);
+
+            //获取贷款类型信用等级
+            $userLevelList = \Core::dao('dealloantypeuserlevel')->getAllLevel($dealLoanType['id']);
+            \Core::view()->set('userLevelList', $userLevelList);
+
+            //获取借款类型列表
+            $dealUserTypeList = \Core::dao('loan_dealusetype')->getAllDealUseType();
+            \Core::view()->set('dealUserTypeList', $dealUserTypeList);
+
+            $regionConfDao = \Core::dao('regionconf');
+            $provinceList = $regionConfDao->getProvinceList();
+            \Core::view()->set('provinceList', $provinceList);
+
+            //获取省份城市列表
+            $provinceCityList = $regionConfDao->getProvinceCityList();
+            \Core::view()->set('provinceCity', json_encode($provinceCityList));
+
+            $maxSort = \Core::dao('loan_dealloantype')->getMaxSort() + 1;
+            \Core::view()->set('maxSort', $maxSort);
+
+            $collateralList = $dealLoanTypeBusiness->getCollateralList();
+            \Core::view()->set('collateralList', $collateralList);
+
+            $loanTypeList = $dealLoanTypeBusiness->getLoanTypeList();
+            \Core::view()->set('loanTypeList', $loanTypeList);
+
+            \Core::view()->load("sys_loanTypeEdit");
+        }
+    }
+
+    public function do_loan_type_user_level_edit()
+    {
+        if (chksubmit()) {
+            \Core::dao('dealloantypeuserlevel')->updateData(\Core::post());
+
+            $loanTypeId = \Core::post('loan_type_id');
+            \Core::redirect(\Core::getUrl('sys_loan', 'type_edit', \Core::config()->getAdminModule(), ['id' => $loanTypeId]));
+        } else {
+            $id = \Core::get('id');
+            $userLevel = \Core::dao('dealloantypeuserlevel')->getRowById($id);
+            \Core::view()->set('userLevel', $userLevel);
+            \Core::view()->load("sys_loanTypeUserLevelEdit");
         }
     }
 

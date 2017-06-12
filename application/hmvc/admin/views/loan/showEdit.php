@@ -11,6 +11,7 @@
     <link href="<?php echo RS_PATH?>admin/css/style.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>switchery/switchery.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?php echo RS_PATH?>jquery/jquery.datetimepicker.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery-1.8.3.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.nicescroll.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>artdialog/dialog-plus-min.js"></script>
@@ -19,6 +20,7 @@
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/Validform_v5.3.2_min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.datetimepicker.full.min.js"></script>
     <!--[if lt IE 9]>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5.js"></script>
     <![endif]-->
@@ -244,7 +246,7 @@
                     <label>最低投标金额</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbid['min_loan_money'];?>">
+                    <input type="text" name="min_loan_money" id="min_loan_money" class="input-txt" value="<?php echo $loanbid['min_loan_money'];?>">
                 </dd>
             </dl>
             <dl class="row loan_money" <?php echo $loanbid['uloadtype']?'style="display:none;"':'';?>>
@@ -252,7 +254,7 @@
                     <label>最高投标金额</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbid['max_loan_money'];?>">
+                    <input type="text" name="max_loan_money" id="max_loan_money" class="input-txt" value="<?php echo $loanbid['max_loan_money'];?>">
                 </dd>
             </dl>
             <dl class="row loan_portion" <?php echo $loanbid['uloadtype']?'':'style="display:none;"';?>>
@@ -260,7 +262,7 @@
                     <label>分成多少份</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbid['portion'];?>">
+                    <input type="text" name="portion" id="portion" class="input-txt" value="<?php echo $loanbid['portion'];?>">
                 </dd>
             </dl>
             <dl class="row loan_portion" <?php echo $loanbid['uloadtype']?'':'style="display:none;"';?>>
@@ -268,7 +270,7 @@
                     <label>最高买多少份</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbid['max_portion'];?>">
+                    <input type="text" name="max_portion" id="max_portion" class="input-txt" value="<?php echo $loanbid['max_portion'];?>">
                 </dd>
             </dl>
             <dl class="row">
@@ -294,7 +296,7 @@
                     <label>筹标期限</label>
                 </dt>
                 <dd class="opt">
-                    <?php echo ($loanbid['start_time'] == 0 || $loanbid['end_time'] == 0)?0:ceil(($loanbid['start_time'] - $loanbid['end_time'])/(24*60*60));?>天
+                    <input tyep="text" name="enddate" value="<?php echo ($loanbid['start_time'] == 0 || $loanbid['end_time'] == 0)?0:ceil(($loanbid['start_time'] - $loanbid['end_time'])/(24*60*60));?>"/>天
                 </dd>
             </dl>
             <dl class="row">
@@ -322,7 +324,7 @@
                     <label>贷款描述</label>
                 </dt>
                 <dd class="opt">
-                    <textarea  cols="80" style="height: 100px;"></textarea>
+                    <textarea  cols="80" style="height: 100px;" name="description"><?php echo $loanbase['description'];?></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -342,7 +344,7 @@
                     <label>风险控制</label>
                 </dt>
                 <dd class="opt">
-                    <textarea  cols="80" style="height: 100px;"></textarea>
+                    <textarea  cols="80" style="height: 100px; " name="risk_security" ><?php echo $loanbid['risk_security'];?></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -380,14 +382,25 @@
                     <a href="<?php echo adminUrl('loan_loan','detail',array('loan_id'=>$loanbid['loan_id']));?>">投标详情</a>
                 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>排序</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="sort" id="sort" style="width: 80px;"  value="0">
-                </dd>
-            </dl>
+            <?php if( $loanbid['deal_status'] == 1){?>
+                <dl class="row">
+                    <dt class="tit">
+                        <label>开始时间</label>
+                    </dt>
+                    <dd class="opt">
+                         <span id="daterange">
+                             <input type="text" plugin="datepicker" class="s-input-txt" id="datestart" name="time" placeholder="点击选择时间" value="<?php echo $loanbid['start_time']?date('Y-m-d H:i:s',$loanbid['start_time']):'';?>"/>
+                         </span>
+                                <input type="button" class="input-btn" value="清空时间" onclick="clear_time();">
+                                <br>
+                        <span style="color:#ff9600;">
+                           如有同步：时间只能是当天或者前一天
+                        </span>
+
+                    </dd>
+                </dl>
+            <?php }?>
+
         </div>
         <!--相关参数-->
         <div class="tab-content" style="display: none;">
@@ -579,6 +592,12 @@
         }
         $("#"+type).append(str);
     }
+    function clear_time() {
+        $("#datestart").val('');
+
+    }
+    $.datetimepicker.setLocale('ch');
+    $('#datestart').datetimepicker({format:"Y-m-d H:i:s",timepicker:true,todayButton:true});
 </script>
 </body>
 </html>

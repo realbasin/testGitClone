@@ -51,36 +51,103 @@ class  controller_loan_loan extends controller_sysBase {
 	}
 	//手动还款
 	public function do_manual_repay(){
-		$data = array();
-		$data['code'] = 000;
+		$result = array();
+		$result['code'] = '000';
 		$loan_id = \Core::get('id',0);
 		if(!$loan_id) {
-			$data['message'] = \Core::L('fail');
-			echo @json_encode($data);
-			exit;
+			$result['message'] = \Core::L('fail');
+			return @json_encode($result);
 		}
-		$l_key = \Core::get('lkey',-1);
-		$user = \Core::dao('loan_loanbase')->getLoan($loan_id,'id,user_id');
-		if(!$user){
-			$data['message'] = \Core::L('no_loan');
-			echo @json_encode($data);
-			exit;
+		$l_key = \Core::get('l_key',-1);
+		$loanBase = \Core::dao('loan_loanbase')->getloanbase($loan_id,'id,user_id');
+		$loanBid = \Core::dao('loan_loanbid')->getOneLoanById($loan_id,'loan_id,deal_status');
+		$loanExt = \Core::dao('loan_loanext')->getExtByLoanId($loan_id);
+		if(!$loanBase || !$loanBid || !$loanExt){
+			$result['message'] = \Core::L('no_loan');
+			return @json_encode($result);
 		}
-		$user_id = $user[$loan_id]['user_id'];
-		//提前还款（批量所有（未还）期）
-		/*if($l_key < 0) {
+		//贷款人id
+		$borrow_user_id = $loanBase['user_id'];
+		if($loanBid['deal_status'] != 4) {
+			$result['message'] = '借款不是还款状态！';
+			return @json_encode($result);
+		}
+		$user_total_money = \Core::dao('user_user')->getUserMoney($borrow_user_id);
+		if ($user_total_money <= 0) {
+			$result['message'] = '余额不足,请先充值';
+			return @json_encode($result);
+		}
+		$no_repay_befor_lkey = \Core::dao('loan_dealrepay')->getCount(array('deal_id'=>$loan_id,'has_repay'=>0,'l_key < '=>$l_key));
+		if($no_repay_befor_lkey > 0){
+			$result['message'] = '请先将往期的借款还完';
+			return @json_encode($result);
+		}
+		//执行还款
+		if($l_key == -1 ) {
+			//手动提前还款
+			$dealRepayDao = \Core::dao('loan_dealrepay');
+			//是否有部分还款的
+			$repay_count_ing = $dealRepayDao->getCount(array('deal_id'=>$loan_id,'has_repay'=>2));
+			if ($repay_count_ing > 0) {
+				$result['message'] = '请将部分还款的借款还完才可以进行此操作！';
+				return @json_encode($result);
+			}
+			//防止提前还款操作未逾期且网站垫付的标
+			$has_site_repay_and_has_repay = $dealRepayDao->getCount(array('deal_id'=>$loan_id,'has_repay'=>0,'status'=>1));
+			if ($has_site_repay_and_has_repay > 0) {
+				$result['message'] = '请手动将网站垫付的借款还完才可以进行此操作！';
+				return @json_encode($result);
+			}
+			//从第几期开始还？条件：当前还款计划中该借款人id名下贷款id未还的最小l_key
+			$start_lkey = $dealRepayDao->findCol('l_key',array('deal_id'=>$loan_id,'has_repay'=>0));
+
+			$inrepay_info = \Core::business('sys_dealrepay')->inrepayRepay($loan_id, $start_lkey);
+			\Core::dump($inrepay_info);die();
+			//待还款列表
+			$wait_repay_list = $dealRepayDao->getAllNoRepayLoan($loan_id);
+			if(!$wait_repay_list){
+				$result['message'] = '数据不存在！';
+				return @json_encode($result);
+			}
+			foreach ($wait_repay_list as $k => $v) {
+				$repay_data = array();
+				$repay_data['has_repay'] = 1;
+				$repay_data['true_repay_time'] = time();
+				//$repay_data['true_repay_date'] = to_date($time);
+				$repay_data['status'] = 0;
+				if ($start_lkey == $v['l_key']) {
+					$repay_data['true_repay_money'] = round($inrepay_info['true_repay_money'],2);
+					$repay_data['impose_money'] = round($inrepay_info['impose_money'],2);
+					$repay_data['true_manage_money'] = round($inrepay_info['true_manage_money'],2);
+					$repay_data['true_mortgage_fee'] = round($inrepay_info['true_mortgage_fee'],2);
+					$repay_data['true_self_money'] = round($inrepay_info['true_self_money'],2);
+					//$repay_data['true_interest_money'] = round($inrepay_info['true_interest_money'],2);
+					//$repay_data['true_manage_money_rebate'] = $true_manage_money_rebate;
+					if($v['repay_time'] == strtotime(date('Y-m-d',time()))) {
+						$repay_data['status'] = 1;
+					}
+				}
+				//TODO 更新数据，应开启事务
+				//TODO 借款人扣款
+			}
+			//\Core::dump($has_repay_count);die();
+			//在提前还款的第一期计算收取所有费用
+			//当月当期还款状态显示为正常还款,往前的月份显示提前还款
+			$result['message'] = '后续操作！';
+			return @json_encode($result);
 
 		}else {
-			//正常还款（单期）
-		}*/
-		//执行还款
-		$status = \Core::business('loan_loanenum')->repayLoanBills($loan_id,$l_key,$user_id);
-		if($status == 0) {
-			$data['code'] = 200;
-			echo @json_encode($data);
+			//手动单期还款
+			$status = \Core::business('loan_loanenum')->repayLoanBills($loan_id,$l_key,$borrow_user_id);
+		}
+		if($status['status'] == 1) {
+
+			$result['code'] = 200;
+			$result['message'] = $status['show_err'];
+			return @json_encode($result);
 		}else {
-			$data['message'] = $status['show_err'];
-			echo @json_encode($data);
+			$result['message'] = $status['show_err'];
+			return @json_encode($result);
 		}
 
 	}
@@ -190,15 +257,19 @@ class  controller_loan_loan extends controller_sysBase {
 					}
 				}
 				//是否本地标，扣除本地标风险保证金
-				$result = \Core::business('sys_dealload')->dealLoadBond($deal_id,$loanBase['user_id']);
-
+				$status = \Core::business('sys_dealload')->dealLoadBond($deal_id,$loanBase['user_id']);
+				if($status['status'] == 1) {
+					$result['code'] = '000';
+					$result['message'] = $status['message'];
+				}
 				//TODO 积分变动
 				//扣除投资人金额
 				$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_rebate,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
 				if($load_list) {
-					$result = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
-					if($result['status'] == 1) {
+					$status = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
+					if($status['status'] == 1) {
 						$result['code'] = '000';
+						$result['message'] = $status['message'];
 					}else {
 						$result['code'] = 200;
 					}
@@ -210,6 +281,7 @@ class  controller_loan_loan extends controller_sysBase {
 			}
 			//更新贷款状态为已放款
 			$load_loan = \Core::dao('loan_dealload')->update(array('is_has_loans'=>1),array('deal_id'=>$deal_id));
+
 			//TODO 分销相关
 			//TODO 生成还款计划
 			$repayplan = \Core::business('sys_dealrepay')->makeRepayPlan($loanBase,$loanBid,$loanExt,$loanbid_info['loan_time']);
@@ -219,12 +291,21 @@ class  controller_loan_loan extends controller_sysBase {
 				//修改为已放款
 				$effectBidNumbers =$loanBidDao->update($loanbid_info,array('loan_id'=>$deal_id,'is_has_loans'=>0));
 				if($effectBidNumbers === false) {
-					$result['message'] = "放款失败";
+					$result['message'] = "放款失败1";
 				}else {
-					//TODO 是否存在优投用户，存在发送推送
-					if (isset($result['yott_users'])) {
-						$result['code'] = 200;
-						$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
+					//TODO 记录贷款状态变更日志
+					$dealStatusLogDao = \Core::dao('loan_dealstatuslog');
+					//TODO 记录贷款日志：满标放款
+					$dealStatusLogDao->insert(array('deal_id'=>$loanBase['id'],'user_id'=>$loanBase['user_id'],'type'=>9,'create_time'=>time()));
+					//TODO 记录贷款日志：借款协议生效
+					$dealStatusLogDao->insert(array('deal_id'=>$loanBase['id'],'user_id'=>$loanBase['user_id'],'type'=>10,'create_time'=>time()));
+					//TODO 借款分销返利
+					\Core::business('user_userinfo')->distributionRebate($deal_id,$loanBase['user_id'],1);
+					//TODO 理财分销返利
+					$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_rebate,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
+
+					foreach ($load_list as $v){
+						\Core::business('user_userinfo')->bidDistributionRebate($deal_id,$v,$v['user_id'],1);
 					}
 					//TODO 发借款成功邮件
 
@@ -240,7 +321,7 @@ class  controller_loan_loan extends controller_sysBase {
 				}
 			}else{
 				$result['code'] = '000';
-				$result['message'] = "放款失败";
+				$result['message'] = "放款失败，生成还款、回款计划失败";
 				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
@@ -352,14 +433,58 @@ class  controller_loan_loan extends controller_sysBase {
 	//贷款详细信息编辑
 	public function do_loan_show_edit(){
 		if(chksubmit()) {
-			\Core::dump('test');die();
-			//提交保存
+			$loan_base = array();
+			$loan_bid = array();
+			$loan_ext = array();
+			$loan_id = \Core::post('loan_id',0);
+			if(!$loan_id) {
+				\Core::redirect(adminUrl('loan_loan','all'),'贷款不存在');
+			}
+			$loan_base['name'] = \Core::post('name','');
+			$loan_base['type_id'] = \Core::post('type_id',0);
+			$loan_base['loantype'] = \Core::post('loantype',0);
+			$loan_ext['contract_id'] = \Core::post('contract_id',0);
+			$loan_ext['scontract_id'] = \Core::post('scontract_id',0);
+			$loan_ext['tcontract_id'] = \Core::post('tcontract_id',0);
+			$loan_bid['uloadtype'] = \Core::post('uloadtype',0);
+			$loan_bid['min_loan_money'] = \Core::post('min_loan_money',0);
+			$loan_bid['max_loan_money'] = \Core::post('max_loan_money',0);
+			$loan_bid['portion'] = \Core::post('portion',0);
+			$loan_bid['max_portion'] = \Core::post('max_portion',0);
+			$loan_bid['end_time'] = \Core::post('enddate',0);
+			$loan_bid['use_ecv'] = \Core::post('use_ecv',0);
+			$loan_base['description'] = \Core::post('description','');
+			$loan_bid['risk_rank'] = \Core::post('risk_rank',0);
+			$loan_bid['risk_security'] = \Core::post('risk_security','');
+			$loan_base['use_type'] = \Core::post('use_type',0);
+			$loan_bid['start_time'] = strtotime(\Core::post('time',''));
 
+			//提交保存.多表更新
+			$loanBaseDao = \Core::dao('loan_loanbase');
+			$loanBidDao = \Core::dao('loan_loanbid');
+			$loanExtDao = \Core::dao('loan_loanext');
+			//TODO 开启事务
+			$loanBaseDao->getDb()->begin();
+			try{
+				$base_flag = $loanBaseDao->update($loan_base,array('id'=>$loan_id));
+				$bid_flag = $loanBidDao->update($loan_bid,array('loan_id'=>$loan_id));
+				$ext_flag = $loanExtDao->update($loan_ext,array('loan_id'=>$loan_id));
+			}catch (\Exception $e){
+				\Core::redirect(adminUrl('loan_loan','all'),'系统错误');
+			}finally{
+				if($base_flag === false || $bid_flag === false || $ext_flag === false) {
+					$loanBaseDao->getDb()->rollback();
+					\Core::redirect(adminUrl('loan_loan','all'),'保存失败');
+				}else {
+					$loanBaseDao->getDb()->commit();
+					\Core::redirect(adminUrl('loan_loan','loan_show_edit',array('loan_id'=>$loan_id)),'保存成功');
+				}
+			}
 		}else {
 			$loan_id = \Core::get('loan_id',0);
 			$loanBusiness=\Core::business('loan_loanenum');
 			//根据借款id，获取贷款基本信息
-			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type';
+			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,description';
 			$loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
 			//获取会员名称
 			$user_id = $loanbase['user_id'];
@@ -469,12 +594,13 @@ class  controller_loan_loan extends controller_sysBase {
 			$row = array();
 			$overdue_day = 0;
 			//判断是否逾期，计算应还金额等
-			//是否还款
+			$imposeInfo = \Core::business('sys_dealrepay')->repayPlanImpose($deal_id,$v['l_key']);
 			if($v['has_repay'] == 1) {
 				//已还总额
-				$isrepay = $v['true_repay_money'];
+				$isrepay = $v['true_repay_money'] + $v['true_manage_money'] + $v['impose_money'] + $v['manage_impose_money'];
 				//待还总额
 				$repay_all_money = '0.00';
+				$need_repay_money = '0.00';
 				//待还本息
 				$repay_money = '0.00';
 				//管理费
@@ -486,49 +612,26 @@ class  controller_loan_loan extends controller_sysBase {
 				//还款情况
 				$status = $v['status'] + 1;
 				$repaydate = date('Y-m-d H:i:s',$v['true_repay_time']);
-			}elseif($v['has_repay'] == 0) {
-				//未还款状态
+				$overdue_day = $imposeInfo['overday']>0?$imposeInfo['overday']:0;
+
+			}else {
 				//已还总额
 				$isrepay = '0.00';
-				//判断是否罚息
-				$time = time();
-				if($time > ($v['repay_time'] + 24 * 3600 - 1) && $v['repay_money'] > 0){
-					$status = 3;
-					//计算逾期时间,设置还款状态
-					$overdue_day = ceil((strtotime(date('Y-m-d',$time)) - $v['repay_time']) / (3600 * 24));
-					//根据日期判断是否严重逾期 获取费率
-					//费率修改为拓展表loan_ext中普通配置字段config_common中获取
-					if ($overdue_day >= C('YZ_IMPSE_DAY')) {
-						$status = 4;
-						$impose_fee = trim($config_common['impose_fee_day2']);
-						$manage_impose_fee = trim($config_common['manage_impose_fee_day2']);
-					}else {
-						$impose_fee = trim($config_common['impose_fee_day1']);
-						$manage_impose_fee = trim($config_common['manage_impose_fee_day1']);
-					}
-					$impose_fee = floatval($impose_fee);
-					$manage_impose_fee = floatval($manage_impose_fee);
-					$repay_money = $v['repay_money'];
-					$manage_money = $v['manage_money'];
-					//罚息
-					$impose_money = number_format($repay_money * $impose_fee * $overdue_day / 100,2);
-					//罚管理费
-					$manage_impose_money = number_format($repay_money * $manage_impose_fee * $overdue_day / 100,2);
-					$impose_all_money = $impose_money + $manage_impose_money;
-					$repay_all_money = $repay_money + $manage_money + $impose_all_money;
-					$repaydate = '';
-				}else {
-					//未逾期
-					$status = $v['status'];
-					$repay_money = $v['repay_money'];
-					$manage_money = $v['manage_money'];
-					//罚息
-					$impose_money = 0;
-					//罚管理费
-					$manage_impose_money = 0;
-					$repay_all_money = $repay_money + $manage_money;
-					$repaydate = '';
-				}
+				//待还总额
+				$repay_all_money = $imposeInfo['need_repay_money'] + $v['manage_money'];
+				$need_repay_money = $imposeInfo['need_repay_money'];
+				//待还本息
+				$repay_money = $v['repay_money'];
+				//管理费
+				$manage_money = $v['manage_money'];
+				//逾期/违约金
+				$impose_money = $imposeInfo['impose_money'];
+				//逾期/违约金管理费
+				$manage_impose_money = $imposeInfo['manage_impose_money'];
+				//还款情况
+				$status = ($imposeInfo['status'] > 1)?($imposeInfo['status']+1):$imposeInfo['status'];
+				$repaydate = '';
+				$overdue_day = $imposeInfo['overday']>0?$imposeInfo['overday']:0;
 			}
 			$l_key = $v['l_key'] + 1;
 			$row['l_key'] = $l_key;
@@ -641,7 +744,7 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 		//TODO贷款人手机查询
 		if(\Core::get('user_name') == null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
-			$searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+			$searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_mobile')."%";
 			$searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
 			$where['user_id '] = $searchuserIds;
 
@@ -752,7 +855,10 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
 		$loanextDao = \Core::dao('loan_loanext');
-		$config_common = $loanextDao->getConfig('config_common');
+		$config_common = $loanextDao->getCommonconfig($deal_id);
+		if ($config_common ){
+			unserialize($config_common);
+		}
 		$loadrepayDao = \Core::dao('loan_dealloadrepay');
 		$loanenumBusiness = \Core::business('loan_loanenum');
 		foreach ($data as $v) {
@@ -760,9 +866,11 @@ class  controller_loan_loan extends controller_sysBase {
 			$overdue_day = 0;
 			//判断是否逾期，计算应还金额等
 			//是否还款
+			$imposeInfo = \Core::business('sys_dealrepay')->repayPlanImpose($deal_id,$v['l_key']);
+
 			if($v['has_repay'] == 1) {
 				//已还总额
-				$isrepay = $v['true_repay_money'];
+				$isrepay = $v['true_repay_money'] + $v['true_manage_money'] + $v['impose_money'] + $v['manage_impose_money'];
 				//待还总额
 				$repay_all_money = '0.00';
 				$need_repay_money = '0.00';
@@ -777,49 +885,26 @@ class  controller_loan_loan extends controller_sysBase {
 				//还款情况
 				$status = $v['status'] + 1;
 				$repaydate = date('Y-m-d H:i:s',$v['true_repay_time']);
-			}elseif($v['has_repay'] == 0) {
-				//未还款状态
+				$overdue_day = $imposeInfo['overday'];
+
+			}else {
 				//已还总额
 				$isrepay = '0.00';
-				//判断是否罚息
-				$time = time();
-				if($time > ($v['repay_time'] + 24 * 3600 - 1) && $v['repay_money'] > 0){
-					$status = 3;
-					//计算逾期时间,设置还款状态
-					$overdue_day = ceil((strtotime(date('Y-m-d',$time)) - $v['repay_time']) / (3600 * 24));
-					//根据日期判断是否严重逾期 获取费率
-					//费率修改为拓展表loan_ext中普通配置字段config_common中获取
-					if ($overdue_day >= C('YZ_IMPSE_DAY')) {
-						$status = 4;
-						$impose_fee = trim($config_common['impose_fee_day2']);
-						$manage_impose_fee = trim($config_common['manage_impose_fee_day2']);
-					}else {
-						$impose_fee = trim($config_common['impose_fee_day1']);
-						$manage_impose_fee = trim($config_common['manage_impose_fee_day1']);
-					}
-					$impose_fee = floatval($impose_fee);
-					$manage_impose_fee = floatval($manage_impose_fee);
-					$repay_money = $v['repay_money'];
-					$manage_money = $v['manage_money'];
-					//罚息
-					$impose_money = number_format($repay_money * $impose_fee * $overdue_day / 100,2);
-					//罚管理费
-					$manage_impose_money = number_format($repay_money * $manage_impose_fee * $overdue_day / 100,2);
-					$impose_all_money = $impose_money + $manage_impose_money;
-					$need_repay_money = $repay_all_money = $repay_money + $manage_money + $impose_all_money;
-					$repaydate = '';
-				}else {
-					//未逾期
-					$status = $v['status'];
-					$repay_money = $v['repay_money'];
-					$manage_money = $v['manage_money'];
-					//罚息
-					$impose_money = 0;
-					//罚管理费
-					$manage_impose_money = 0;
-					$need_repay_money = $repay_all_money = $repay_money + $manage_money;
-					$repaydate = '';
-				}
+				//待还总额
+				$repay_all_money = $imposeInfo['need_repay_money'] + $v['manage_money'];
+				$need_repay_money = $imposeInfo['need_repay_money'];
+				//待还本息
+				$repay_money = $v['repay_money'];
+				//管理费
+				$manage_money = $v['manage_money'];
+				//逾期/违约金
+				$impose_money = $imposeInfo['impose_money'];
+				//逾期/违约金管理费
+				$manage_impose_money = $imposeInfo['manage_impose_money'];
+				//还款情况
+				$status = ($imposeInfo['status'] > 1)?($imposeInfo['status']+1):$imposeInfo['status'];
+				$repaydate = '';
+				$overdue_day = $imposeInfo['overday'];
 			}
 			$opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
 			if($v['has_repay'] == 0) {
@@ -829,7 +914,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$where = array();
 			$where['deal_id'] = $v['deal_id'];
 			$where['l_key'] = $v['l_key'];
-			if($loadrepayDao->getIsSiteRepay($where) == 0){
+			if($loadrepayDao->getIsSiteRepay($where) == 0 && $v['has_repay'] == 0){
 				$opration.="<li><a href='javascript:site_repay(".$v['deal_id'].")'>网站资金代还款</a></li>";
 			}
 			$opration.="<li><a href='javascript:repay_plan_export_load(".$v['deal_id'].",".$v['l_key'].")'>导出还款计划列表</a></li>";
@@ -843,7 +928,7 @@ class  controller_loan_loan extends controller_sysBase {
 			//待还总额
 			$row['cell'][] = '￥'.$repay_all_money;
 			//还需还金额
-			$row['cell'][] = '￥'.$need_repay_money;
+			$row['cell'][] = '￥'.$repay_all_money;
 			//待还本息
 			$row['cell'][] = '￥'.$repay_money;
 			//管理费
@@ -857,7 +942,7 @@ class  controller_loan_loan extends controller_sysBase {
 			//还款时间
 			$row['cell'][] = $repaydate;
 			//逾期天数
-			$row['cell'][] = $overdue_day?$overdue_day:0;
+			$row['cell'][] = $overdue_day>0?$overdue_day:0;
 			$row['cell'][] = '<a href="javascript:viewloanitem('.$v['deal_id'].','.$v['l_key'].');" >查看</a>';
 			$row['cell'][] = '';
 			$json['rows'][] = $row;
@@ -868,7 +953,7 @@ class  controller_loan_loan extends controller_sysBase {
 		echo @json_encode($json);
 
 	}
-	//投资人列表
+	//投资人回款列表
 	public function do_all_loaditem_json(){
 		$json = array();
 		$id = \Core::get('id',0);
@@ -881,7 +966,7 @@ class  controller_loan_loan extends controller_sysBase {
 			echo @json_encode($json);
 			exit();
 		}
-		$fields = 'id,deal_id,l_key,user_id,status,is_site_repay,has_repay,impose_money,repay_money,repay_time,manage_money,interest_money,true_reward_money,t_user_id,true_manage_money,manage_interest_money,true_manage_interest_money,manage_interest_money_rebate,true_manage_interest_money_rebate,manage_early_interest_money';
+		$fields = 'id,deal_id,l_key,user_id,status,is_site_repay,has_repay,impose_money,repay_money,repay_time,manage_money,interest_money,true_interest_money,true_reward_money,t_user_id,true_manage_money,manage_interest_money,true_manage_interest_money,manage_interest_money_rebate,true_manage_interest_money_rebate,manage_early_interest_money';
 		//获取投资列表
 		$data = \Core::dao('loan_dealloadrepay')->getLoadRepayByLkey($id,$lkey,$fields);
 		if($data) {
@@ -890,7 +975,7 @@ class  controller_loan_loan extends controller_sysBase {
 			//当前时间
 			$now_time = time();
 			//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
-			$config_common = \Core::dao('loan_loanext')->getConfig('config_common');
+			$config_common = \Core::dao('loan_loanext')->getCommonconfig($id);
 			//用户名称
 			foreach ($data as $v) {
 				$userIds[]=$v['user_id'];
@@ -917,17 +1002,19 @@ class  controller_loan_loan extends controller_sysBase {
 						//是否严重逾期
 						if($impose_day > C('YZ_IMPSE_DAY')) {
 							$status = 4;
-							$impose_fee = trim($config_common['impose_fee_day2']);
+							$impose_fee = \Core::arrayKeyExists('impose_fee_day2',$config_common)?\Core::arrayGet($config_common,'impose_fee_day2'):0.9;
 						}else {
 							$status = 3;
-							$impose_fee = trim($config_common['impose_fee_day1']);
+							$impose_fee = \Core::arrayKeyExists('impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'impose_fee_day1'):0.9;
 						}
 						$impose_fee = floatval($impose_fee);
 						//罚息/违约金
 						$impose_money = number_format($v['repay_money'] * $impose_fee * $impose_day / 100,2);
+						//$realrepaymoney =  $v['true_interest_money'] + $impose_money;
 
 					}
 				}else {
+					//已还款
 					$status = $v['status'] + 1;
 					$impose_money = $v['impose_money'];
 					if ($v['is_site_repay'] == 0) {
@@ -937,10 +1024,10 @@ class  controller_loan_loan extends controller_sysBase {
 					} elseif ($v['is_site_repay'] == 2) {
 						$site_repay = "机构";
 					}
-					$realrepaymoney =  $v['true_reward_money'];
+					$realrepaymoney =  $v['true_interest_money'] + $impose_money;
 				}
 				//借款id
-				$row['cell'][] = $v['deal_id'];
+				$row['cell'][] = $v['id'];
 				//会员
 				$row['cell'][] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name'):'';
 				//承接人
@@ -1002,5 +1089,87 @@ class  controller_loan_loan extends controller_sysBase {
 		exportExcel('投标列表', $header, $data);
 		unset($where);
 		unset($data);
+	}
+	//导出全部贷款列表
+	public function do_loanlist_export(){
+		$fields = 'id,name,user_id,borrow_amount,rate,repay_time,loantype,loan_status,sor_code,first_audit_admin_id,second_audit_admin_id,is_has_received,buy_count,is_has_loans';
+		$sql = 'select '. $fields. ' from _tablePrefix_loan_base base left join _tablePrefix_loan_bid bid on base.id = bid.loan_id where is_delete = 0 and is_effect = 1 order by base.id';
+		$businessComm=\Core::business('common');
+		$count = $businessComm->getCount($sql);
+		$curPage=\Core::getPost('curpage');
+		if($count > C('export_perpage')) {
+			$page = ceil($count/C('export_perpage'));
+			for ($i=1;$i<=$page;$i++){
+				$limit1 = ($i-1)*C('export_perpage') + 1;
+				$limit2 = $i*C('export_perpage') > $count ? $count : $i*C('export_perpage');
+				$array[$i] = $limit1.' ~ '.$limit2 ;
+			}
+			Core::view()->set('list',$array);
+			Core::view()->set('murl',adminUrl('loan_loan', 'all'));
+			Core::view()->load('export.excel');
+			exit;
+		}
+		$curPage=$curPage?$curPage:1;
+
+		//TODO 获取数据源
+		//$nase_data = $loanBaseDao->getPage($curPage,C('export_perpage'),'','id,name,user_id,borrow_amount,rate,repay_time,loantype,loan_status,sor_code,first_audit_admin_id,second_audit_admin_id');
+		$datas = $businessComm->getPageList($curPage,C('export_perpage'),$sql);
+		//Excel头部
+		$header = array();
+		$header['贷款编号'] = 'integer';
+		$header['贷款名称'] = 'string';
+		$header['借款人'] = 'string';
+		$header['推荐人'] = 'string';
+		$header['借款金额'] = 'price';
+		$header['利率'] = 'string';
+		$header['期数'] = 'string';
+		$header['还款方式'] = 'string';
+		$header['投标状态'] = 'string';
+		$header['是否放款'] = 'string';
+		$header['流标返还'] = 'string';
+		$header['投标数'] = 'integer';
+		$header['客户端'] = 'string';
+		$header['初审人'] = 'string';
+		$header['复审人'] = 'string';
+		$export=array();
+		foreach ($datas['rows'] as $v) {
+			$userIds[]=$v['user_id'];
+			$adminFirstIds[]=$v['first_audit_admin_id'];
+			$adminSecondIds[]=$v['second_audit_admin_id'];
+		}
+
+		$adminDao = \Core::dao('sys_admin_admin');
+		$userDao = \Core::dao('user_user');
+		$userNames = $userDao->getUser($userIds,'id,user_name,real_name,pid');
+		$firstAdminNames = $adminDao->getAdmin($adminFirstIds,'admin_id,admin_name,admin_real_name,admin_mobile');
+		$secondAdminNames = $adminDao->getAdmin($adminSecondIds,'admin_id,admin_name,admin_real_name,admin_mobile');
+		$loanBusiness = \Core::business('loan_loanenum');
+
+		foreach ($userNames as $v) {
+			$userPids[] = $v['pid'];
+		}
+		$pidNames = $userDao->getUser($userPids,'id,user_name,real_name');
+		foreach($datas['rows'] as $v){
+			$row=array();
+			$row[] = $v['id'];
+			$row[] = $v['name'];
+			$row[] = \Core::arrayKeyExists($v['user_id'], $userNames)?\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($userNames, $v['user_id']),'real_name').')':'';
+			$row[] = \Core::arrayKeyExists($v['user_id'], $pidNames)?\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'user_name').'('.\Core::arrayGet(\Core::arrayGet($pidNames, $userNames[$v['user_id']]['pid']),'real_name').')':'';
+			$row[] = $v['borrow_amount'];
+			$row[] = $v['rate'].'%';
+			$row[] = $v['repay_time'];
+			$row[] = $loanBusiness->enumLoanType($v['loantype']);
+			$row[] = strip_tags($loanBusiness->enumDealStatus($v['loan_status']));
+			$row[] = $v['is_has_loans']?strip_tags(\Core::L('yes')):strip_tags(\Core::L('no'));
+			$row[] = $v['is_has_received']?strip_tags(\Core::L('yes')):strip_tags(\Core::L('no'));
+			$row[] = $v['buy_count'];
+			$row[] = $loanBusiness->enumSorCode($v['sor_code']);
+			$row[] = \Core::arrayKeyExists($v['first_audit_admin_id'], $firstAdminNames)?\Core::arrayGet(\Core::arrayGet($firstAdminNames, $v['first_audit_admin_id'],''),'admin_real_name'):($v['first_audit_admin_id']=='-1'?'自动审核':'');
+			$row[] = \Core::arrayKeyExists($v['second_audit_admin_id'], $secondAdminNames)?\Core::arrayGet(\Core::arrayGet($secondAdminNames, $v['second_audit_admin_id'],''),'admin_real_name'):'';
+			$export[]=$row;
+		}
+
+		$this -> log('导出所有贷款列表(第'.$curPage.'页)', 'export');
+		exportExcel('有贷款列表(第'.$curPage.'页)', $header, $export);
 	}
 }

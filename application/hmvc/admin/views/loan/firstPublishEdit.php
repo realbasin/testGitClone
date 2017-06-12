@@ -28,9 +28,9 @@
 <div class="location">
     <div  class="right"><a href="javascript:void(null);" onclick="help(this);"  onfocus="this.blur();"><i class="help"></i><?php echo \Core::L('help');?></a></div>
     <i class="home"></i>
-    <span><?php echo \Core::L('loan');?></span>
+    <span><?php echo \Core::L('audit');?></span>
     <i class="arrow"></i>
-    <span><a href="<?php echo adminUrl('loan_loan','index');?>"><?php echo \Core::L('loan_all');?></a></span>
+    <span><a href="<?php echo adminUrl('loan_audit','index');?>"><?php echo \Core::L('first_publish');?></a></span>
     <i class="arrow"></i>
     <span><?php echo $loanbase['name'];?></span>
 </div>
@@ -50,6 +50,7 @@
     <form method="post" id="form1" name="form1" enctype="multipart/form-data">
         <input type="hidden" name="form_submit" value="ok" />
         <input type="hidden" name="loan_id" value="<?php echo $loanbase['id'];?>" />
+        <input type="hidden" name="update_time" value="<?php echo time();?>" />
         <!--基本信息-->
         <div class="tab-content">
             <dl class="row">
@@ -66,13 +67,14 @@
                     <label><em>*</em>借款名称</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="name" id="name" class="input-txt" value="<?php echo $loanbase['name'];?>">
+                    <input type="text" name="name" id="name" class="input-txt" readonly="readonly" value="<?php echo $loanbase['name'];?>">
                     <p class="notic">借款名称</p>
                 </dd>
             </dl>
             <dl class="row">
                 <dt class="tit">
                     <label><em>*</em>会员</label>
+                    <input type="hidden" name="user_id" value="<?php echo $loanbase['user_id'];?>">
                 </dt>
                 <dd class="opt">
                     <?php echo $username;?>
@@ -122,21 +124,20 @@
 
             <dl class="row">
                 <dt class="tit">
-                    <label>借款类型</label>
+                    <label>分类</label>
                 </dt>
                 <dd class="opt">
-                    <select name="type_id" id="type_id" value="-1">
-                        <option value="-1">-请选择类型-</option>
-                        <?php if($dealloantype){?>
-                            <?php foreach($dealloantype as $k=>$v){?>
-                                <?php if($k == $loanbase['type_id']) {?>
-                                    <?php echo "<option value='".$k."' selected='selected'>".$v['name']."</option>";?>
+                    <select name="dealcate" id="dealcate" onfocus="this.defaultIndex=this.selectedIndex;" onchange="this.selectedIndex=this.defaultIndex;" value="-1">
+                        <option value="-1">-请选择分类-</option>
+                        <?php if($dealcate){?>
+                            <?php foreach($dealcate as $k=>$v){?>
+                                <?php if($k == $loanbase['cate_id']) {?>
+                                    <?php echo "<option value='".$k."'selected='selected'>".$v['name']."</option>";?>
                                 <?php }?>
                                 <?php echo "<option value='".$k."'>".$v['name']."</option>";?>
                             <?php }?>
                         <?php }?>
                     </select>
-                    <p class="notic">借款类型</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -217,7 +218,7 @@
                     <label>借款金额</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" readonly="readonly" value="<?php echo $loanbase['borrow_amount'];?>">
+                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo $loanbase['borrow_amount'];?>">
                 </dd>
             </dl>
             <dl class="row">
@@ -231,53 +232,10 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label>投标类型</label>
-                </dt>
-                <dd class="opt">
-                    <select name="uloadtype" id="uloadtype" value="-1">
-                        <option value="0" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'':'selected="selected"';?>>按金额</option>
-                        <option value="1" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'selected="selected"':'';?>>按份额</option>
-                    </select>
-                </dd>
-            </dl>
-            <dl class="row loan_money" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'style="display:none;"':'';?>>
-                <dt class="tit">
-                    <label>最低投标金额</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo \Core::arrayGet($loanbid,'min_loan_money',0);?>">
-                </dd>
-            </dl>
-            <dl class="row loan_money" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'style="display:none;"':'';?>>
-                <dt class="tit">
-                    <label>最高投标金额</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo \Core::arrayGet($loanbid,'min_loan_money',0);?>">
-                </dd>
-            </dl>
-            <dl class="row loan_portion" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'':'style="display:none;"';?>>
-                <dt class="tit">
-                    <label>分成多少份</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo \Core::arrayGet($loanbid,'portion');?>">
-                </dd>
-            </dl>
-            <dl class="row loan_portion" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'':'style="display:none;"';?>>
-                <dt class="tit">
-                    <label>最高买多少份</label>
-                </dt>
-                <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" value="<?php echo \Core::arrayGet($loanbid,'max_portion');?>">
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
                     <label>借款期限</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount"  readonly="readonly" style="width: 80px;" value="<?php echo $loanbase['repay_time'];?>">
+                    <input type="text" name="repay_time" id="repay_time"  readonly="readonly" style="width: 80px;" value="<?php echo $loanbase['repay_time'];?>">
                     <?php echo $loanbase['repay_time_type']?'月':'天';?>
                 </dd>
             </dl>
@@ -292,14 +250,6 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label>筹标期限</label>
-                </dt>
-                <dd class="opt">
-                    <?php echo (\Core::arrayGet($loanbid,'start_time',0) == 0 || \Core::arrayGet($loanbid,'end_time','') == 0)?0:ceil(($loanbid['start_time'] - $loanbid['end_time'])/(24*60*60));?>天
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
                     <label>是否纳入推荐奖励</label>
                 </dt>
                 <dd class="opt">
@@ -308,22 +258,10 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label>可否使用红包</label>
-                </dt>
-                <dd class="opt">
-                    <select name="use_ecv" id="use_ecv" value="-1">
-                        <option value="0" <?php echo \Core::arrayGet($loanbid,'use_ecv')?'':'selected="selected"';?>>否</option>
-                        <option value="1" <?php echo \Core::arrayGet($loanbid,'use_ecv')?'selected="selected"':'';?>>是</option>
-                    </select>
-                    <p class="notic">选“是”请将“最低投标金额”设置大于最大红包额度</p>
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
                     <label>贷款描述</label>
                 </dt>
                 <dd class="opt">
-                    <textarea  cols="80" style="height: 100px;"></textarea>
+                    <textarea  cols="80" name="description" style="height: 100px;"></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -332,9 +270,9 @@
                 </dt>
                 <dd class="opt">
                     <select name="risk_rank">
-                        <option value="0" <?php echo (\Core::arrayGet($loanbid,'risk_rank') == 0)?'selected="selected"':'';?>>低</option>
-                        <option value="1" <?php echo (\Core::arrayGet($loanbid,'risk_rank') == 0)?'selected="selected"':'';?>>中</option>
-                        <option value="2" <?php echo (\Core::arrayGet($loanbid,'risk_rank') == 0)?'selected="selected"':'';?>>高</option>
+                        <option value="0" <?php echo (\Core::arrayGet($loanbase,'risk_rank') == 0)?'selected="selected"':'';?>>低</option>
+                        <option value="1" <?php echo (\Core::arrayGet($loanbase,'risk_rank') == 1)?'selected="selected"':'';?>>中</option>
+                        <option value="2" <?php echo (\Core::arrayGet($loanbase,'risk_rank') == 2)?'selected="selected"':'';?>>高</option>
                     </select>
                 </dd>
             </dl>
@@ -343,7 +281,7 @@
                     <label>风险控制</label>
                 </dt>
                 <dd class="opt">
-                    <textarea  cols="80" style="height: 100px;"></textarea>
+                    <textarea  cols="80" name="risk_security" style="height: 100px;"></textarea>
                 </dd>
             </dl>
             <dl class="row">
@@ -377,7 +315,7 @@
                     <label>借款状态</label>
                 </dt>
                 <dd class="opt">
-                    <?php echo (\Core::arrayGet($loanbid,'publish_wait') == 3)?'复审':'初审';?>
+                    <?php echo (\Core::arrayGet($loanbase,'publish_wait') == 3)?'复审':'初审';?>
                 </dd>
             </dl>
             <dl class="row">
@@ -386,6 +324,83 @@
                 </dt>
                 <dd class="opt">
                     <input type="text" name="sort" id="sort" style="width: 80px;"  value="0">
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>审核状态</label>
+                </dt>
+                <dd class="opt">
+                    <label>审核失败<input type="radio" name="is_delete" value="3" /> </label>
+                    <label>审核成功<input type="radio" name="publish_wait" value="2" /> </label>
+                </dd>
+            </dl>
+            <dl class="row" id="delele_msg_box" style="display:none">
+                <dt class="tit">
+                    <label>短信回复:</label>
+                </dt>
+                <dd class="opt">
+                    <select name="delete_msg">
+                        <option value="综合评分不足">综合评分不足</option>
+                        <option value="资料不完备">资料不完备</option>
+                        <option value="暂不支持成人高等教育">暂不支持成人高等教育</option>
+                        <option value="借款意愿变更">借款意愿变更</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row" id="delete_real_msg_box" style="display:none">
+                <dt class="tit">
+                    <label>真实原因:</label>
+                </dt>
+                <dd class="opt">
+                    <select name="delete_real_msg">
+                        <option value="">请选择</option>
+                        <option value="学籍与产品不符">学籍与产品不符</option>
+                        <option value="已毕业">已毕业</option>
+                        <option value="偿还能力不足">偿还能力不足</option>
+                        <option value="成人教育">成人教育</option>
+                        <option value="网络教育">网络教育</option>
+                        <option value="待审核">待审核</option>
+                        <option value="当前逾期">当前逾期</option>
+                        <option value="电话审核失败">电话审核失败</option>
+                        <option value="风险客户">风险客户</option>
+                        <option value="网贷黑名单">网贷黑名单</option>
+                        <option value="小树黑名单">小树黑名单</option>
+                        <option value="客户不需要">客户不需要</option>
+                        <option value="没接电话">没接电话</option>
+                        <option value="没有学信网">没有学信网</option>
+                        <option value="偏远地区">偏远地区</option>
+                        <option value="已实习">已实习</option>
+                        <option value="视频审核失败">视频审核失败</option>
+                        <option value="资料虚假">资料虚假</option>
+                        <option value="学信网没有照片">学信网没有照片</option>
+                        <option value="资料不齐全">资料不齐全</option>
+                        <option value="用户不需要">用户不需要</option>
+                        <option value="客户不配合">客户不配合</option>
+                        <option value="客户态度不好">客户态度不好</option>
+                        <option value="严重逾期">严重逾期</option>
+                        <option value="风险分数过高">风险分数过高</option>
+                        <option value="学籍不符">学籍不符</option>
+                        <option value="休学">休学</option>
+                        <option value="借贷平台较多">借贷平台较多</option>
+                        <option value="负债高">负债高</option>
+                        <option value="客户不提供其他平台账号密码">客户不提供其他平台账号密码</option>
+                        <option value="没有身份证">没有身份证</option>
+                        <option value="没有服务密码">没有服务密码</option>
+                        <option value="芝麻信用分低于550">芝麻信用分低于550</option>
+                        <option value="没有还款记录">没有还款记录</option>
+                        <option value="入学年份不符">入学年份不符</option>
+                        <option value="未满18岁">未满18岁</option>
+                        <option value="资料审核失败">资料审核失败</option>
+                        <option value="资料不全">资料不全</option>
+                        <option value="通话记录不足3个月">通话记录不足3个月</option>
+                        <option value="手机号码非实名制">手机号码非实名制</option>
+                        <option value="3个月内申请平台超过16家">3个月内申请平台超过16家</option>
+                        <option value="联系人电话审核失败">联系人电话审核失败</option>
+                        <option value="优才贷">优才贷</option>
+                        <option value="毕业年份不符">毕业年份不符</option>
+                        <option value="工作单位审核失败">工作单位审核失败</option>
+                    </select>
                 </dd>
             </dl>
         </div>
@@ -504,9 +519,9 @@
         <div class="tab-content" style="display: none;">
             <dl class="row">
                 <dt class="tit">
-                    <label>认证资料显示</label>
+                    <label>认证资料显示 [ <a href="javascript:void(0);" onclick="add_mortgage_img('view_info');">+</a> ] </label>
                 </dt>
-                <dd class="opt">
+                <dd class="opt" id="view_info">
 
                 </dd>
             </dl>
@@ -531,13 +546,14 @@
 
         <div class="page-footer">
             <div class="btn-wrap">
-                <input type="button" class="btn" value="<?php echo \Core::L('goback');?>"  onclick="goback();"/>
+                <input type="submit" name="btnSubmit" value="<?php echo \Core::L('submit');?>" id="btnSubmit" class="btn" />
             </div>
         </div>
     </form>
 </div>
 <script type="text/javascript">
     var help_content="<?php echo \Core::L('loan_add_help');?>";
+    var viewinfonum = 1;
     var contractnum = 1;
     var infosnum = 1;
     function help(ctrl){
@@ -566,6 +582,11 @@
     function add_mortgage_img(type){
         var str = '';
         str += '名称：<input type="text" size="10" name="mortgage_'+type+'_name_';
+        if(type == 'view_info'){
+            str += viewinfonum +'" id="mortgage_'+type+'_name_'+viewinfonum+'" value="">&nbsp;';
+            str += '图片：<input type="file" name="mortgage_'+type+'_name_'+viewinfonum+'"><br>';
+            viewinfonum = viewinfonum+1;
+        }
         if(type == 'contract'){
             str += contractnum +'" id="mortgage_'+type+'_name_'+contractnum+'" value="">&nbsp;';
             str += '图片：<input type="file" name="mortgage_'+type+'_name_'+contractnum+'"><br>';
@@ -578,6 +599,25 @@
         }
         $("#"+type).append(str);
     }
+    $('input[name=is_delete]').click(function() {
+        var no_region = $("#no_region");
+        if (no_region.length > 0) {
+            alert("确定不匹配贷款所在城市");
+        }
+    });
+    $("input[name='publish_wait']").live("click",function(){
+        $("input[name='is_delete']").attr("checked",false);
+        $("#delele_msg_box,#delete_real_msg_box").hide();
+    });
+
+    $("input[name='is_delete']").click(function(){
+        if ($(this).val() == "3") {
+            $("input[name='publish_wait']").attr("checked",false);
+            $("#delele_msg_box,#delete_real_msg_box").show();
+        }
+        return true;
+    });
+
 </script>
 </body>
 </html>

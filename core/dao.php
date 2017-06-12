@@ -175,11 +175,29 @@ abstract class Dao {
 	 * 获得指定条件的记录条数
 	 * @param type $where 查询条件
 	 */ 
-	public function getCount(Array $where = null){
+	public function getCount(Array $where = null,Array $mutiWhere=null,$groupBy=null){
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
 		}
-		$total = $this -> getDb() -> select('count(*) as total') -> from($this -> getTable()) -> execute() -> value('total');
+		if($mutiWhere){
+			foreach($mutiWhere as $v){
+				if(is_array($v) && count($v)==3 && is_array($v[0])){
+					$this -> getDb() -> where($v[0],$v[1],$v[2]);
+				}
+			}
+		}
+		if($groupBy){
+			$groupFields='';
+			if(strpos($groupBy,',')===false){
+				$groupFields=$this->getDb()->wrap($groupBy);
+			}else{
+				$groupFields=$groupBy;
+			}
+			$this -> getDb() -> select('count(DISTINCT '.$groupFields.') as total') -> from($this -> getTable());
+		}else{
+			$this -> getDb() -> select('count(*) as total') -> from($this -> getTable());
+		}
+		$total =  $this -> getDb() -> execute() -> value('total');
 		return $total;
 	}
 
@@ -224,20 +242,34 @@ abstract class Dao {
 	 * @$groupBy分组查询
 	 * @$joins需join查询的arrays，格式为array(array('table','condition','joinmode'))表名，条件，模式
 	 * 如果有groupby语句，则count要使用其它方式
+	 * @$muitiWhere 多个where查询条件，格式为array(array(array('filed'=>'value'),leftwrap,rightwrap))
 	 */ 
-	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array(), $groupBy=null,Array $joins=array(),$fieldsWrap=true){
+	public function getFlexPage($page,$pagesize,$fields = '*', Array $where = null, Array $orderBy = array(), $groupBy=null,Array $joins=array(),$fieldsWrap=true,Array $muitiWhere=array()){
 		$data = array();
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
 		}
-		if($joins && is_array($joins)){
+		if($muitiWhere){
+			foreach($muitiWhere as $v){
+				if(is_array($v) && count($v)==3 && is_array($v[0])){
+					$this -> getDb() -> where($v[0],$v[1],$v[2]);
+				}
+			}
+		}
+		if($joins){
 			foreach($joins as $v){
-				if(count($v)<2) break;
+				if(count($v)!=3) break;
 				$this -> getDb()->join($v[0], $v[1],$v[2]);
 			}
 		}
 		if($groupBy){
-			$this -> getDb() -> select('count(DISTINCT '.$this->getDb()->wrap($groupBy).') as total') -> from($this -> getTable());
+			$groupFields='';
+			if(strpos($groupBy,',')===false){
+				$groupFields=$this->getDb()->wrap($groupBy);
+			}else{
+				$groupFields=$groupBy;
+			}
+			$this -> getDb() -> select('count(DISTINCT '.$groupFields.') as total') -> from($this -> getTable());
 		}else{
 			$this -> getDb() -> select('count(*) as total') -> from($this -> getTable());
 		}
@@ -247,12 +279,19 @@ abstract class Dao {
 		if (is_array($where)) {
 			$this -> getDb() -> where($where);
 		}
+		if($muitiWhere){
+			foreach($muitiWhere as $v){
+				if(is_array($v) && count($v)==3 && is_array($v[0])){
+					$this -> getDb() -> where($v[0],$v[1],$v[2]);
+				}
+			}
+		}
 		if($groupBy){
 			$this -> getDb() -> groupBy($groupBy);
 		}
-		if($joins && is_array($joins)){
+		if($joins){
 			foreach($joins as $v){
-				if(count($v)<2) break;
+				if(count($v)!=3) break;
 				$this -> getDb()->join($v[0], $v[1],$v[2]);
 			}
 		}

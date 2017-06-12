@@ -31,7 +31,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('loan');?></span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('first_publish');?></span>
+    <span><?php echo \Core::L('true_publish');?></span>
 
 </div>
 <div class="line10"></div>
@@ -156,34 +156,37 @@
                         </select>
                     </dd>
                 </dl>
-                <dl>
-                    <dt>贷款状态</dt>
-                    <dd>
-                        <select class="class-select" id="deal_status" name="deal_status" value="-1">
-                            <option value="-1">-全部类型-</option>
-                            <?php if($dealstatus){?>
-                                <?php foreach($dealstatus as $k=>$v){?>
-                                    <?php echo "<option value='".$k."'>".$v."</option>";?>
-                                <?php }?>
-                            <?php }?>
-                        </select>
-                    </dd>
-                </dl>
-                <dl>
-                    <dt>流标返还</dt>
-                    <dd>
-                        <select class="class-select" id="is_has_received" name="is_has_received" value="-1">
-                            <option value="-1">-全部类型-</option>
-                            <option value="0">未返还</option>
-                            <option value="1">已返还</option>
-                        </select>
-                    </dd>
-                </dl>
+
                 <dl>
                     <dt>贷款人ID</dt>
                     <dd>
                         <label>
                             <input type="text" value="" name="user_id" id="user_id" class="s-input-txt" placeholder="输入贷款人id">
+                        </label>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>手机号</dt>
+                    <dd>
+                        <label>
+                            <input type="text" value="" name="user_mobile" id="user_mobile" class="s-input-txt" placeholder="输入手机号">
+                        </label>
+                    </dd>
+                </dl>
+
+                <dl>
+                    <dt>贷款人名称</dt>
+                    <dd>
+                        <label>
+                            <input type="text" value="" name="user_name" id="user_name" class="s-input-txt" placeholder="输入贷款人名称">
+                        </label>
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>推荐人名称</dt>
+                    <dd>
+                        <label>
+                            <input type="text" value="" name="p_user_name" id="p_user_name" class="s-input-txt" placeholder="输入推荐人名称">
                         </label>
                     </dd>
                 </dl>
@@ -195,7 +198,7 @@
 <script>
     $(function(){
         $("#flexitable").flexigrid({
-            url: '<?php echo adminUrl('loan_audit',$action);?>',
+            url: '<?php echo adminUrl('loan_audit','true_publish_json');?>',
             colModel : [
                 {display: '<?php echo \Core::L("operate");?>', name : 'operation', width : 80, sortable : false, align: 'center', className: 'handle-m'},
                 {display: '编号', name : 'id', width : 50, sortable : true, align: 'center'},
@@ -217,15 +220,15 @@
             ],
             sortname: "id",
             sortorder: "desc",
-            title: '首单待审核列表'
+            title: '复审核列表'
         });
 
         $('#submit').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit',$action);?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit','true_publish_json');?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
         });
 
         $('#reset').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit',$action);?>'}).flexReload();
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit','true_publish_json');?>'}).flexReload();
             $("#formSearch")[0].reset();
         });
 
@@ -270,38 +273,6 @@
         d.show(this);
     });
 
-    function get_owners(id){
-        var ids = '';
-        $("input[name='key']:checked").each(function(idx){
-            ids = $(this).val()+ids+',';
-        });
-        if(parseInt(id) > 0){
-            ids = ids+id;
-        }
-        if(ids == ''){
-            alert("请先选择");
-            return;
-        }
-        //alert(ids);
-        $.ajax({
-            url	: "<?php echo adminUrl('loan_audit','publish_audit_owner');?>&way=1",
-            dataType: "json",
-            async	: false,
-            data	: {id: id, ids: ids},
-            type	: "POST",
-            success: function(data){
-                /*请求成功时处理*/
-                alert(data.msg);
-                if(data.response_code == 1){
-                    window.location.reload();
-                }
-            },
-            error: function(jqxhr, textstatus, errorthrown){
-                /*请求出错处理*/
-                alert('error');
-            }
-        });
-    }
 
 
 </script>

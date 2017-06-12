@@ -45,6 +45,8 @@ class dao_loan_loanbase extends Dao {
 				,'publish_memo'//复审失败原因
 				,'second_audit_admin_id'//复审人
 				,'source_id'//source_id
+				,'risk_rank'//风险等级
+				,'risk_security'//风险描述
 				);
 	}
 

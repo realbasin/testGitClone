@@ -32,6 +32,8 @@ define("AES_DECRYPT_KEY","__FANWEP2P__");
 	->setStorageDirPath(STORAGE_PATH)
 	/* 注册项目包 */
 	->addPackage(APP_PATH)
+    ->addPackage(PACKAGES_PATH.'gearman')
+    ->addPackage(PACKAGES_PATH.'cron')
 	/* 注册自动加载的函数文件 */
 	->addAutoloadFunctions(array(
 		'main'
@@ -154,7 +156,7 @@ define("AES_DECRYPT_KEY","__FANWEP2P__");
 	 * 3.如果这里不设置(保留注释)，\Core::cache()默认使用的是文件缓存，
 	 * 缓存数据默认存储在application/storage/cache
 	 */
-	//->setCacheConfig('cache')
+	->setCacheConfig('cache')
 	/* 设置数据库连接信息，参数可以是配置文件名称；也可以是数据库配置信息数组，即配置文件返回的那个数组。 */
 	->setDatabseConfig('database')
 	/* 设置自定义的错误显示控制处理类 */

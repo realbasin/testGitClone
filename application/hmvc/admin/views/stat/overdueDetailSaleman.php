@@ -68,7 +68,7 @@ $(function(){
 	$("#flexitable").flexigrid({
         url: '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_json');?>'+'&'+$("#form1").serialize(),
         colModel : [
-            {display: '行长', name : 'salesman_name', width : 150, sortable : true, align: 'center'}, 
+            {display: '行长', name : 'saleman_id', width : 150, sortable : true, align: 'center'}, 
 			{display: '逾期总人数', name : 'user_count', width : 120, sortable : true, align : 'center'},
 			{display: '逾期总笔数', name : 'deal_count', width : 120, sortable : true, align: 'center'},
 			{display: '逾期总期数', name : 'repay_count', width : 120, sortable : true, align: 'center'},
@@ -81,8 +81,7 @@ $(function(){
        
         sortname: "user_count",
         sortorder: "desc",
-        title: '归属行长',
-        usepager:false
+        title: '归属行长'
    });
    
 });
