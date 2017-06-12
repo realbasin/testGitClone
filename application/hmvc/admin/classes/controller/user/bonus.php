@@ -138,7 +138,7 @@ class  controller_user_bonus extends controller_sysBase {
             $opration = "<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
             $opration .= "<li><a href='javascript:type_edit(".$v['id'].")'>编辑</a></li>";
             $opration .= "<li><a href='javascript:type_bonus(".$v['id'].")'>优惠券</a></li>";
-            $opration .= "<li><a href='#'>查看</a></li>";
+            $opration .= "<li><a href='javascript:use_log(".$v['id'].",".$v['use_type'].")'>查看</a></li>";
             $opration .= "<li><a href='javascript:flexDelete(".$v['id'].")'>删除</a></li>";
             $row['id'] = $v['id'];
             $row['cell'][] = $opration;
@@ -182,7 +182,7 @@ class  controller_user_bonus extends controller_sysBase {
     //优惠券列表页面
     public function do_type_bonus() {
         $type_id = \Core::get('type_id',0);
-        $bonusTypeName = \Core::dao('user_bonustype')->getBonusTypeName($type_id);
+        $bonusTypeName = \Core::dao('user_bonustype')->findCol('bonus_type_name', $type_id);
 
         $bonusRuleList = \Core::dao('user_bonusrule')->getBonusRuleByTypeId($type_id);
 
@@ -195,7 +195,7 @@ class  controller_user_bonus extends controller_sysBase {
     //新增优惠券
     public function do_bonus_add() {
         $type_id = \Core::get('type_id',0);
-        $bonusType = \Core::dao('user_bonustype')->find(array('id'=>$type_id));
+        $bonusType = \Core::dao('user_bonustype')->find($type_id);
 
         if (chksubmit()) {
             $insertData = array(
@@ -219,10 +219,11 @@ class  controller_user_bonus extends controller_sysBase {
         \Core::view()->set('bonusType', $bonusType)->load('user_bonusAdd');
     }
 
+    //编辑优惠券
     public function do_bonus_edit() {
         $rule_id = intval(\Core::get('rule_id'));
-        $bonusRule = \Core::dao('user_bonusrule')->find(array('id'=>$rule_id));
-        $bonusTypeName = \Core::dao('user_bonustype')->getBonusTypeName($bonusRule['bonus_type_id']);
+        $bonusRule = \Core::dao('user_bonusrule')->find($rule_id);
+        $bonusTypeName = \Core::dao('user_bonustype')->findCol('bonus_type_name', $bonusRule['bonus_type_id']);
 
         if (chksubmit()) {
             $updateData = array(
@@ -264,13 +265,20 @@ class  controller_user_bonus extends controller_sysBase {
 
     //优惠券使用情况
     public function do_use_log() {
+        $use_type = \Core::postGet('use_type', 1);
+        $type_id = \Core::postGet('type_id', 0);
+        if ($type_id > 0) {
+            $bonus_type_name = \Core::dao('user_bonustype')->findCol('bonus_type_name', $type_id);
+        } else {
+            $bonus_type_name = '';
+        }
+
+        \Core::view()->set('use_type', $use_type)->set('type_id', $type_id)->set('bonus_type_name', $bonus_type_name);
         \Core::view()->load('user_bonusUseLog');
     }
 
     //优惠券使用情况列表
     public function do_use_log_json() {
-        /*$use_type = \Core::postGet('use_type', 1);
-        $is_effect = intval(\Core::postGet('is_effect', -1));
         $pagesize = \Core::postGet('rp');
         $page = \Core::postGet('curpage');
         if (!$page || !is_numeric($page))
@@ -278,8 +286,43 @@ class  controller_user_bonus extends controller_sysBase {
         if (!$pagesize || !is_numeric($pagesize))
             $pagesize = 15;
 
+        $bonusTypeWhere = array();
+        $use_type = \Core::postGet('use_type', 1);
+        $bonusTypeWhere['use_type'] = $use_type;
+
+        $bonus_type_name = \Core::postGet('bonus_type_name', '');
+        if (!empty($bonus_type_name)) {
+            $bonusTypeWhere['bonus_type_name like'] = '%'.$bonus_type_name.'%';
+        }
+
+        $type_id = \Core::postGet('type_id', 0);
+        if ($type_id > 0) {
+            $bonusTypeWhere['id'] = $type_id;
+        }
+
+        $bonusTypeIds = \Core::dao('user_bonustype')->findCol('id', $bonusTypeWhere, true);
+
+        //查询不到对应的优惠券类型
+        if (empty($bonusTypeIds)) {
+            echo @json_encode(array());
+            exit;
+        }
+
         $where = array();
-        $data = \Core::dao('user_bonususer') -> getFlexPage($page, $pagesize, '*', $where, array('id'=>'desc'));
+        $where['bonus_type_id'] = $bonusTypeIds;
+
+        $drawed_time_start = \Core::postGet('drawed_time_start', '');
+        if (!empty($drawed_time_start)) {
+            $where['start_time'] = strtotime($drawed_time_start);
+        }
+
+        $drawed_time_start = \Core::postGet('drawed_time_start', '');
+        if (!empty($drawed_time_start)) {
+            $where['start_time'] = strtotime($drawed_time_start);
+        }
+
+        echo @json_encode($where);exit;
+        /*$data = \Core::dao('user_bonususer') -> getFlexPage($page, $pagesize, '*', $where, array('id'=>'desc'));
 
         $outputJson = array(
             'page' => $page,
@@ -289,7 +332,6 @@ class  controller_user_bonus extends controller_sysBase {
             $row = array();
             $row['cell'][] = $v['id'];
             $row['cell'][] = $v['bonus_sn'];
-            $row['cell'][] = \Core::dao('user_bonustype')->getBonusTypeName($v['bonus_type_id']);
 //            $row['cell'][] = $v['use_type']==1 ? "理财端" : "借款端";
 
             $row['cell'][] = '';
