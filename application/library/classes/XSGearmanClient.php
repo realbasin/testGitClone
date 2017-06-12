@@ -106,9 +106,9 @@ class XSGearmanClient
      * 生成一个唯一字符串
      * @return string
      */
-    private function genUniqueId()
+    private function genUniqueId($prefix='')
     {
-        return md5(time() . mt_rand());
+        return md5($prefix . microtime() . mt_rand());
     }
 
     /**
