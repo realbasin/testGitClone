@@ -5,15 +5,16 @@ class  business_sys_admin_admin extends Business {
 		
 	}
 	//管理员提成
-	public function adminreferrals($admin_id,$admin_deal_info){
+	public function adminReferrals($admin_id,$admin_deal_info){
 		$result = array();
 		$result['status'] = 0;
+		$result['code'] = 200;
 		$result['is_post_yott'] = false; //记录是否有Yott用户投标
 		if ($admin_id["platform_code"] == "yott") {
 			$result['is_post_yott'] = true;
 		}
 		//获取部门成员
-		$mymanager = \Core::dao('sys_admin_adminext')->getAdminById($admin_id,'id,referrals_rate,pid');
+		$mymanager = \Core::dao('sys_admin_admin')->getAdminById($admin_id,'id,pid');
 		if($mymanager  && floatval($mymanager['referrals_rate']) != 0) {
 			$money = 0;
 			$url = '';
@@ -43,11 +44,12 @@ class  business_sys_admin_admin extends Business {
 				$updateAdminMoney = \Core::dao('sys_admin_adminext')->update(array('referrals_money'=>$adminReferralsMoney),array('id'=>$admin_id));
 				if($updateAdminMoney === false) {
 					$result['status'] = 1;
+					$result['code'] = '000';
 					$result['message'] = "放款失败，更新管理员提成金额失败";
 				}
 			}
-			//部门
-			if($mymanager['pid'] > 0) {
+			//部门提成无用，先注释
+			/*if($mymanager['pid'] > 0) {
 				//获取提成比
 				$mydepartment = \Core::dao('sys_admin_adminext')->getAdminById($mymanager['pid'],'id,referrals_rate,pid');
 				$d_data['deal_id'] = $m_data['deal_id'];
@@ -69,7 +71,7 @@ class  business_sys_admin_admin extends Business {
 						$result['message'] = "放款失败，更新管理员提成金额失败";
 					}
 				}
-			}
+			}*/
 		}
 		return $result;
 	}

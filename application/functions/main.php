@@ -480,4 +480,22 @@ function set_cdn_host($url)
 
 	return $url;
 }
+/*
+ * 增加german队列
+ * @option $taskName 要执行的任务名称，不含Task_前缀
+ * @option $taskArgs 任务执行参数 eg:array('deal_id'=>1000)
+ * @option $hmvc 要执行的task所在的MVC，如果留空，默认主mvc
+ */
+function addGerman($taskName,Array $taskArgs=array(),$hmvc=''){
+	//TODO 增加german队列
+
+}
+
+/*
+ * 增加rabbitmq队列
+ */
+function addRabbitQueue($taskName,$taskArgs=array(),$hmvc=''){
+	//TODO 增加RabbitMQ队列
+
+}
 ?>

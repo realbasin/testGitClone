@@ -66,30 +66,29 @@
 <script>
 $(function(){
 	$("#flexitable").flexigrid({
-        url: '',
+        url: '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_json');?>'+'&'+$("#form1").serialize(),
         colModel : [
-            {display: '排名', name : 'operation', width : 80, sortable : false, align: 'center'},
-            {display: '业务员', name : 'name', width : 150, sortable : true, align: 'center'}, 
-			{display: '逾期总人数', name : 'value', width : 120, sortable : false, align : 'center'},
-			{display: '逾期总笔数', name : 'info1', width : 120, sortable : false, align: 'center'},
-			{display: '逾期总期数', name : 'info2', width : 120, sortable : false, align: 'center'},
-			{display: '逾期已还期数', name : 'info3', width : 120, sortable : false, align: 'center'},
-			{display: '逾期总天数', name : 'info4', width : 120, sortable : false, align: 'center'}
+            {display: '行长', name : 'saleman_id', width : 150, sortable : true, align: 'center'}, 
+			{display: '逾期总人数', name : 'user_count', width : 120, sortable : true, align : 'center'},
+			{display: '逾期总笔数', name : 'deal_count', width : 120, sortable : true, align: 'center'},
+			{display: '逾期总期数', name : 'repay_count', width : 120, sortable : true, align: 'center'},
+			{display: '逾期已还期数', name : 'has_repay_count', width : 120, sortable : true, align: 'center'},
+			{display: '逾期总天数', name : 'expired_days', width : 120, sortable : true, align: 'center'}
             ],
         buttons : [
             {display: '<i class="fa fa-file-excel-o"></i> 导出全部数据到Excel', name : 'csv', bclass : 'csv', title : '导出全部数据到Excel', onpress : flexPress }
         ],
        
-        sortname: "name",
-        sortorder: "asc",
-        title: '归属业务员'
+        sortname: "user_count",
+        sortorder: "desc",
+        title: '归属行长'
    });
    
 });
 	
 function flexPress(name, grid) {
     if (name == 'csv') {
-        window.location.href = '<?php echo adminUrl('stat_borrow','noRepayment_export',array('datestart'=>$datestart,'dateend'=>$dateend));?>';
+        window.location.href = '<?php echo adminUrl('stat_borrow','overdueDetail_saleman_export',array('datestart'=>$datestart?$datestart:date('Y-m-d',strtotime('-30 day')),'dateend'=>$dateend?$dateend:date('Y-m-d',time())));?>';
     }
 };
 	

@@ -32,6 +32,8 @@ define("AES_DECRYPT_KEY","__FANWEP2P__");
 	->setStorageDirPath(STORAGE_PATH)
 	/* 注册项目包 */
 	->addPackage(APP_PATH)
+    ->addPackage(PACKAGES_PATH.'gearman')
+    ->addPackage(PACKAGES_PATH.'cron')
 	/* 注册自动加载的函数文件 */
 	->addAutoloadFunctions(array(
 		'main'

@@ -72,7 +72,7 @@ class dao_loan_dealloantype extends Dao {
 			}
 			$ext .= " AND (d.is_extend_effect=0 OR (d.is_extend_effect=1 AND de.start_time<=" . $time . " AND de.end_time>=" . $time . "))";
 			$sql = "SELECT d.*,de.start_time,de.end_time,de.city_ids,de.min_deadline,de.deadline,de.is_recommend,de.banner,de.seo_title,de.seo_keyword,de.seo_description,de.guarantees_amt,de.guarantor_amt,de.guarantor_pro_fit_amt,de.manage_fee,de.user_loan_manage_fee,de.manage_impose_fee_day1,de.manage_impose_fee_day2,de.impose_fee_day1,de.impose_fee_day2,de.minimum,de.maximum,de.user_load_transfer_fee,de.compensate_fee,de.user_bid_rebate,de.min_loan_money,de.max_loan_money,de.limit_loan_money,de.limit_bid_money,de.loan_limit_time,de.generation_position,de.uloadtype,de.portion,de.max_portion FROM " . _tablePrefix_ . "deal_loan_type d LEFT JOIN " . _tablePrefix_ . "deal_loan_type_extern de ON d.id=de.loan_type_id WHERE d.is_effect = 1 and d.is_delete = 0 $ext ORDER BY d.sort DESC";
-			$t_loan_type_list = \Core::db()->execute($sql)->rows();
+			$t_loan_type_list = $this->getDb()->execute($sql)->rows();
 			$loan_type_list = array();
 			foreach ($t_loan_type_list as $k => $v) {
 				$v['banner'] = set_cdn_host($v['banner']);
@@ -88,4 +88,12 @@ class dao_loan_dealloantype extends Dao {
 		
 		return $loan_type_list;
 	}
+
+	public function getDealLoanType($id){
+        return $this->getDb()->select('*')->from($this->getTable())->where(['id'=>$id])->execute()->row();
+    }
+
+    public function getMaxSort(){
+        return $this->getDb()->select('max(sort) as max_sort')->from($this->getTable())->where([])->execute()->value('max_sort');
+    }
 }

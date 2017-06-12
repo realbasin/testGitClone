@@ -108,6 +108,7 @@
                     data: "id="+id+"&l_key="+lkey,
                     success: function(data){
                         if (data.code==200){
+                            jsprint(data.message);
                             $("#flexitable").flexReload();
                         } else {
                             jsprint(data.message);
@@ -129,7 +130,7 @@
     //弹窗显示
     function viewloanitem(deal_id,l_key){
         var d=parent.dialog({
-            title: '投资人回款列表',
+            title: '投资人第'+(l_key + 1)+'期回款列表',
             url: '<?php echo adminUrl('loan_loan','viewloanitem');?>'+'&loan_id='+deal_id+'&l_key='+l_key,
         });
         d.width(1000);
