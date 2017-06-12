@@ -104,11 +104,18 @@ class dao_loan_dealrepay extends Dao {
 	public function isGetManage($deal_id,$l_key,$user_id){
 		return $this->findCol('get_manage',array('deal_id'=>$deal_id,'user_id'=>$user_id,'l_key'=>$l_key));
 	}
-	//是否全部还款
+	//是否全部未还款
 	public function getAllNoRepay($deal_id){
 		$where = array();
 		$where['deal_id'] = $deal_id;
 		$where['has_repay'] = 0;
 		return $this->getCount($where);
+	}
+	//获取未还款贷款
+	public function getAllNoRepayLoan($deal_id,$field='*'){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['has_repay'] = 0;
+		return $this->getDb()->select($field)->from($this->getTable())->where($where)->orderBy('l_key','asc')->execute()->key('l_key')->rows();
 	}
 }
