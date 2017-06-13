@@ -64,11 +64,20 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
-                    <label><em>*</em>借款名称</label>
+                    <label><em>*</em>贷款名称</label>
                 </dt>
                 <dd class="opt">
                     <input type="text" name="name" id="name" class="input-txt" readonly="readonly" value="<?php echo $loanbase['name'];?>">
-                    <p class="notic">借款名称</p>
+                    <p class="notic">贷款名称</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>简短名称</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="sub_name" id="sub_name" class="input-txt" readonly="readonly" value="<?php echo $loanbase['name'];?>">
+                    <p class="notic">简短名称</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -140,6 +149,7 @@
                     </select>
                 </dd>
             </dl>
+            
             <dl class="row">
                 <dt class="tit">
                     <label>还款方式</label>
@@ -232,10 +242,53 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>投标类型</label>
+                </dt>
+                <dd class="opt">
+                    <select name="uloadtype" id="uloadtype" onfocus="this.defaultIndex=this.selectedIndex;" onchange="this.selectedIndex=this.defaultIndex;" value="-1">
+                        <option value="0" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'':'selected="selected"';?>>按金额</option>
+                        <option value="1" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'selected="selected"':'';?>>按份额</option>
+                    </select>
+                </dd>
+            </dl>
+            <dl class="row loan_money"   <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'style="display:none;"':'';?>>
+                <dt class="tit">
+                    <label>最低投标金额</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="min_loan_money" id="min_loan_money" class="input-txt" readonly="readonly" value="<?php echo \Core::arrayGet($loanbid,'min_loan_money',0);?>">
+                </dd>
+            </dl>
+            <dl class="row loan_money" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'style="display:none;"':'';?>>
+                <dt class="tit">
+                    <label>最高投标金额</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="max_loan_money" id="max_loan_money" class="input-txt" readonly="readonly" value="<?php echo \Core::arrayGet($loanbid,'max_loan_money',0);?>">
+                </dd>
+            </dl>
+            <dl class="row loan_portion" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'':'style="display:none;"';?>>
+                <dt class="tit">
+                    <label>分成多少份</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="portion" id="portion" class="input-txt" value="<?php echo \Core::arrayGet($loanbid,'portion');?>">
+                </dd>
+            </dl>
+            <dl class="row loan_portion" <?php echo \Core::arrayGet($loanbid,'uloadtype','')?'':'style="display:none;"';?>>
+                <dt class="tit">
+                    <label>最高买多少份</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="max_portion" id="max_portion" class="input-txt" readonly="readonly" value="<?php echo \Core::arrayGet($loanbid,'max_portion');?>">
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>借款期限</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="repay_time" id="repay_time"  readonly="readonly" style="width: 80px;" value="<?php echo $loanbase['repay_time'];?>">
+                    <input type="text" name="repay_time_type" id="repay_time_type"  readonly="readonly" style="width: 80px;" value="<?php echo $loanbase['repay_time'];?>">
                     <?php echo $loanbase['repay_time_type']?'月':'天';?>
                 </dd>
             </dl>
@@ -250,10 +303,30 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>筹标期限</label>
+                </dt>
+                <dd class="opt">
+                    <?php echo (\Core::arrayGet($loanbid,'start_time',0) == 0 || \Core::arrayGet($loanbid,'end_time','') == 0)?0:ceil(($loanbid['start_time'] - $loanbid['end_time'])/(24*60*60));?>天
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>是否纳入推荐奖励</label>
                 </dt>
                 <dd class="opt">
                     <?php echo $loanbase['is_referral_award']?'是':'否';?>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>可否使用红包</label>
+                </dt>
+                <dd class="opt">
+                    <select name="use_ecv" id="use_ecv" value="-1">
+                        <option value="0" <?php echo \Core::arrayGet($loanbid,'use_ecv')?'':'selected="selected"';?>>否</option>
+                        <option value="1" <?php echo \Core::arrayGet($loanbid,'use_ecv')?'selected="selected"':'';?>>是</option>
+                    </select>
+                    <p class="notic">选“是”请将“最低投标金额”设置大于最大红包额度</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -270,9 +343,9 @@
                 </dt>
                 <dd class="opt">
                     <select name="risk_rank">
-                        <option value="0" <?php echo (\Core::arrayGet($loanbase,'risk_rank') == 0)?'selected="selected"':'';?>>低</option>
-                        <option value="1" <?php echo (\Core::arrayGet($loanbase,'risk_rank') == 1)?'selected="selected"':'';?>>中</option>
-                        <option value="2" <?php echo (\Core::arrayGet($loanbase,'risk_rank') == 2)?'selected="selected"':'';?>>高</option>
+                        <option value="0" <?php echo (\Core::arrayGet($loanbid,'risk_rank') == 0)?'selected="selected"':'';?>>低</option>
+                        <option value="1" <?php echo (\Core::arrayGet($loanbid,'risk_rank') == 0)?'selected="selected"':'';?>>中</option>
+                        <option value="2" <?php echo (\Core::arrayGet($loanbid,'risk_rank') == 0)?'selected="selected"':'';?>>高</option>
                     </select>
                 </dd>
             </dl>
@@ -315,7 +388,7 @@
                     <label>借款状态</label>
                 </dt>
                 <dd class="opt">
-                    <?php echo (\Core::arrayGet($loanbase,'publish_wait') == 3)?'复审':'初审';?>
+                    <?php echo (\Core::arrayGet($loanbid,'publish_wait') == 3)?'复审':'初审';?>
                 </dd>
             </dl>
             <dl class="row">
@@ -332,7 +405,7 @@
                 </dt>
                 <dd class="opt">
                     <label>审核失败<input type="radio" name="is_delete" value="3" /> </label>
-                    <label>审核成功<input type="radio" name="publish_wait" value="2" /> </label>
+                    <label>审核成功<input type="radio" name="deal_status" value="1" /> </label>
                 </dd>
             </dl>
             <dl class="row" id="delele_msg_box" style="display:none">
@@ -519,9 +592,9 @@
         <div class="tab-content" style="display: none;">
             <dl class="row">
                 <dt class="tit">
-                    <label>认证资料显示 [ <a href="javascript:void(0);" onclick="add_mortgage_img('view_info');">+</a> ] </label>
+                    <label>认证资料显示</label>
                 </dt>
-                <dd class="opt" id="view_info">
+                <dd class="opt">
 
                 </dd>
             </dl>
@@ -553,7 +626,6 @@
 </div>
 <script type="text/javascript">
     var help_content="<?php echo \Core::L('loan_add_help');?>";
-    var viewinfonum = 1;
     var contractnum = 1;
     var infosnum = 1;
     function help(ctrl){
@@ -582,11 +654,6 @@
     function add_mortgage_img(type){
         var str = '';
         str += '名称：<input type="text" size="10" name="mortgage_'+type+'_name_';
-        if(type == 'view_info'){
-            str += viewinfonum +'" id="mortgage_'+type+'_name_'+viewinfonum+'" value="">&nbsp;';
-            str += '图片：<input type="file" name="mortgage_'+type+'_name_'+viewinfonum+'"><br>';
-            viewinfonum = viewinfonum+1;
-        }
         if(type == 'contract'){
             str += contractnum +'" id="mortgage_'+type+'_name_'+contractnum+'" value="">&nbsp;';
             str += '图片：<input type="file" name="mortgage_'+type+'_name_'+contractnum+'"><br>';
@@ -605,18 +672,39 @@
             alert("确定不匹配贷款所在城市");
         }
     });
-    $("input[name='publish_wait']").live("click",function(){
+    $("input[name='deal_status']").live("click",function(){
         $("input[name='is_delete']").attr("checked",false);
+        $("select[name='auditing_status']").val(0);
         $("#delele_msg_box,#delete_real_msg_box").hide();
+        $("#auditing_status_box").hide();
+        deal_status_click(this);
     });
 
     $("input[name='is_delete']").click(function(){
         if ($(this).val() == "3") {
-            $("input[name='publish_wait']").attr("checked",false);
+            $("input[name='deal_status']").attr("checked",false);
             $("#delele_msg_box,#delete_real_msg_box").show();
         }
+        $("select[name='auditing_status']").val(0);
+        $("#auditing_status_box").hide();
+        deal_status_click();
         return true;
     });
+
+
+    function deal_status_click(obj){
+        $("#start_time_box #start_time").removeClass("require");
+        $("select[name='auditing_status']").removeClass("require");
+        switch($(obj).val()){
+            case "1":  //开始时间后移至复审时指定
+                //$("#start_time_box").show();
+                //$("#start_time_box #start_time").addClass("require");
+                break;
+            default :
+                $("#start_time_box").hide();
+                break;
+        }
+    };
 
 </script>
 </body>

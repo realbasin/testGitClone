@@ -29,6 +29,6 @@ class dao_loan_contract extends Dao {
 		$where = array();
 		$where['is_effect'] = 1;
 		$where['is_delete'] = 0;
-		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->rows();
+		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->key('id')->rows();
 	}
 }

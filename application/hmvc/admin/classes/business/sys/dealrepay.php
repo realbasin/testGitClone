@@ -85,7 +85,7 @@ class  business_sys_dealrepay extends Business {
 			//付息还本
 			if($deal['loantype'] == 1 ) {
 				//月还本息
-				$return['month_repay_money'] = number_format($this->av_it_formula($deal['borrow_amount'],$deal['rate']/12/100));
+				$return['month_repay_money'] = number_format($this->av_it_formula($deal['borrow_amount'],$deal['rate']/12/100),2);
 				//实际还多少钱
 				$return['remain_repay_money'] = round($deal['borrow_amount'] + $return['month_repay_money'] * $deal['repay_time'],2);
 			}
@@ -224,7 +224,7 @@ class  business_sys_dealrepay extends Business {
 		if ($config_common ){
 			unserialize($config_common);
 		}
-		//TODO 判断是否罚息 可将这块逻辑封装
+		//判断是否罚息
 		if($time == 0){
 			$time = time();
 		}
@@ -332,5 +332,54 @@ class  business_sys_dealrepay extends Business {
 		$repay_update_data['status'] = $status;
 		return \Core::dao('loan_dealrepay')->update($repay_update_data,array('deal_id'=>$hasRepayTotal['deal_id'],'l_key'=>$hasRepayTotal['l_key']));
 	}
-	//
+	//提前还款
+	public function inrepayRepay($deal_id,$start_lkey){
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$loanBidDao = \Core::dao('loan_loanbid');
+		$loanExtDao = \Core::dao('loan_loanext');
+		$dealRepayDao = \Core::dao('loan_dealrepay');
+		//获取借款金额、利率、还款期数、还款方式
+		$loan = $loanBaseDao->getloanbase($deal_id,'id,borrow_amount,rate,repay_time,loantype');
+		if(!$loan) {
+			return false;
+		}
+		//要还多少
+		$repay_money = $this->deal_repay_money($loan);
+		//本金
+		$benjin = $this->get_benjin($start_lkey,$loan['repay_time'],$loan['borrow_amount'],$repay_money['month_repay_money'],$loan['rate']);
+		//贷款普通配置，提前还款费率
+		$loan_config = $loanExtDao->getCommonconfig($deal_id);
+		if(!$loan_config) {
+			return false;
+		}
+		$loan_config = unserialize($loan_config);
+		$compensate_fee = \Core::arrayKeyExists('compensate_fee',$loan_config)?\Core::arrayGet($loan_config,'compensate_fee'):0;
+		$mortgage_fee = \Core::arrayKeyExists('mortgage_fee',$loan_config)?\Core::arrayGet($loan_config,'mortgage_fee'):0;
+		$manage_fee = \Core::arrayKeyExists('manage_fee',$loan_config)?\Core::arrayGet($loan_config,'manage_fee'):0;
+		$return["impose_money"] = round($benjin * floatval($compensate_fee)*0.01, 2);
+		$return["true_self_money"] = $benjin;
+
+		//$o_repay_loans = $GLOBALS['db']->getAll("SELECT id,user_id,deal_id,l_key,repay_money,self_money,interest_money FROM ".DB_PREFIX."deal_repay WHERE deal_id=".$loaninfo['deal']['id']." ORDER BY l_key ASC");
+		$o_repay_loans = $dealRepayDao->getAllNoRepayLoan($deal_id,'id,user_id,deal_id,l_key,repay_money,self_money,interest_money');
+		if(!$o_repay_loans) {
+			return false;
+		}
+		$o_total_repay = 0.00;
+		$return["true_repay_money"] = $benjin;
+		$return["true_manage_money"] = 0;
+		for($k=$start_lkey ;$k < $loan['repay_time']; $k++){//剩余利息
+			$benjin = round($this->get_benjin($k,$loan['repay_time'],$loan['borrow_amount'],$repay_money['month_repay_money'],$loan['rate']),2);
+			$return['true_repay_money'] += $benjin*$loan['rate']*0.01/12;
+			$o_total_repay += $o_repay_loans[$k]['repay_money'];
+		}
+		$return['true_repay_money'] = round($return['true_repay_money'],2);
+		$return["true_manage_money"] = round($return['true_manage_money'], 2);
+		$return["true_mortgage_fee"] = round($mortgage_fee, 2);
+		$return["true_manage_money_rebate"] = round($return["true_manage_money"] * floatval(C('INVESTORS_COMMISSION_RATIO'))/100, 2);
+		$return["true_manage_money"] = round($loan['borrow_amount']*$manage_fee/100,2);
+		//$return["true_manage_interest_money"] = round($loaninfo['deal']['manage_interest_money'], 2);
+		//$return["true_manage_interest_money_rebate"] = round($loaninfo['deal']['manage_interest_money_rebate'], 2);
+
+		return $return;
+	}
 }

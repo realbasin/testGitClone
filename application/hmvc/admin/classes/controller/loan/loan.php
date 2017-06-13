@@ -74,17 +74,72 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 		$user_total_money = \Core::dao('user_user')->getUserMoney($borrow_user_id);
 		if ($user_total_money <= 0) {
-			$result["message"] = "余额不足,请先充值";
+			$result['message'] = '余额不足,请先充值';
 			return @json_encode($result);
 		}
 		$no_repay_befor_lkey = \Core::dao('loan_dealrepay')->getCount(array('deal_id'=>$loan_id,'has_repay'=>0,'l_key < '=>$l_key));
 		if($no_repay_befor_lkey > 0){
-			$result["message"] = "请先将往期的借款还完";
-
+			$result['message'] = '请先将往期的借款还完';
 			return @json_encode($result);
 		}
 		//执行还款
-		$status = \Core::business('loan_loanenum')->repayLoanBills($loan_id,$l_key,$borrow_user_id);
+		if($l_key == -1 ) {
+			//手动提前还款
+			$dealRepayDao = \Core::dao('loan_dealrepay');
+			//是否有部分还款的
+			$repay_count_ing = $dealRepayDao->getCount(array('deal_id'=>$loan_id,'has_repay'=>2));
+			if ($repay_count_ing > 0) {
+				$result['message'] = '请将部分还款的借款还完才可以进行此操作！';
+				return @json_encode($result);
+			}
+			//防止提前还款操作未逾期且网站垫付的标
+			$has_site_repay_and_has_repay = $dealRepayDao->getCount(array('deal_id'=>$loan_id,'has_repay'=>0,'status'=>1));
+			if ($has_site_repay_and_has_repay > 0) {
+				$result['message'] = '请手动将网站垫付的借款还完才可以进行此操作！';
+				return @json_encode($result);
+			}
+			//从第几期开始还？条件：当前还款计划中该借款人id名下贷款id未还的最小l_key
+			$start_lkey = $dealRepayDao->findCol('l_key',array('deal_id'=>$loan_id,'has_repay'=>0));
+
+			$inrepay_info = \Core::business('sys_dealrepay')->inrepayRepay($loan_id, $start_lkey);
+			\Core::dump($inrepay_info);die();
+			//待还款列表
+			$wait_repay_list = $dealRepayDao->getAllNoRepayLoan($loan_id);
+			if(!$wait_repay_list){
+				$result['message'] = '数据不存在！';
+				return @json_encode($result);
+			}
+			foreach ($wait_repay_list as $k => $v) {
+				$repay_data = array();
+				$repay_data['has_repay'] = 1;
+				$repay_data['true_repay_time'] = time();
+				//$repay_data['true_repay_date'] = to_date($time);
+				$repay_data['status'] = 0;
+				if ($start_lkey == $v['l_key']) {
+					$repay_data['true_repay_money'] = round($inrepay_info['true_repay_money'],2);
+					$repay_data['impose_money'] = round($inrepay_info['impose_money'],2);
+					$repay_data['true_manage_money'] = round($inrepay_info['true_manage_money'],2);
+					$repay_data['true_mortgage_fee'] = round($inrepay_info['true_mortgage_fee'],2);
+					$repay_data['true_self_money'] = round($inrepay_info['true_self_money'],2);
+					//$repay_data['true_interest_money'] = round($inrepay_info['true_interest_money'],2);
+					//$repay_data['true_manage_money_rebate'] = $true_manage_money_rebate;
+					if($v['repay_time'] == strtotime(date('Y-m-d',time()))) {
+						$repay_data['status'] = 1;
+					}
+				}
+				//TODO 更新数据，应开启事务
+				//TODO 借款人扣款
+			}
+			//\Core::dump($has_repay_count);die();
+			//在提前还款的第一期计算收取所有费用
+			//当月当期还款状态显示为正常还款,往前的月份显示提前还款
+			$result['message'] = '后续操作！';
+			return @json_encode($result);
+
+		}else {
+			//手动单期还款
+			$status = \Core::business('loan_loanenum')->repayLoanBills($loan_id,$l_key,$borrow_user_id);
+		}
 		if($status['status'] == 1) {
 
 			$result['code'] = 200;
@@ -202,15 +257,19 @@ class  controller_loan_loan extends controller_sysBase {
 					}
 				}
 				//是否本地标，扣除本地标风险保证金
-				$result = \Core::business('sys_dealload')->dealLoadBond($deal_id,$loanBase['user_id']);
-
+				$status = \Core::business('sys_dealload')->dealLoadBond($deal_id,$loanBase['user_id']);
+				if($status['status'] == 1) {
+					$result['code'] = '000';
+					$result['message'] = $status['message'];
+				}
 				//TODO 积分变动
 				//扣除投资人金额
 				$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_rebate,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
 				if($load_list) {
-					$result = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
-					if($result['status'] == 1) {
+					$status = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
+					if($status['status'] == 1) {
 						$result['code'] = '000';
+						$result['message'] = $status['message'];
 					}else {
 						$result['code'] = 200;
 					}
@@ -234,11 +293,6 @@ class  controller_loan_loan extends controller_sysBase {
 				if($effectBidNumbers === false) {
 					$result['message'] = "放款失败1";
 				}else {
-					//TODO 是否存在优投用户，存在发送推送
-					if (isset($result['yott_users'])) {
-						$result['code'] = 200;
-						$result['message'] = "放款成功,还/回款计划已生成,发送优投推送";
-					}
 					//TODO 记录贷款状态变更日志
 					$dealStatusLogDao = \Core::dao('loan_dealstatuslog');
 					//TODO 记录贷款日志：满标放款
@@ -690,7 +744,7 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 		//TODO贷款人手机查询
 		if(\Core::get('user_name') == null && (\Core::get('user_mobile')!=null && is_numeric(\Core::get('user_mobile')))) {
-			$searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_name')."%";
+			$searchIdsWhere["AES_DECRYPT(mobile_encrypt,'__FANWEP2P__') like"] = "%".\Core::get('user_mobile')."%";
 			$searchuserIds = $userDao->getUsersIdsByMobileAndName($searchIdsWhere,'id',$pagesize);
 			$where['user_id '] = $searchuserIds;
 
@@ -860,7 +914,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$where = array();
 			$where['deal_id'] = $v['deal_id'];
 			$where['l_key'] = $v['l_key'];
-			if($loadrepayDao->getIsSiteRepay($where) == 0){
+			if($loadrepayDao->getIsSiteRepay($where) == 0 && $v['has_repay'] == 0){
 				$opration.="<li><a href='javascript:site_repay(".$v['deal_id'].")'>网站资金代还款</a></li>";
 			}
 			$opration.="<li><a href='javascript:repay_plan_export_load(".$v['deal_id'].",".$v['l_key'].")'>导出还款计划列表</a></li>";

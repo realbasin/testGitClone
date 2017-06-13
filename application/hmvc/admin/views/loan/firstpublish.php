@@ -31,7 +31,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('loan');?></span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('publish');?></span>
+    <span><?php echo \Core::L('first_publish');?></span>
 
 </div>
 <div class="line10"></div>
@@ -210,15 +210,13 @@
 <script>
     $(function(){
         $("#flexitable").flexigrid({
-            url: '<?php echo adminUrl('loan_audit','publish_json');?>',
+            url: '<?php echo adminUrl('loan_audit','first_publish_json');?>',
             colModel : [
                 {display: '<?php echo \Core::L("operate");?>', name : 'operation', width : 80, sortable : false, align: 'center', className: 'handle-m'},
                 {display: '编号', name : 'id', width : 50, sortable : true, align: 'center'},
                 {display: '贷款名称', name : 'name', width : 60, sortable : true, align : 'center'},
                 {display: '借款人', name : 'user_id', width : 100, sortable : true, align: 'left'},
                 {display: '贷款金额', name : 'borrow_amount', width : 80, sortable : true, align: 'center'},
-                {display: '贷款次数', name : 'deal_times', width : 50, sortable : true, align: 'center'},
-                {display: '逾期记录', name : 'over_repay_times', width : 50, sortable : true, align: 'center'},
                 {display: '利率(%)', name : 'rate', width : 50, sortable : true, align: 'center'},
                 {display: '期数', name : 'repay_time', width : 40, sortable : true, align: 'center'},
                 {display: '借款用途', name : 'use_type', width : 60, sortable : true, align: 'center'},
@@ -238,15 +236,15 @@
             ],
             sortname: "id",
             sortorder: "desc",
-            title: '<?php echo \Core::L('publish');?>'
+            title: '<?php echo \Core::L('first_publish');?>'
         });
 
         $('#submit').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit','publish_json');?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit','first_publish_json');?>&'+$("#formSearch").serialize(),query:'',qtype:''}).flexReload();
         });
 
         $('#reset').click(function(){
-            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit','publish_json');?>'}).flexReload();
+            $("#flexitable").flexOptions({url: '<?php echo adminUrl('loan_audit','first_publish_json');?>'}).flexReload();
             $("#formSearch")[0].reset();
         });
 

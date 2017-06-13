@@ -61,7 +61,7 @@
                 {display: '查看', name : 'buy_count', width : 40, sortable : false, align: 'center'},
             ],
             buttons : [
-                {display: '<i class="fa"></i> 手动还款', name : 'manual_repay',  title : '手动还款', bclass : 'csv',onpress : flexPress },
+                {display: '<i class="fa"></i> 手动提前还款', name : 'manual_repay',  title : '手动还款', bclass : 'csv',onpress : flexPress },
                 {display: '<i class="fa fa-file-excel-o"></i> 导出还款计划列表', name : 'cvs', bclass : 'csv', title : '导出还款计划列表', onpress : flexPress }
             ],
             sortname: "l_key",
@@ -87,7 +87,44 @@
             window.location.href = '<?php echo adminUrl('loan_loan','repayplan_export',array('deal_id'=>$loan_id));?>';
         }
         if(name=='manual_repay'){
-            manual_repay();
+            var need_repay_money = 0;
+            var is_overdue = 0;
+            var manage_money = 0;
+            $("#flexitable table").find('tr').each(function () {
+                var tdArr = $(this).children();
+                var money = tdArr.eq(7).find("div").text();
+                var repay_str= tdArr.eq(11).find("div").text();
+                if (repay_str == '逾期待还' || repay_str == '严重逾期待还' || repay_str == '严重逾期') {
+                    is_overdue = 1;
+                }
+                if(repay_str == '待还'){
+                    need_repay_money = need_repay_money + parseFloat(money.substring(1));
+                }
+                manage_money = parseFloat(tdArr.eq(8).find("div").text().substring(1));
+            });
+            if(need_repay_money != 0){
+                need_repay_money = need_repay_money + manage_money;
+            }else {
+                parent.dialog({
+                    title: '请确认还款金额',
+                    content: '本借款已还清！',
+                    width:300,
+                    cancelValue: lang['ok'],
+                    cancel: function () { }
+                }).showModal();
+                return false;
+            }
+            if(is_overdue == 1){
+                parent.dialog({
+                    title: '请确认还款金额',
+                    content: '请将逾期未还的借款还完才可以进行此操作！',
+                    width:300,
+                    cancelValue: lang['ok'],
+                    cancel: function () { }
+                }).showModal();
+                return false;
+            }
+            manual_repay(<?php echo $loan_id;?>,-1,parseFloat(need_repay_money).toFixed(2));
         }
     }
     //手动还款
@@ -96,7 +133,7 @@
             var id = new Array(id);
         };
         parent.dialog({
-            title: '确认手动还款金额',
+            title: '请确认还款金额',
             content: '账户余额为￥'+<?php echo $usermoney;?>+'元</br>本期需还款总额为￥'+all_repay_money+'元</br>是否确定进行手动还款操作？!',
             width:300,
             okValue: lang['ok'],
@@ -117,7 +154,6 @@
                 });
             },
             cancelValue: lang['cancel'],
-
             cancel: function () { }
         }).showModal();
     }
