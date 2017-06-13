@@ -50,6 +50,7 @@ return array(
 						'retry' => 100,
 						// 数据库序号，默认0, 参考 http://redis.io/commands/select
 						'db' => 0,
+                            'prefix'=>null,
 		    			),
 		    			'slaves' => array(
 //							array(
@@ -92,6 +93,7 @@ return array(
 				'timeout'=>1.5,//连接超时，单位秒
 				'read_timeout'=>1.5,//读超时，单位秒
 				'persistent'=>false,//是否持久化连接
+                'prefix'=>null,
 	    	)
 		)
 	),
