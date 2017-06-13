@@ -504,4 +504,25 @@ function addRabbitQueue($taskName,$taskArgs=array(),$hmvc=''){
 	//TODO 增加RabbitMQ队列
 
 }
+
+function strim($str)
+{
+	return quotes(htmlspecialchars(trim($str)));
+}
+
+function quotes($content)
+{
+	//if $content is an array
+	if (is_array($content)) {
+		foreach ($content as $key => $value) {
+			//$content[$key] = mysql_real_escape_string($value);
+			$content[$key] = addslashes($value);
+		}
+	} else {
+		//if $content is not an array
+		$content = addslashes($content);
+		//mysql_real_escape_string($content);
+	}
+	return $content;
+}
 ?>

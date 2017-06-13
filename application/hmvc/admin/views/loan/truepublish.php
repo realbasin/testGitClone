@@ -65,6 +65,14 @@
                     </dd>
                 </dl>
                 <dl>
+                    <dt>简短名称</dt>
+                    <dd>
+                        <label>
+                            <input type="text" value="" name="sub_name" id="sub_name" class="s-input-txt" placeholder="输入简短名称">
+                        </label>
+                    </dd>
+                </dl>
+                <dl>
                     <dt>贷款金额</dt>
                     <dd>
                         <label>
@@ -212,6 +220,8 @@
                 {display: '借款用途', name : 'use_type', width : 60, sortable : true, align: 'center'},
                 {display: '还款方式', name : 'loantype', width : 60, sortable : true, align: 'center'},
                 {display: '客户端', name : 'sor_code', width : 100, sortable : true, align: 'center'},
+                {display: '审核状态', name : 'deal_status', width : 100, sortable : true, align: 'center'},
+                {display: '初审人', name : 'first_audit_admin', width : 100, sortable : true, align: 'center'},
             ],
 
             searchitems : [
@@ -220,7 +230,7 @@
             ],
             sortname: "id",
             sortorder: "desc",
-            title: '复审核列表'
+            title: '<?php echo \Core::L('true_publish');?>'
         });
 
         $('#submit').click(function(){

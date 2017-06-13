@@ -465,7 +465,7 @@ class  controller_loan_audit extends controller_sysBase {
             $row = array();
             $row['id'] = $v['id'];
             $opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
-            $opration.="<li><a href='javascript:publish_edit(".$v['id'].")'>审核操作</a></li>";
+            $opration.="<li><a href='javascript:loan_audit(".$v['id'].")'>审核操作</a></li>";
             $opration.="<li><a href='javascript:loan_audit_log(".$v['id'].")'>审核日志</a></li>";
             $opration.="</ul></span>";
             $row['cell'][] = $opration;
@@ -523,7 +523,6 @@ class  controller_loan_audit extends controller_sysBase {
         //固定查询条件
         $where['is_delete'] = 0;
         $where['publish_wait'] = 2;
-        $where['b_status'] = 1;
 
         //简易查询条件
         if (\Core::get('query')) {
@@ -617,7 +616,6 @@ class  controller_loan_audit extends controller_sysBase {
         }
         $userDao=\Core::dao('user_user');
         $adminDao=\Core::dao('sys_admin_admin');
-        $dealRepayDao=\Core::dao('loan_dealrepay');
 
         $userNames=$userDao->getUser($userIds,'id,user_name,real_name');
         $firstAdminNames=$adminDao->getAdmin($adminFirstIds,'admin_id,admin_name,admin_real_name,admin_mobile');
@@ -637,14 +635,13 @@ class  controller_loan_audit extends controller_sysBase {
             $row['cell'][] = "￥".$v['borrow_amount'];
             $row['cell'][] = $loanBusiness->enumDealTimes($v['user_id']);
             $row['cell'][] = $loanBusiness->enumOverRepayTimes($v['user_id']);
-            $row['cell'][] = $dealRepayDao->getOverdueTimes($v['user_id']);
             $row['cell'][] = $v['rate']."%";
             $row['cell'][] = $v['repay_time'].$loanBusiness->enumRepayTimeType($v['repay_time_type']);
             $row['cell'][] = $loanBusiness->enumDealUseType($v['use_type']);
             $row['cell'][] = $loanBusiness->enumLoanType($v['loantype']);
             $row['cell'][] = $loanBusiness->enumSorCode($v['sor_code']);
             $row['cell'][] = $v['first_audit_admin_id'] == 0 ? '待认领' : '初审中';
-            $row['cell'][] = \Core::arrayKeyExists($v['first_audit_admin_id'], $firstAdminNames)?\Core::arrayGet(\Core::arrayGet($firstAdminNames, $v['first_audit_admin_id'],''),'admin_real_name'):'<a href="javascript:;" onclick="get_owners('.$v['id'].');">认领</a>';
+            $row['cell'][] = \Core::arrayGet(\Core::arrayGet($firstAdminNames, $v['first_audit_admin_id'],''),'admin_real_name');
             $row['cell'][] = '';
             $json['rows'][] = $row;
         }
@@ -800,7 +797,7 @@ class  controller_loan_audit extends controller_sysBase {
         $loanbase['rate'] = trim(\Core::post('rate'));
         $loanbase['delete_msg'] = trim(\Core::post('delete_msg'));
         $loanbase['delete_real_msg'] = trim(\Core::post('delete_real_msg'));
-        $loanbase['sort'] = trim(\Core::post('sort'));
+        //$loanbase['sort'] = trim(\Core::post('sort'));
         $loanbase['type_id'] = intval(\Core::post('type_id'));
 
         $loanext['contract_id'] = intval(\Core::post('contract_id'));
@@ -828,13 +825,13 @@ class  controller_loan_audit extends controller_sysBase {
         }
 
         $userDao = \Core::dao('user_user');
-        $userInfo = $userDao->getUser($user_id,'idno_encrypt,\''.AES_DECRYPT_KEY.'\' as idno');
-        if ($userInfo[0]['idno'] != '') {
+        $idno = $userDao->findCol('AES_DECRYPT(idno_encrypt,\'__FANWEP2P__\')',$user_id);
+        if (!empty($idno)) {
             $user = array();
-            $user['byear'] = substr($userInfo[0]['idno'], 6, 4);
-            $user['bmonth'] = substr($userInfo[0]['idno'], 10, 2);
-            $user['bday'] = substr($userInfo[0]['idno'], 12, 2);
-            $user['sex'] = (intval(substr($userInfo[0]['idno'], 16, 1)) % 2) > 0 ? 1 : 0;
+            $user['byear'] = substr($idno, 6, 4);
+            $user['bmonth'] = substr($idno, 10, 2);
+            $user['bday'] = substr($idno, 12, 2);
+            $user['sex'] = (intval(substr($idno, 16, 1)) % 2) > 0 ? 1 : 0;
             $userDao->update($user,$user_id);
         }
         if(!$loanbase['type_id']) {
@@ -858,7 +855,7 @@ class  controller_loan_audit extends controller_sysBase {
         }
         $loanext['mortgage_infos'] = $this->mortgage_info();
         $loanext['mortgage_contract'] = $this->mortgage_info("contract");
-        $loanext['view_info'] = $this->mortgage_info("view_info");//认证资料修改
+        //$loanext['view_info'] = $this->mortgage_info("view_info");//认证资料修改
         $loan_type_list = \Core::dao('loan_dealloantype')->getDealLoanTypeList($loanbase['type_id']);
         $loan_type = $loan_type_list[$loanbase['type_id']];
 
@@ -868,6 +865,7 @@ class  controller_loan_audit extends controller_sysBase {
         //记录更改相关数据
 
         $data = $loanbase;
+        $data['id'] = $loan_id;
         $data['user_id'] = $user_id;
         $data['admin_id'] = $this->admininfo['id'];
         $log_id = \Core::business('loan_publish')->updateDealOpLog($data,1);
@@ -932,7 +930,7 @@ class  controller_loan_audit extends controller_sysBase {
             $usercreditBusiness = \Core::business('user_usercredit');
 
             //根据借款id，获取贷款基本信息
-            $basefields = 'id,deal_sn,name,cate_id,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,risk_rank,risk_security';
+            $basefields = 'id,deal_sn,name,sub_name,cate_id,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,risk_rank,risk_security,update_time';
             $loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
             //获取会员名称
             $user_id = Core::arrayGet($loanbase,'user_id');
@@ -985,9 +983,9 @@ class  controller_loan_audit extends controller_sysBase {
         $mortgage_infos = array();
         $cdn_img_host = get_image_cdn_host();
         for ($i = 1; $i <= 20; $i++) {
-            if (strim($_REQUEST['mortgage_' . $type . '_img_' . $i]) != "") {
-                $vv['name'] = strim($_REQUEST['mortgage_' . $type . '_name_' . $i]);
-                $img = strim($_REQUEST['mortgage_' . $type . '_img_' . $i]);
+            if (strim(\Core::post('mortgage_' . $type . '_img_' . $i)) != "") {
+                $vv['name'] = strim(\Core::psot('mortgage_' . $type . '_name_' . $i));
+                $img = strim(\Core::arrayGet('mortgage_' . $type . '_img_' . $i));
                 $vv['img'] = str_replace("http://" . $cdn_img_host, "", $img);
                 $mortgage_infos[] = $vv;
             }

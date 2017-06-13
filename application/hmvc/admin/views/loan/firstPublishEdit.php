@@ -47,10 +47,10 @@
             </div>
         </div>
     </div>
-    <form method="post" id="form1" name="form1" enctype="multipart/form-data">
+    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update') ?>" enctype="multipart/form-data">
         <input type="hidden" name="form_submit" value="ok" />
         <input type="hidden" name="loan_id" value="<?php echo $loanbase['id'];?>" />
-        <input type="hidden" name="update_time" value="<?php echo time();?>" />
+        <input type="hidden" name="update_time" value="<?php echo $loanbase['update_time'];?>" />
         <!--基本信息-->
         <div class="tab-content">
             <dl class="row">
@@ -69,6 +69,15 @@
                 <dd class="opt">
                     <input type="text" name="name" id="name" class="input-txt" readonly="readonly" value="<?php echo $loanbase['name'];?>">
                     <p class="notic">借款名称</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label><em>*</em>简短名称</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="sub_name" id="sub_name" class="input-txt" readonly="readonly" value="<?php echo $loanbase['sub_name'];?>">
+                    <p class="notic">简短名称</p>
                 </dd>
             </dl>
             <dl class="row">
@@ -318,14 +327,14 @@
                     <?php echo (\Core::arrayGet($loanbase,'publish_wait') == 3)?'复审':'初审';?>
                 </dd>
             </dl>
-            <dl class="row">
+            <!--<dl class="row">
                 <dt class="tit">
                     <label>排序</label>
                 </dt>
                 <dd class="opt">
                     <input type="text" name="sort" id="sort" style="width: 80px;"  value="0">
                 </dd>
-            </dl>
+            </dl>-->
             <dl class="row">
                 <dt class="tit">
                     <label>审核状态</label>
@@ -617,6 +626,7 @@
         }
         return true;
     });
+    //todo checkform
 
 </script>
 </body>
