@@ -78,7 +78,7 @@ class FileStore extends GranuleStore implements LockInterface {
 			try {
 				$current_value = $this -> get($name);
 				if (!is_null($current_value) && $this -> hasLockValueExpired($current_value)) {
-					$this -> delete($key);
+					$this -> delete($name);
 				}
 			} catch (Exception $e) {
 			}
