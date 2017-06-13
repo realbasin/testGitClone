@@ -81,9 +81,9 @@
                     </select>
                     规则启用
                     <select name="rule_effect">
-                        <option value="2">全部</option>
+                        <option value="0">全部</option>
                         <option value="1">启用</option>
-                        <option value="0">禁用</option>
+                        <option value="2">禁用</option>
                     </select>
                     规则删除
                     <select name="rule_delete">
@@ -110,18 +110,18 @@
         $("#flexitable").flexigrid({
             url: '<?php echo adminUrl('user_bonus','use_log_json');?>'+'&type_id=<?php echo $type_id;?>&use_type=<?php echo $use_type;?>',
             colModel : [
-                {display: '编号', name : 'id', width : 24, sortable : true, align: 'center'},
-                {display: '优惠券号', name : 'value', width : 80, sortable : false, align : 'left'},
-                {display: '优惠券类型名称', name : 'info', width : 150, sortable : false, align: 'left'},
-                {display: '资产类别', name : 'info', width : 50, sortable : false, align: 'left'},
-                {display: '用户名', name : 'info', width : 100, sortable : false, align: 'left'},
-                {display: '手机号码', name : 'info', width : 80, sortable : false, align: 'left'},
-                {display: '面额', name : 'info', width : 40, sortable : false, align: 'left'},
-                {display: '使用最少金额', name : 'info', width : 80, sortable : false, align: 'left'},
-                {display: '领取时间', name : 'info', width : 80, sortable : false, align: 'left'},
-                {display: '领取方式', name : 'info', width : 80, sortable : false, align: 'left'},
-                {display: '使用时间', name : 'info', width : 80, sortable : false, align: 'left'},
-                {display: '使用情况', name : 'info', width : 80, sortable : false, align: 'left'}
+                {display: '编号', name : 'id', width : 70, sortable : true, align: 'left'},
+                {display: '优惠券号', name : 'bonus_sn', width : 80, sortable : false, align : 'left'},
+                {display: '优惠券类型名称', name : 'bonus_type_name', width : 150, sortable : false, align: 'left'},
+                {display: '资产类别', name : 'use_type_name', width : 50, sortable : false, align: 'left'},
+                {display: '用户名', name : 'user_name', width : 80, sortable : false, align: 'left'},
+                {display: '手机号码', name : 'mobile', width : 80, sortable : false, align: 'left'},
+                {display: '面额', name : 'money', width : 40, sortable : false, align: 'center'},
+                {display: '使用最少金额', name : 'limit_amount', width : 80, sortable : false, align: 'center'},
+                {display: '领取时间', name : 'drawed_time', width : 120, sortable : false, align: 'left'},
+                {display: '领取方式', name : 'issue_type', width : 50, sortable : false, align: 'left'},
+                {display: '使用时间', name : 'used_time', width : 120, sortable : false, align: 'left'},
+                {display: '使用情况', name : 'used_status', width : 80, sortable : false, align: 'left'}
             ],
             title: '优惠券使用情况'
         });

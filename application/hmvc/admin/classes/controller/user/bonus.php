@@ -286,58 +286,74 @@ class  controller_user_bonus extends controller_sysBase {
         if (!$pagesize || !is_numeric($pagesize))
             $pagesize = 15;
 
-        $bonusTypeWhere = array();
-        $use_type = \Core::postGet('use_type', 1);
-        $bonusTypeWhere['use_type'] = $use_type;
-
-        $bonus_type_name = \Core::postGet('bonus_type_name', '');
-        if (!empty($bonus_type_name)) {
-            $bonusTypeWhere['bonus_type_name like'] = '%'.$bonus_type_name.'%';
-        }
-
-        $type_id = \Core::postGet('type_id', 0);
-        if ($type_id > 0) {
-            $bonusTypeWhere['id'] = $type_id;
-        }
-
-        $bonusTypeIds = \Core::dao('user_bonustype')->findCol('id', $bonusTypeWhere, true);
-
-        //查询不到对应的优惠券类型
-        if (empty($bonusTypeIds)) {
-            echo @json_encode(array());
-            exit;
-        }
-
         $where = array();
-        $where['bonus_type_id'] = $bonusTypeIds;
+        $where['use_type'] = \Core::postGet('use_type', 1);
+        $where['bonus_type_id'] = \Core::postGet('type_id', 0);
+        $where['bonus_type_name'] = \Core::postGet('bonus_type_name', '');
+        $where['start_time'] = \Core::postGet('drawed_time_start', ''); //领取时间（开始）
+        $where['end_time'] = \Core::postGet('drawed_time_end', '');    //领取时间（结束）
+        $where['bonus_sn'] = \Core::postGet('bonus_sn', '');    //优惠券号
+        $where['user_id'] = \Core::postGet('user_id', '');
+        $where['user_name'] = \Core::postGet('user_name', '');
+        $where['mobile'] = \Core::postGet('mobile', '');
+        $where['used_time_start'] = \Core::postGet('used_time_start', ''); //使用时间（开始）
+        $where['used_time_end'] = \Core::postGet('used_time_end', '');    //使用时间（结束）
+        $where['use_status'] = \Core::postGet('use_status', 0);    //使用情况：0-全部；1-未使用；2-已使用；3-已过期
+        $where['rule_effect'] = \Core::postGet('rule_effect', 0);    //规则启用：0-全部；1-启用；2-禁用
+        $where['rule_delete'] = \Core::postGet('rule_delete', 0);    //规则删除：0-全部；1-未删除；2-已删除
+        $where['issue_type'] = \Core::postGet('issue_type', 0);    //领取方式：-1-全部；0-系统派发；1-手动发放
 
-        $drawed_time_start = \Core::postGet('drawed_time_start', '');
-        if (!empty($drawed_time_start)) {
-            $where['start_time'] = strtotime($drawed_time_start);
+        $responseData = \Core::business('user_bonususer')->getBonusUserLogListByCondition($where, $page, $pagesize);
+
+        if (!empty($responseData)) {
+            $outputJson = array(
+                'page' => $page,
+                'total' => $responseData['total'],
+            );
+
+            foreach ($responseData['rows'] as $v) {
+                $row = array();
+                $row['cell'][] = $v['id'];
+                $row['cell'][] = $v['bonus_sn'];
+                $row['cell'][] = $v['bonus_type_name'];
+                $row['cell'][] = $v['use_type'] == 1 ? "理财端" : "借款端";
+                $user_info = \Core::dao('user_user')->getUser($v['user_id'], 'user_name,AES_DECRYPT(mobile_encrypt,"'.AES_DECRYPT_KEY.'") mobile');
+                $row['cell'][] = !empty($user_info) ? $user_info['user_name'] : '';
+                $row['cell'][] = !empty($user_info) ? $user_info['mobile'] : '';
+                $row['cell'][] = $v['money'];
+                $row['cell'][] = $v['limit_amount'];
+                $row['cell'][] = date('Y-m-d H:i:s', $v['drawed_time']);
+                $row['cell'][] = $v['issue_type'] ? '手动发放' : '系统派发';
+                $row['cell'][] = !empty($v['used_time']) ? date('Y-m-d H:i:s', $v['used_time']) : '';
+                //使用情况
+                switch ($v['module']) {
+                    case 'deal':
+                        $row['cell'][] = '<a href="#'.$v['module_pk_Id'].'" target="_blank">查看申请</a>';
+                        break;
+                    case 'deal_load':
+                        $row['cell'][] = '<a href="#'.$v['module_pk_Id'].'" target="_blank">查看投资标</a>';
+                        break;
+                    case 'deal_load_transfer':
+                        $row['cell'][] = '<a href="#'.$v['module_pk_Id'].'" target="_blank">查看债权标</a>';
+                        break;
+                    default:
+                        if (empty($v['used_time'])) {
+                            if ($v['used_end_time'] > time()) {
+                                $row['cell'][] = '未使用';
+                            } else {
+                                $row['cell'][] = '已过期';
+                            }
+                        } else {
+                            $row['cell'][] = '数据异常';
+                        }
+                }
+                $row['cell'][] = '';
+
+                $outputJson['rows'][] = $row;
+            }
+        } else {
+            $outputJson = array('page'=>$page,'total'=>0,'rows'=>array());
         }
-
-        $drawed_time_start = \Core::postGet('drawed_time_start', '');
-        if (!empty($drawed_time_start)) {
-            $where['start_time'] = strtotime($drawed_time_start);
-        }
-
-        echo @json_encode($where);exit;
-        /*$data = \Core::dao('user_bonususer') -> getFlexPage($page, $pagesize, '*', $where, array('id'=>'desc'));
-
-        $outputJson = array(
-            'page' => $page,
-            'total' => $data['total'],
-        );
-        foreach ($data['rows'] as $v) {
-            $row = array();
-            $row['cell'][] = $v['id'];
-            $row['cell'][] = $v['bonus_sn'];
-//            $row['cell'][] = $v['use_type']==1 ? "理财端" : "借款端";
-
-            $row['cell'][] = '';
-
-            $outputJson['rows'][] = $row;
-        }*/
-        echo @json_encode(array());
+        echo @json_encode($outputJson);
     }
 }
