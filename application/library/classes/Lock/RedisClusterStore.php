@@ -38,7 +38,7 @@ class RedisClusterStore extends GranuleStore implements LockInterface
 	 * @param  string  $prefix
 	 * @return void
 	 */
-	public function __construct(I_Cache_Redis_Cluster $redis, $prefix = 'lock', $timeout = 30, $max_timeout = 300, $retry_wait_usec = 100000)
+	public function __construct(\I_Cache_Redis_Cluster $redis, $prefix = 'lock', $timeout = 30, $max_timeout = 300, $retry_wait_usec = 100000)
 	{
 		$this->redis = $redis;
 		$this->setPrefix($prefix);
