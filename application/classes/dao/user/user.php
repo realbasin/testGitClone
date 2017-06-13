@@ -261,19 +261,7 @@ class dao_user_user extends Dao {
             AES_DECRYPT(email_encrypt,'" . AES_DECRYPT_KEY . "') as email,
             AES_DECRYPT(money_encrypt,'" . AES_DECRYPT_KEY . "') as money";
         }
-        $builder = $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute();
-        switch (strtoupper($type)) {
-            case 'ALL':
-                $result = $builder->rows();
-                break;
-            case 'ONE':
-                $result = $builder->value($fields);
-                break;
-            case 'ROW':
-            default:
-                $result = $builder->row();
-        }
-        return $result;
+        return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute();
     }
 
 	//获取用户列表
