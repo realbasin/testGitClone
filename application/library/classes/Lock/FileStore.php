@@ -1,4 +1,5 @@
 <?php
+defined("IN_XIAOSHU") or exit("Access Invalid!");
 namespace Lock;
 /**
  * 文件锁实例
@@ -74,12 +75,11 @@ class FileStore extends GranuleStore implements LockInterface {
 
 		$time = time();
 		while ((time() - $time) < $this -> max_timeout) {
-
 			// 删除超时的锁文件。
 			try {
-				$current_value = $this -> get($key);
+				$current_value = $this -> get($name);
 				if (!is_null($current_value) && $this -> hasLockValueExpired($current_value)) {
-					$this -> delete($key);
+					$this -> delete($name);
 				}
 			} catch (Exception $e) {
 			}
@@ -117,17 +117,15 @@ class FileStore extends GranuleStore implements LockInterface {
 	 * @param unknown $key
 	 */
 	public function release($name) {
-		$key = $this -> getKey($name);
-
 		if (!$this -> isLocked($name)) {
 			throw new \Xs_Exception_500("Attempting to release a lock that is not held");
 		}
 		try {
-			$value = $this -> get($key);
+			$value = $this -> get($name);
 			unset($this -> expires_at[$name]);
 			// 释放内存占用。
 			if (!$this -> hasLockValueExpired($value)) {
-				$this -> delete($key);
+				$this -> delete($name);
 				// 释放锁。
 			} else {
 				trigger_error(sprintf('A FileLock was not released before the timeout. Class: %s Lock Name: %s', get_class($this), $name), E_USER_WARNING);
@@ -165,11 +163,11 @@ class FileStore extends GranuleStore implements LockInterface {
 	 * 获得文件锁文件路径
 	 * @param string $key
 	 */
-	private function get($key) {
-		if (empty($key)) {
+	private function get($name) {
+		if (empty($name)) {
 			return null;
 		}
-		$key = $this -> _hashKey($key);
+		$key = $this -> getKey($name);
 		$filePath = $this -> _hashKeyPath($key) . $key;
 		if (file_exists($filePath)) {
 			return file_get_contents($filePath);
@@ -181,11 +179,11 @@ class FileStore extends GranuleStore implements LockInterface {
 	 * 删除文件锁
 	 * @param string $key
 	 */
-	private function delete($key) {
-		if (empty($key)) {
+	private function delete($name) {
+		if (empty($name)) {
 			return false;
 		}
-		$key = $this -> _hashKey($key);
+		$key = $this -> getKey($name);
 		$filePath = $this -> _hashKeyPath($key) . $key;
 		if (file_exists($filePath)) {
 			return unlink($filePath);

@@ -1,4 +1,5 @@
 <?php
+defined("IN_XIAOSHU") or exit("Access Invalid!");
 namespace Lock;
 /**
  * Memcached锁实例
@@ -47,7 +48,7 @@ class MemcachedStore extends GranuleStore implements LockInterface
 	 * @param  string      $prefix
 	 * @return void
 	 */
-	public function __construct(I_Cache_Memcached $memcached, $prefix = '', $timeout = 30, $max_timeout = 300, $retry_wait_usec = 100000)
+	public function __construct(\I_Cache_Memcached $memcached, $prefix = '', $timeout = 30, $max_timeout = 300, $retry_wait_usec = 100000)
 	{
 		$this->setPrefix($prefix);
 		$this->memcached = $memcached;

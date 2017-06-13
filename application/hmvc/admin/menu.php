@@ -8,6 +8,7 @@ $menu = array(
 				'img'=>'home',
 				'list' => array(
 					array('link'=>'dashboard,index','text'=>$lang['dashboard']),
+					array('link'=>'dashboard,locktest','text'=>'锁测试'),
 				)
 			),
 			1 => array(
