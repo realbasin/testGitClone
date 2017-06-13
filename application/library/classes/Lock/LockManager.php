@@ -56,7 +56,7 @@ class LockManager
 		$classType=$config['type'];
 		$classTypeName="\\Lock\\{$classType}";
 		$filename = dirname(__FILE__) . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $classType) . '.php';
-        if(!class_exists($classType)){
+        if(!class_exists($classTypeName)){
         	require($filename);
         }
 		switch($classType){
