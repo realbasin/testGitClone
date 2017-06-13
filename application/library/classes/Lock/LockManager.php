@@ -1,6 +1,6 @@
 <?php
-defined("IN_XIAOSHU") or exit("Access Invalid!");
 namespace Lock;
+defined("IN_XIAOSHU") or exit("Access Invalid!");
 
 use Closure;
 
