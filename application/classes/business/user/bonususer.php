@@ -66,7 +66,7 @@ class  business_user_bonususer extends Business {
             $condition .= " AND bu.used_time <= ".$param['used_time_end'];
         }
         //使用情况：0-全部；1-未使用；2-已使用；3-已过期
-        if (isset($param['use_status']) && !empty(intval($param['use_status']))) {
+        if (isset($param['use_status']) && !empty($param['use_status'])) {
             switch (intval($param['use_status'])) {
                 case 1:
                     $condition .= " AND bu.used_time=0 AND bt.use_start_time<=" . time();
