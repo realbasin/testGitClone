@@ -20,7 +20,7 @@ return
 		'tablePrefix' => 'xssd_',
 		'tablePrefixSqlIdentifier' => '_tablePrefix_',
 		//是否开启慢查询记录
-		'slowQueryDebug' => false,
+		'slowQueryDebug' => true,
 		'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
 		'slowQueryHandle' => new \I_Database_SlowQuery_Handle_Default(),
 		/**
@@ -68,7 +68,7 @@ return
 		'tablePrefix' => 'xssd_',
 		'tablePrefixSqlIdentifier' => '_tablePrefix_',
 		//是否开启慢查询记录
-		'slowQueryDebug' => false,
+		'slowQueryDebug' => true,
 		'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
 		'slowQueryHandle' => new \I_Database_SlowQuery_Handle_Default(),
 		/**
