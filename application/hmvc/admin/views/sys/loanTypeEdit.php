@@ -11,7 +11,7 @@
     <link href="<?php echo RS_PATH?>admin/css/style.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>switchery/switchery.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.css" rel="stylesheet" type="text/css" />
-    <link href="<?php echo RS_PATH?>jquery/jquery.daterangepicker.css" rel="stylesheet" type="text/css" />
+    <link href="<?php echo RS_PATH?>jquery/jquery.datetimepicker.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>admin/css/flexigrid.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>css/font-awesome.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.css" rel="stylesheet" type="text/css" />
@@ -25,7 +25,7 @@
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>moment.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/Validform_v5.3.2_min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.daterangepicker.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.datetimepicker.full.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/flexigrid.js"></script>
     <script charset="utf-8" src="<?php echo RS_PATH?>kindeditor-4.1.7/kindeditor.js"></script>
     <!--[if lt IE 9]>
@@ -128,11 +128,8 @@
                 <dd class="opt">
                     <?php $selectedUserTypeList = explode(',',$dealLoanType['usetypes']); ?>
                     <?php foreach($dealUserTypeList as $dealUserType){?>
-                        <?php if(in_array($dealUserType['id'],$selectedUserTypeList)){ ?>
-                            <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' datatype=\"*\" nullmsg=\"请选择借款用途\" checked />".$dealUserType['name'];?>
-                        <?php }else{ ?>
-                            <?php echo "<input type=\"checkbox\" name=\"usetypes[]\" value='".$dealUserType['id']."' datatype=\"*\" nullmsg=\"请选择借款用途\" />".$dealUserType['name'];?>
-                        <?php } ?>
+                        <input type="checkbox" id="usetypes_<?php echo $dealUserType['id']; ?>" name="usetypes[]" value="<?php echo $dealUserType['id']; ?>" datatype="*" nullmsg="请选择借款用途" <?php if(in_array($dealUserType['id'],$selectedUserTypeList)) echo 'checked'; ?> />
+                        <label for="usetypes_<?php echo $dealUserType['id']; ?>"><?php echo $dealUserType['name'];?></label>&nbsp;&nbsp;
                     <?php }?>
                 </dd>
             </dl>
@@ -144,11 +141,8 @@
                 <dd class="opt">
                     <?php $selectedCollateralList = explode(',',$dealLoanType['collaterals']); ?>
                     <?php foreach($collateralList as $collateral){?>
-                        <?php if(in_array($collateral['id'],$selectedCollateralList)){ ?>
-                            <?php echo "<input type=\"checkbox\" name=\"collaterals[]\" value='".$collateral['id']."' checked />".$collateral['name'];?>
-                        <?php }else{ ?>
-                            <?php echo "<input type=\"checkbox\" name=\"collaterals[]\" value='".$collateral['id']."' />".$collateral['name'];?>
-                        <?php } ?>
+                        <input type="checkbox" id="collaterals_<?php echo $collateral['id']; ?>" name="collaterals[]" value="<?php echo $collateral['id']; ?>" <?php if(in_array($collateral['id'],$selectedCollateralList)) echo 'checked'; ?> />
+                        <label for="collaterals_<?php echo $collateral['id']; ?>"><?php echo $collateral['name'];?></label>&nbsp;&nbsp;
                     <?php }?>
                     <p class="notic">（借款端借款申请页面的借款金额最大最小额度根据此项来获取：空-信用贷；不空-抵押贷）</p>
                 </dd>
@@ -161,11 +155,8 @@
                 <dd class="opt">
                     <?php $selectedLoanTypeList = explode(',',$dealLoanType['types']); ?>
                     <?php foreach($loanTypeList as $loanType){?>
-                        <?php if(in_array($loanType['id'],$selectedLoanTypeList)){ ?>
-                            <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' checked datatype=\"n\" nullmsg=\"请选择类别\" />".$loanType['name'];?>
-                        <?php }else{ ?>
-                            <?php echo "<input type=\"radio\" name=\"types\" value='".$loanType['id']."' datatype=\"n\" nullmsg=\"请选择类别\" />".$loanType['name'];?>
-                        <?php } ?>
+                        <input type="radio" id="types_<?php echo $loanType['id']; ?>" name="types" value="<?php echo $loanType['id']; ?>" checked datatype="n" nullmsg="请选择类别" <?php if(in_array($loanType['id'],$selectedLoanTypeList)) echo 'checked'; ?> />
+                        <label for="types_<?php echo $loanType['id']; ?>"><?php echo $loanType['name'];?></label>&nbsp;&nbsp;
                     <?php }?>
                     <p class="notic">（理财端信用标、抵押标的区分，根据此处的选择来确定；学生贷+信用贷=信用贷）</p>
                 </dd>
@@ -271,11 +262,18 @@
                 <dd class="opt">
                     <?php $identityAuth = json_decode($dealLoanType['identity_auth'],true); ?>
                     <input type="checkbox" class="js-switch blue" name="id_is_effect" value="1" <?php echo $identityAuth['id_is_effect']?'checked':''; ?>><br/>
-                    <input type="checkbox" name="idcard_name" value="1" <?php echo $identityAuth['idcard_name']?'checked':''; ?>>姓名<input type="checkbox" name="idcard_name_norequired" value="1" <?php echo $identityAuth['idcard_name_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="idcard_number" value="1" <?php echo $identityAuth['idcard_number']?'checked':''; ?>>身份证号码<input type="checkbox" name="idcard_number_norequired" value="1" <?php echo $identityAuth['idcard_number_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="idcard_front" value="1" <?php echo $identityAuth['idcard_front']?'checked':''; ?>>身份证正面照<input type="checkbox" name="idcard_front_norequired" value="1" <?php echo $identityAuth['idcard_front_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="home_addr" value="1" <?php echo $identityAuth['home_addr']?'checked':''; ?>>家庭住址<input type="checkbox" name="home_addr_norequired" value="1" <?php echo $identityAuth['home_addr_norequired']?'checked':''; ?>>选填
-                    <p class="notic"></p>
+
+                    <input type="checkbox" id="idcard_name" name="idcard_name" value="1" <?php echo $identityAuth['idcard_name']?'checked':''; ?>><label for="idcard_name">姓名</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="idcard_name_norequired" name="idcard_name_norequired" value="1" <?php echo $identityAuth['idcard_name_norequired']?'checked':''; ?>><label for="idcard_name_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="idcard_number" name="idcard_number" value="1" <?php echo $identityAuth['idcard_number']?'checked':''; ?>><label for="idcard_number">身份证号码</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="idcard_number_norequired" name="idcard_number_norequired" value="1" <?php echo $identityAuth['idcard_number_norequired']?'checked':''; ?>><label for="idcard_number_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="idcard_front" name="idcard_front" value="1" <?php echo $identityAuth['idcard_front']?'checked':''; ?>><label for="idcard_front">身份证正面照</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="idcard_front_norequired" name="idcard_front_norequired" value="1" <?php echo $identityAuth['idcard_front_norequired']?'checked':''; ?>><label for="idcard_front_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="home_addr" name="home_addr" value="1" <?php echo $identityAuth['home_addr']?'checked':''; ?>><label for="home_addr">家庭住址</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="home_addr_norequired" name="home_addr_norequired" value="1" <?php echo $identityAuth['home_addr_norequired']?'checked':''; ?>><label for="home_addr_norequired">选填</label>&nbsp;&nbsp;
                 </dd>
             </dl>
 
@@ -286,15 +284,30 @@
                 <dd class="opt">
                     <?php $educationAuth = json_decode($dealLoanType['education_auth'],true); ?>
                     <input type="checkbox" class="js-switch blue" name="edu_is_effect" value="1" <?php echo $educationAuth['edu_is_effect']?'checked':''; ?>><br/>
-                    <input type="checkbox" name="hs_info" value="1" <?php echo $educationAuth['hs_info']?'checked':''; ?>>高中学校<input type="checkbox" name="hs_info_norequired" value="1" <?php echo $educationAuth['hs_info_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="college_info" value="1" <?php echo $educationAuth['college_info']?'checked':''; ?>>大学学校<input type="checkbox" name="college_info_norequired" value="1" <?php echo $educationAuth['college_info_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="xx_info" value="1" <?php echo $educationAuth['xx_info']?'checked':''; ?>>学信网信息<input type="checkbox" name="xx_info_norequired" value="1" <?php echo $educationAuth['xx_info_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="jw_info" value="1" <?php echo $educationAuth['jw_info']?'checked':''; ?>>教务管理系统信息<input type="checkbox" name="jw_info_norequired" value="1" <?php echo $educationAuth['jw_info_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="tb_info" value="1" <?php echo $educationAuth['tb_info']?'checked':''; ?>>学费缴费单<input type="checkbox" name="tb_info_norequired" value="1" <?php echo $educationAuth['tb_info_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="notice_info" value="1" <?php echo $educationAuth['notice_info']?'checked':''; ?>>录取通知书<input type="checkbox" name="notice_info_norequired" value="1" <?php echo $educationAuth['notice_info_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="studentIdCard_info" value="1" <?php echo $educationAuth['studentIdCard_info']?'checked':''; ?>>学生证<input type="checkbox" name="studentIdCard_info_norequired" value="1" <?php echo $educationAuth['studentIdCard_info_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="campus_card_info" value="1" <?php echo $educationAuth['campus_card_info']?'checked':''; ?>>一卡通<input type="checkbox" name="campus_card_info_norequired" value="1" <?php echo $educationAuth['campus_card_info_norequired']?'checked':''; ?>>选填
-                    <p class="notic"></p>
+
+                    <input type="checkbox" id="hs_info" name="hs_info" value="1" <?php echo $educationAuth['hs_info']?'checked':''; ?>><label for="hs_info">高中学校</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="hs_info_norequired" name="hs_info_norequired" value="1" <?php echo $educationAuth['hs_info_norequired']?'checked':''; ?>><label for="hs_info_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="college_info" name="college_info" value="1" <?php echo $educationAuth['college_info']?'checked':''; ?>><label for="college_info">大学学校</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="college_info_norequired" name="college_info_norequired" value="1" <?php echo $educationAuth['college_info_norequired']?'checked':''; ?>><label for="college_info_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="xx_info" name="xx_info" value="1" <?php echo $educationAuth['xx_info']?'checked':''; ?>><label for="xx_info">学信网信息</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="xx_info_norequired" name="xx_info_norequired" value="1" <?php echo $educationAuth['xx_info_norequired']?'checked':''; ?>><label for="xx_info_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="jw_info" name="jw_info" value="1" <?php echo $educationAuth['jw_info']?'checked':''; ?>><label for="jw_info">教务管理系统信息</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="jw_info_norequired" name="jw_info_norequired" value="1" <?php echo $educationAuth['jw_info_norequired']?'checked':''; ?>><label for="jw_info_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="tb_info" name="tb_info" value="1" <?php echo $educationAuth['tb_info']?'checked':''; ?>><label for="tb_info">学费缴费单</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="tb_info_norequired" name="tb_info_norequired" value="1" <?php echo $educationAuth['tb_info_norequired']?'checked':''; ?>><label for="tb_info_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="notice_info" name="notice_info" value="1" <?php echo $educationAuth['notice_info']?'checked':''; ?>><label for="notice_info">录取通知书</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="notice_info_norequired" name="notice_info_norequired" value="1" <?php echo $educationAuth['notice_info_norequired']?'checked':''; ?>><label for="notice_info_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="studentIdCard_info" name="studentIdCard_info" value="1" <?php echo $educationAuth['studentIdCard_info']?'checked':''; ?>><label for="studentIdCard_info">学生证</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="studentIdCard_info_norequired" name="studentIdCard_info_norequired" value="1" <?php echo $educationAuth['studentIdCard_info_norequired']?'checked':''; ?>><label for="studentIdCard_info_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="campus_card_info" name="campus_card_info" value="1" <?php echo $educationAuth['campus_card_info']?'checked':''; ?>><label for="campus_card_info">一卡通</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="campus_card_info_norequired" name="campus_card_info_norequired" value="1" <?php echo $educationAuth['campus_card_info_norequired']?'checked':''; ?>><label for="campus_card_info_norequired">选填</label>
                 </dd>
             </dl>
 
@@ -305,24 +318,28 @@
                 <dd class="opt">
                     <?php $relationInfo = json_decode($dealLoanType['relation_info'],true); ?>
                     <input type="checkbox" class="js-switch blue" name="contact_is_effect" value="1" <?php echo $relationInfo['contact_is_effect']?'checked':''; ?>><br/>
-                    <input type="checkbox" name="contact_qq" value="1" <?php echo $relationInfo['contact_qq']?'checked':''; ?>>QQ号码<input type="checkbox" name="contact_qq_norequired" value="1" <?php echo $relationInfo['contact_qq_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="contact_wx" value="1" <?php echo $relationInfo['contact_wx']?'checked':''; ?>>微信号码<input type="checkbox" name="contact_wx_norequired" value="1" <?php echo $relationInfo['contact_wx_norequired']?'checked':''; ?>>选填<br/>
-                    <input type="checkbox" name="emergency_contact" value="1" <?php echo $relationInfo['emergency_contact']?'checked':''; ?>>紧急联系人<br/>
+
+                    <input type="checkbox" id="contact_qq" name="contact_qq" value="1" <?php echo $relationInfo['contact_qq']?'checked':''; ?>><label for="contact_qq">QQ号码</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="contact_qq_norequired" name="contact_qq_norequired" value="1" <?php echo $relationInfo['contact_qq_norequired']?'checked':''; ?>><label for="contact_qq_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="contact_wx" name="contact_wx" value="1" <?php echo $relationInfo['contact_wx']?'checked':''; ?>><label for="contact_wx">微信号码</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="contact_wx_norequired" name="contact_wx_norequired" value="1" <?php echo $relationInfo['contact_wx_norequired']?'checked':''; ?>><label for="contact_wx_norequired">选填</label>&nbsp;&nbsp;<br/>
+
+                    <input type="checkbox" id="emergency_contact" name="emergency_contact" value="1" <?php echo $relationInfo['emergency_contact']?'checked':''; ?>><label for="emergency_contact">紧急联系人</label>&nbsp;&nbsp;<br/>
 
                     <div id="contact_div">
                         <?php $contactInfoList = $relationInfo['contact_info']; ?>
                         <?php foreach($contactInfoList as $key => $value){ ?>
                             <div class="contact_wrap" data-index="<?php echo $key + 1; ?>">
-                                第<?php echo $key + 1; ?>联系人&nbsp;
-                                <input type="text" name="contact_arr[<?php echo $key; ?>]" value="<?php echo $value['contact']; ?>">&nbsp;&nbsp;&nbsp;&nbsp;
-                                <input type="checkbox" name="company_arr[<?php echo $key; ?>]" value="1" <?php echo $value['company'] ? 'checked':''; ?>>工作单位&nbsp;&nbsp;&nbsp;&nbsp;
-                                <input type="checkbox" name="contact_norequired_arr[<?php echo $key; ?>]" value="1" <?php echo $value['contact_norequired'] ? 'checked':''; ?>>选填&nbsp;&nbsp;&nbsp;&nbsp;
+                                第<?php echo $key + 1; ?>联系人&nbsp;&nbsp;
+                                <input type="text" name="contact_arr[<?php echo $key; ?>]" value="<?php echo $value['contact']; ?>">&nbsp;&nbsp;
+                                <input type="checkbox" id="company_arr[<?php echo $key; ?>]" name="company_arr[<?php echo $key; ?>]" value="1" <?php echo $value['company'] ? 'checked':''; ?>><label for="company_arr[<?php echo $key; ?>]">工作单位</label>&nbsp;&nbsp;
+                                <input type="checkbox" id="contact_norequired_arr[<?php echo $key; ?>]" name="contact_norequired_arr[<?php echo $key; ?>]" value="1" <?php echo $value['contact_norequired'] ? 'checked':''; ?>><label for="contact_norequired_arr[<?php echo $key; ?>]">选填</label>&nbsp;&nbsp;
                                 <input type="button" class="input-btn" value="删除" onclick="contact_del(this);">
                             </div>
                         <?php } ?>
                     </div>
                     <input type="button" class="input-btn" id="contact_add" value="添加">
-                    <p class="notic"></p>
                 </dd>
             </dl>
 
@@ -333,13 +350,18 @@
                 <dd class="opt">
                     <?php $workInfo = json_decode($dealLoanType['work_info'],true); ?>
                     <input type="checkbox" class="js-switch blue" name="work_is_effect" value="1" <?php echo $workInfo['work_is_effect'] ? 'checked':''; ?>><br/>
-                    <input type="checkbox" name="company_name" value="1" <?php echo $workInfo['company_name'] ? 'checked':''; ?>>公司全称<br/>
-                    <input type="checkbox" name="company_addr" value="1" <?php echo $workInfo['company_addr'] ? 'checked':''; ?>>公司地址<br/>
-                    <input type="checkbox" name="company_station" value="1" <?php echo $workInfo['company_station'] ? 'checked':''; ?>>公司岗位<br/>
-                    <input type="checkbox" name="company_telephone" value="1" <?php echo $workInfo['company_telephone'] ? 'checked':''; ?>>公司固话<br/>
-                    <input type="checkbox" name="industry" value="1" <?php echo $workInfo['industry'] ? 'checked':''; ?>>行业职业<br/>
-                    <input type="checkbox" name="income_range" value="1" <?php echo $workInfo['income_range'] ? 'checked':''; ?>>收入范围
-                    <p class="notic"></p>
+
+                    <input type="checkbox" id="company_name" name="company_name" value="1" <?php echo $workInfo['company_name'] ? 'checked':''; ?>><label for="company_name">公司全称</label><br/>
+
+                    <input type="checkbox" id="company_addr" name="company_addr" value="1" <?php echo $workInfo['company_addr'] ? 'checked':''; ?>><label for="company_addr">公司地址</label><br/>
+
+                    <input type="checkbox" id="company_station" name="company_station" value="1" <?php echo $workInfo['company_station'] ? 'checked':''; ?>><label for="company_station">公司岗位</label><br/>
+
+                    <input type="checkbox" id="company_telephone" name="company_telephone" value="1" <?php echo $workInfo['company_telephone'] ? 'checked':''; ?>><label for="company_telephone">公司固话</label><br/>
+
+                    <input type="checkbox" id="industry" name="industry" value="1" <?php echo $workInfo['industry'] ? 'checked':''; ?>><label for="industry">行业职业</label><br/>
+
+                    <input type="checkbox" id="income_range" name="income_range" value="1" <?php echo $workInfo['income_range'] ? 'checked':''; ?>><label for="income_range">收入范围</label>
                 </dd>
             </dl>
         </div>
@@ -380,7 +402,6 @@
                 </dd>
             </dl>
 
-            <span id="daterange">
             <dl class="row">
                 <dt class="tit">
                     <label>开始时间</label>
@@ -400,7 +421,6 @@
                     <p class="notic"></p>
                 </dd>
             </dl>
-            </span>
 
             <dl class="row">
                 <dt class="tit">
@@ -651,8 +671,8 @@
                     <label>用户投标类型</label>
                 </dt>
                 <dd class="opt">
-                    按金额<input type="radio" name="uloadtype" value="0" <?php echo $dealLoanTypeExtern['uloadtype'] == 0 ? 'checked' : ''; ?>>
-                    按份数<input type="radio" name="uloadtype" value="1" <?php echo $dealLoanTypeExtern['uloadtype'] == 1 ? 'checked' : ''; ?>>
+                    <input type="radio" name="uloadtype" id="uloadtype_0" value="0" <?php echo $dealLoanTypeExtern['uloadtype'] == 0 ? 'checked' : ''; ?>><label for="uloadtype_0">按金额</label>&nbsp;&nbsp;
+                    <input type="radio" name="uloadtype" id="uloadtype_1" value="1" <?php echo $dealLoanTypeExtern['uloadtype'] == 1 ? 'checked' : ''; ?>><label for="uloadtype_1">按份数</label>
                     <p class="notic"></p>
                 </dd>
             </dl>
@@ -787,9 +807,9 @@
                 </dt>
                 <dd class="opt">
                     <?php $chkStatus = explode(',', $dealLoanType['xuex_chk_status']); ?>
-                    <input type="checkbox" name="xuex_chk_status[]" value="0" <?php echo in_array(0,$chkStatus) ? 'checked' : '' ?>>未验证
-                    <input type="checkbox" name="xuex_chk_status[]" value="1" <?php echo in_array(1,$chkStatus) ? 'checked' : '' ?>>正确
-                    <input type="checkbox" name="xuex_chk_status[]" value="2" <?php echo in_array(2,$chkStatus) ? 'checked' : '' ?>>错误
+                    <input type="checkbox" id="xuex_chk_status_0" name="xuex_chk_status[]" value="0" <?php echo in_array(0,$chkStatus) ? 'checked' : '' ?>><label for="xuex_chk_status_0">未验证</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="xuex_chk_status_1" name="xuex_chk_status[]" value="1" <?php echo in_array(1,$chkStatus) ? 'checked' : '' ?>><label for="xuex_chk_status_1">正确</label>&nbsp;&nbsp;
+                    <input type="checkbox" id="xuex_chk_status_2" name="xuex_chk_status[]" value="2" <?php echo in_array(2,$chkStatus) ? 'checked' : '' ?>><label for="xuex_chk_status_2">错误</label>
                     <p class="notic">学信网状态未勾选的将被自动拒绝</p>
                 </dd>
             </dl>
@@ -830,6 +850,9 @@
         window.editor = K.create('#content');
     });
 
+    $.datetimepicker.setLocale('ch');
+    $('#start_time,#end_time').datetimepicker({format:"Y-m-d",timepicker:false,todayButton:false});
+
     var provinceCity = <?php echo $provinceCity; ?>;
     $('#contact_add').on('click',function(){
         var maxIndex = 0;
@@ -841,10 +864,10 @@
         });
         maxIndex+=1;
         var html = '<div class="contact_wrap" data-index="'+maxIndex+'">'+
-            '第'+maxIndex+'联系人&nbsp;'+
-        '<input type="text" name="contact_arr['+maxIndex+']" placeholder="">&nbsp;&nbsp;&nbsp;&nbsp;'+
-        '<input type="checkbox" name="company_arr['+maxIndex+']" value="1">工作单位&nbsp;&nbsp;&nbsp;&nbsp;'+
-        '<input type="checkbox" name="contact_norequired_arr['+maxIndex+']" value="1">选填&nbsp;&nbsp;&nbsp;&nbsp;'+
+            '第'+maxIndex+'联系人&nbsp;&nbsp;'+
+        '<input type="text" name="contact_arr['+maxIndex+']" placeholder="">&nbsp;&nbsp;'+
+        '<input type="checkbox" id="company_arr['+maxIndex+']" name="company_arr['+maxIndex+']" value="1"><label for="company_arr['+maxIndex+']">工作单位</label>&nbsp;&nbsp;'+
+        '<input type="checkbox" id="contact_norequired_arr['+maxIndex+']" name="contact_norequired_arr['+maxIndex+']" value="1"><label for="contact_norequired_arr['+maxIndex+']">选填</label>&nbsp;&nbsp;'+
         '<input type="button" class="input-btn" value="删除" onclick="contact_del(this);">'+
         '</div>';
         $('#contact_div').append(html);
@@ -909,27 +932,6 @@
         //初始化表单验证
         $("#form1").initValidform();
 
-        $('#daterange').dateRangePicker({
-            shortcuts:
-                {
-                    'next-days':[365,1095,1825]
-                },
-            startDate:'<?php echo date('Y-m-d',time());?>',
-            endDate:false,
-            getValue: function()
-            {
-                if ($('#start_time').val() && $('#end_time').val() )
-                    return $('#start_time').val() + ' to ' + $('#end_time').val();
-                else
-                    return '';
-            },
-            setValue: function(s,s1,s2)
-            {
-                $('#start_time').val(s1);
-                $('#end_time').val(s2);
-            }
-        });
-
         //加载高风险城市
         var tongdun_limit_city = '<?php echo $dealLoanType['tongdun_limit_city'] ?>';
         var tongdun_limit_province = '<?php echo $dealLoanType['tongdun_limit_province'] ?>';
@@ -937,7 +939,7 @@
             var provinceArr = tongdun_limit_province.split(',');
             var cityArr = tongdun_limit_city.split(',');
             for(var i=0;i<provinceArr.length;i++){
-                province_city_add()
+                province_city_add();
                 var citySelect = $('#province_city_div select').last();
                 var provinceSelect = $(citySelect).prev();
                 provinceSelect.find("option[value='"+provinceArr[i]+"']").attr("selected",true);

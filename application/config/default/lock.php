@@ -1,6 +1,6 @@
 <?php
 defined("IN_XIAOSHU") or exit("Access Invalid!");
-/*
+/**
  * 锁配置文件
  */
 return array(
@@ -10,12 +10,13 @@ return array(
 	'stores' => array(
 	//文件锁配置
 		'file' => array(
-			'class' => 'FileStore',
-			'config' => STORAGE_PATH.'lock'
+			'type' => 'FileStore',
+			'config' => STORAGE_PATH.'lock/'
 		),
 	//memcached锁配置，不能做分布式，memcached的特性做分布式会出现异常问题
 		'memcached' => array(
-			'class' => 'MemcachedStore',
+			'type' => 'MemcachedStore',
+			'class'=>'I_Cache_Memcached',
 			'config' => array(
 			//memcached服务器信息
 				array("127.0.0.1", 11211)
@@ -23,7 +24,8 @@ return array(
 		),
 	//redis锁配置
 		'redis' => array(
-			'class' => 'RedisStore',
+			'type' => 'RedisStore',
+			'class'=>'I_Cache_Redis',
 			'config' =>
 	    		array(
 				//redis服务器信息，支持集群。
@@ -48,6 +50,7 @@ return array(
 						'retry' => 100,
 						// 数据库序号，默认0, 参考 http://redis.io/commands/select
 						'db' => 0,
+                            'prefix'=>null,
 		    			),
 		    			'slaves' => array(
 //							array(
@@ -79,7 +82,8 @@ return array(
 	    	)
 		),
 		'redis_cluster' => array(
-			'class' => 'RedisClusterStore',
+			'type' => 'RedisClusterStore',
+			'class'=>'I_Cache_Redis_Cluster',
 			'config' => array(
 				'hosts'=>array(//集群中所有master主机信息
 		    		//'127.0.0.1:7001',
@@ -89,6 +93,7 @@ return array(
 				'timeout'=>1.5,//连接超时，单位秒
 				'read_timeout'=>1.5,//读超时，单位秒
 				'persistent'=>false,//是否持久化连接
+                'prefix'=>null,
 	    	)
 		)
 	),
