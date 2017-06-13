@@ -48,7 +48,7 @@
                     <option value="2">借款端</option>
                 </select>
                 优惠券类型名称:
-                <input class="s-input-txt" type="text" name="bonus_type_name" placeholder="请输入优惠券类型名称">
+                <input class="s-input-txt" type="text" name="bonus_type_name" size="30" placeholder="请输入优惠券类型名称">
                 是否启用:
                 <select value="0" id="is_effect" name='is_effect'>
                     <option value="-1">-</option>
@@ -98,6 +98,9 @@ function type_edit(id) {
 }
 function type_bonus(id) {
     window.location.href = '<?php echo adminUrl('user_bonus','type_bonus');?>'+'&type_id='+id;
+}
+function use_log(type_id, use_type) {
+    window.location.href = '<?php echo adminUrl('user_bonus','use_log');?>'+'&type_id='+type_id+'&use_type='+use_type;
 }
 function flexPress(name, grid) {
     if(name=='delete'){

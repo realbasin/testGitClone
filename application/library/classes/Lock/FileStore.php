@@ -1,4 +1,5 @@
 <?php
+defined("IN_XIAOSHU") or exit("Access Invalid!");
 namespace Lock;
 /**
  * 文件锁实例
