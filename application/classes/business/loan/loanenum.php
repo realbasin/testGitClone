@@ -165,16 +165,17 @@ class  business_loan_loanenum extends Business {
 				$root['show_err'] = '余额不足，还款还需'.$need_repay_money-$user_total_money.'，请先充值';
 				return $root;
 			}else {
-				//TODO 网站资金已代还处理
 				//进行还款系列操作 启用事务
 				$userDao->getDb()->begin();
 				try{
 					//1.投资人回款
-
 					foreach ($load_user_list as $v) {
-						//TODO  是否是网站代还
 						//获取所有投资用户该期的回款计划
 						$user_load = $dealLoadRepayDao->getSomeOneLkeyPlan($id,$l_key,$v['user_id']);
+						//TODO 网站代还 或已收到回款
+						if($user_load['is_site_repay'] == 1 || $user_load['has_repay'] == 1){
+							continue;
+						}
 						$update_status = $dealLoadRepayBusiness->updateLoadRepayPlan($user_load,$v['money'],$status,$impose_money,$manage_impose_money);
 						if($update_status === false){
 							$root['show_err'] = '回款修改失败';
