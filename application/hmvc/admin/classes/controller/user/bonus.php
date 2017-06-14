@@ -317,9 +317,9 @@ class  controller_user_bonus extends controller_sysBase {
                 $row['cell'][] = $v['bonus_sn'];
                 $row['cell'][] = $v['bonus_type_name'];
                 $row['cell'][] = $v['use_type'] == 1 ? "理财端" : "借款端";
-                $user_info = \Core::dao('user_user')->getUser($v['user_id'], 'user_name,AES_DECRYPT(mobile_encrypt,"'.AES_DECRYPT_KEY.'") mobile');
-                $row['cell'][] = !empty($user_info) ? $user_info['user_name'] : '';
-                $row['cell'][] = !empty($user_info) ? $user_info['mobile'] : '';
+                $user_info = \Core::dao('user_user')->getUserInfo('user_name,mobile', array('id'=>$v['user_id']));
+                $row['cell'][] = !empty($user_info) ? $user_info->value('user_name') : '';
+                $row['cell'][] = !empty($user_info) ? $user_info->value('mobile') : '';
                 $row['cell'][] = $v['money'];
                 $row['cell'][] = $v['limit_amount'];
                 $row['cell'][] = date('Y-m-d H:i:s', $v['drawed_time']);

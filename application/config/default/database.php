@@ -20,7 +20,7 @@ return
 		'tablePrefix' => 'xssd_',
 		'tablePrefixSqlIdentifier' => '_tablePrefix_',
 		//是否开启慢查询记录
-		'slowQueryDebug' => false,
+		'slowQueryDebug' => true,
 		'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
 		'slowQueryHandle' => new \I_Database_SlowQuery_Handle_Default(),
 		/**
@@ -39,7 +39,55 @@ return
 		'indexHandle' => new \I_Database_Index_Handle_Default(),
 		'masters' => array(
 		    'master01' => array(
-			'hostname' => 'localhost',
+			'hostname' => '127.0.0.1',
+			'port' => 3306,
+			'username' => 'root',
+			'password' => '87ksdk@lkcxo4#',
+		    )
+		),
+		/*
+		 * 目前配置无从数据库
+		 */
+		'slaves' => array(
+//		    'slave01' => array(
+//			'hostname' => '127.0.0.1',
+//			'port' => 3306,
+//			'username' => 'root',
+//			'password' => '',
+//		    )
+		)
+	    ),
+	    
+		'stat' => array(
+		'driverType' => 'mysql',
+		'debug' => true,
+		'pconnect' => false,
+		'charset' => 'utf8',
+		'collate' => 'utf8_general_ci',
+		'database' => 'xssd_stat',
+		'tablePrefix' => 'xssd_',
+		'tablePrefixSqlIdentifier' => '_tablePrefix_',
+		//是否开启慢查询记录
+		'slowQueryDebug' => true,
+		'slowQueryTime' => 3000, //慢查询最小时间,单位毫秒，1秒=1000毫秒
+		'slowQueryHandle' => new \I_Database_SlowQuery_Handle_Default(),
+		/**
+		 * 是否开启没有满足设置的索引类型的查询记录
+		 */
+		'indexDebug' => false,
+		/**
+		 * 索引使用的最小情况，只有小于最小情况的时候才会记录sql到日志
+		 * minIndexType值从好到坏依次是:
+		 * system > const > eq_ref > ref > fulltext > ref_or_null 
+		 * > index_merge > unique_subquery > index_subquery > range 
+		 * > index > ALL 一般来说，得保证查询至少达到range级别，最好能达到ref
+		 * 避免ALL即全表扫描
+		 */
+		'minIndexType' => 'index',
+		'indexHandle' => new \I_Database_Index_Handle_Default(),
+		'masters' => array(
+		    'master01' => array(
+			'hostname' => '127.0.0.1',
 			'port' => 3306,
 			'username' => 'root',
 			'password' => '87ksdk@lkcxo4#',
