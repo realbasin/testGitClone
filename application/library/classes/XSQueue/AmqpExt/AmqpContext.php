@@ -101,7 +101,7 @@ class AmqpContext implements Context
     }
 
     /**
-     * @param AmqpQueue|PsrDestination $destination
+     * @param AmqpQueue|Destination $destination
      *
      * @return int
      */
