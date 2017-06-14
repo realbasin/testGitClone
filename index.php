@@ -72,7 +72,8 @@ define("AES_DECRYPT_KEY","__FANWEP2P__");
 	  这样Sr::url方法在生成url的时候就知道是否加上入口文件名称 */
 	->setIsRewrite(false)
 	/* 注册默认pathinfo路由器 */
-	->addRouter(new \Router_PathInfo_Default())
+    ->addRouter(new \Router_PathInfo_Default())
+	->addRouter(new \Router_PathInfo_Api())
 	/* pathinfo路由器,注册uri重写 */
 	->setUriRewriter(new I_Uri_Rewriter_Default())
 	/* 注册默认get路由器 */
