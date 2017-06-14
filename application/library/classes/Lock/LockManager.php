@@ -23,14 +23,8 @@ class LockManager
 	 */
 	public function lockStore($name='')
 	{
-		static $stores=array();
 		$name = $name ? $name : $this->getDefaultDriver();
-		if(isset($stores[$name])){
-			return $stores[$name];
-		}
-		$instance=$this->get($name);
-		$stores[$name] = $instance;
-		return $instance;
+		return $this->get($name);
 	}
 
 	/**
