@@ -1,11 +1,11 @@
 <?php
 namespace Lock;
+defined("IN_XIAOSHU") or exit("Access Invalid!");
 
 use Closure;
 
 class LockManager
 {
-	protected static $stores = array();
 	protected $config;
 	
 
@@ -21,10 +21,16 @@ class LockManager
 	 * @param  string  $name
 	 * @return mixed
 	 */
-	public function store($name)
+	public function lockStore($name='')
 	{
-		$name = $name ?  : $this->getDefaultDriver();
-		return $this->stores[$name] = $this->get($name);
+		static $stores=array();
+		$name = $name ? $name : $this->getDefaultDriver();
+		if(isset($stores[$name])){
+			return $stores[$name];
+		}
+		$instance=$this->get($name);
+		$stores[$name] = $instance;
+		return $instance;
 	}
 
 	/**
@@ -35,7 +41,7 @@ class LockManager
 	 */
 	protected function get($name)
 	{
-		return isset($this->stores[$name]) ? $this->stores[$name] : $this->resolve($name);
+		return  $this->resolve($name);
 	}
 
 	/**
@@ -48,16 +54,23 @@ class LockManager
 	protected function resolve($name)
 	{
 		$config = $this->getConfig($name);
-		$className=$config['class'];
-		switch($className){
+		$classType=$config['type'];
+		$classTypeName="\\Lock\\{$classType}";
+		$filename = dirname(__FILE__) . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $classType) . '.php';
+        if(!class_exists($classTypeName)){
+        	require($filename);
+        }
+		switch($classType){
 			case 'FileStore':
+				return new $classTypeName($config['config'],$this->getTimeout(),$this->getMaxTimeout(),$this->getRetryWaitUsec(),$this->getPrefix());
 				break;
 			case 'MemcachedStore':
-				break;
 			case 'RedisClusterStore':
-				break;
 			case 'RedisStore':
+				return new $classTypeName(\Core::cache($config),$this->getTimeout(),$this->getMaxTimeout(),$this->getRetryWaitUsec(),$this->getPrefix());
 				break;
+			default:
+				throw new \Xs_Exception_500("Unknown lock config type {$name} !");
 		}
 	}
 
@@ -117,7 +130,7 @@ class LockManager
 		if($config){
 			return $config;
 		}else{
-			throw new \Xs_Exception_500("unknown lock config type {$name} !");
+			throw new \Xs_Exception_500("Unknown lock config type {$name} !");
 		}
 	}
 
@@ -132,7 +145,7 @@ class LockManager
 		if($config){
 			return $config;
 		}else{
-			throw new \Xs_Exception_500("can not find lock default lock config !");
+			throw new \Xs_Exception_500("Can not find lock default lock config !");
 		}
 	}
 

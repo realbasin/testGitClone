@@ -47,6 +47,7 @@
         <div class="form-default">
             <dl class="row">
                 <dt class="tit">
+                    <em>*</em>
                     <label>院校名称</label>
                 </dt>
                 <dd class="opt">
@@ -56,10 +57,11 @@
 
             <dl class="row">
                 <dt class="tit">
+                    <em>*</em>
                     <label>所在地</label>
                 </dt>
                 <dd class="opt">
-                    <select name="province_id" id="provonce_id" onchange="load_city(this);" datatype="*" nullmsg="请选择所在地省份！">
+                    <select name="province_id" id="province_id" onchange="load_city(this);" datatype="*" nullmsg="请选择所在地省份！">
                         <option value="" <?php if($school['province_id'] == 0) echo 'selected'; ?>>请选择</option>
                         <?php foreach($provinceList as $province){ ?>
                             <option value="<?php echo $province['id']; ?>" <?php if($school['province_id'] == $province['id']) echo 'selected'; ?>><?php echo $province['name']; ?></option>
@@ -74,6 +76,7 @@
 
             <dl class="row">
                 <dt class="tit">
+                    <em>*</em>
                     <label>院校等级</label>
                 </dt>
                 <dd class="opt">
@@ -89,6 +92,7 @@
 
             <dl class="row">
                 <dt class="tit">
+                    <em>*</em>
                     <label>办学类型</label>
                 </dt>
                 <dd class="opt">
@@ -193,11 +197,10 @@
         var regionId = <?php echo $school['region_id']; ?>;
         if(provinceId !== ''){
             load_city(document.getElementById('province_id'));
-            console.log(provinceId)
         }
 
         if(regionId !== ''){
-            $('#region_id').val(regionId);
+            $('#region_id').find("option[value='"+ regionId +"']").attr("selected",true);
         }
     });
 </script>

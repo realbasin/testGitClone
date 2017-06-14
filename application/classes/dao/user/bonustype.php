@@ -34,9 +34,4 @@ class dao_user_bonustype extends Dao {
 	public function getTable() {
 		return 'bonus_type';
 	}
-
-	//获取优惠券类型名称（缓存10分钟）
-	public function getBonusTypeName($id) {
-	    return $this->getDb()->select('bonus_type_name')->from($this->getTable())->where(array('id'=>$id))->cache(C('stat_sql_cache_time'),'stat_user_balance_total')->execute()->value('bonus_type_name');
-    }
 }

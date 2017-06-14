@@ -230,7 +230,40 @@ class dao_user_user extends Dao {
 	public function getUser($userId,$field){
 		return $this->getDb()->select($field)->from($this->getTable())->where(array('id'=>$userId))->execute()->key('id')->rows();
 	}
-	
+
+    /**
+     * 根据具体场景（条件）获取具体的用户信息
+     * @param $fields
+     * @param array $where
+     * @param string $type
+     * @return array|mixed|null
+     */
+	public function getUserInfo($fields, array $where, $type='ROW') {
+        if (strpos($fields, 'real_name') !== false) {
+            $fields = str_replace("real_name", "AES_DECRYPT(real_name_encrypt,'" . AES_DECRYPT_KEY . "') as real_name", $fields);
+        }
+        if (strpos($fields, 'idno') !== false) {
+            $fields = str_replace("idno", "AES_DECRYPT(idno_encrypt,'" . AES_DECRYPT_KEY . "') as idno", $fields);
+        }
+        if (strpos($fields, 'mobile') !== false) {
+            $fields = str_replace("mobile", "AES_DECRYPT(mobile_encrypt,'" . AES_DECRYPT_KEY . "') as mobile", $fields);
+        }
+        if (strpos($fields, 'email') !== false) {
+            $fields = str_replace("email", "AES_DECRYPT(email_encrypt,'" . AES_DECRYPT_KEY . "') as email", $fields);
+        }
+        if (strpos($fields, 'money') !== false) {
+            $fields = str_replace("money", "AES_DECRYPT(money_encrypt,'" . AES_DECRYPT_KEY . "') as money", $fields);
+        }
+        if ($fields == '*') {
+            $fields .= ",AES_DECRYPT(real_name_encrypt,'" . AES_DECRYPT_KEY . "') as real_name,
+            AES_DECRYPT(idno_encrypt,'" . AES_DECRYPT_KEY . "') as idno,
+            AES_DECRYPT(mobile_encrypt,'" . AES_DECRYPT_KEY . "') as mobile,
+            AES_DECRYPT(email_encrypt,'" . AES_DECRYPT_KEY . "') as email,
+            AES_DECRYPT(money_encrypt,'" . AES_DECRYPT_KEY . "') as money";
+        }
+        return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute();
+    }
+
 	//获取用户列表
 	public function getUserList($fileds,$where,Array $order=array()){
 		$this->getDb()->select($fileds)->from($this->getTable());

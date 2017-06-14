@@ -8,6 +8,7 @@ $menu = array(
 				'img'=>'home',
 				'list' => array(
 					array('link'=>'dashboard,index','text'=>$lang['dashboard']),
+					array('link'=>'dashboard,locktest','text'=>'锁测试'),
 				)
 			),
 			1 => array(
@@ -77,6 +78,15 @@ $menu = array(
 				'subtext'=>'会员管理',
 				'img'=>'user',
 				'list' => array(
+					array('link'=>'','text'=>'小树会员',
+						'sub'=>array(
+							array('link'=>'user_user,index','text'=>'普通用户'),
+							array('link'=>'user_user,loan_index','text'=>'借款用户'),
+							array('link'=>'user_user,invest_index','text'=>'理财用户'),
+							array('link'=>'user_user,xiaoshublack','text'=>'小树黑名单'),
+							array('link'=>'user_user,black','text'=>'网贷黑名单'),
+						),
+					),
 					array('link'=>'','text'=>'优惠券管理',
 						'sub'=>array(
 							array('link'=>'user_bonus,all_type','text'=>'优惠券类型'),

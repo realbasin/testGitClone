@@ -54,10 +54,7 @@ class  controller_sys_loan extends controller_sysBase
         foreach ($data['rows'] as $v) {
             $row = array();
             $row['id'] = $v['id'];
-            $operateStr = "<span class='btn'><em><i class='fa fa-edit'></i>" . \Core::L('operate') . " <i class='arrow'></i></em><ul>";
-            $operateStr .= "<li><a href='javascript:type_edit(" . $v['id'] . ")'>编辑</a></li>";
-            $operateStr .= "</ul></span>";
-            $row['cell'][] = $operateStr;
+            $row['cell'][] = "<a class='btn blue' onclick=\"type_edit('{$v['id']}')\"><i class='fa fa-pencil-square-o'></i> " . \Core::L('edit') . "</a>";
             $row['cell'][] = $v['id'];
             $row['cell'][] = $v['name'];
             $row['cell'][] = $v['is_quota'] ? '是' : '否';
