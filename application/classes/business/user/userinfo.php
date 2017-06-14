@@ -61,6 +61,7 @@ class  business_user_userinfo extends Business {
 				$userDao->getDb()->commit();
 				return true;
 			}
+			//TODO 交易托管
 		}
 	}
 	/*
@@ -97,6 +98,7 @@ class  business_user_userinfo extends Business {
 				$userDao->getDb()->commit();
 				return true;
 			}
+			//TODO 交易托管
 		}
 	}
 	/*
