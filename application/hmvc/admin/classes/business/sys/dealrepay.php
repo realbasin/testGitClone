@@ -117,6 +117,9 @@ class  business_sys_dealrepay extends Business {
 			//还款时间
 			$load_repay['repay_time'] = $repay_day = strtotime(date('Y-m-d', $repay_day) . '+1 month');
 			//TODO 根据不同还款方式，生成不同计划
+			if($loan['loantype'] == 2 && $i + 1 != $true_repay_time) {
+				continue;
+			}
 			if ($i + 1 == $true_repay_time) {
 				//最后一期 $loan['loantype'] 0 等额本息 1付息还本 2到期本息
 				if($loan['loantype'] == 0) {
@@ -199,7 +202,11 @@ class  business_sys_dealrepay extends Business {
 					unset($load_has_repay);
 				}
 			} else {
-				$load_repay['l_key'] = $i;
+				if($loan['loantype'] == 2 ) {
+					$load_repay['l_key'] = 0;
+				}else{
+					$load_repay['l_key'] = $i;
+				}
 				$load_repay['status'] = 0;
 				$load_repay['has_repay'] = 0;
 				$repay_id = $dealRepayDao->insert($load_repay);
@@ -224,7 +231,7 @@ class  business_sys_dealrepay extends Business {
 		if ($config_common ){
 			unserialize($config_common);
 		}
-		//判断是否罚息
+		//判断是否罚息(**到期还本息到最后一期才算罚息**)
 		if($time == 0){
 			$time = time();
 		}
@@ -334,10 +341,6 @@ class  business_sys_dealrepay extends Business {
 	}
 	//提前还款
 	public function inrepayRepay($loan,$start_lkey){
-		//$loanBaseDao = \Core::dao('loan_loanbase');
-
-		//获取借款金额、利率、还款期数、还款方式
-		//$loan = $loanBaseDao->getloanbase($deal_id,'id,borrow_amount,rate,repay_time,loantype');
 		if(!$loan) {
 			return false;
 		}
