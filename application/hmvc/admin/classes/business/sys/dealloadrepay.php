@@ -21,6 +21,8 @@ class  business_sys_dealloadrepay extends Business {
 		unset($load_repay['manage_money_rebate']);
 		unset($load_repay['repay_money']);
 		unset($load_repay['self_money']);
+		//借款者管理费
+		$borrow_manage = $load_repay['manage_money'];
 		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
 		//转让标表dao
 		$dealLoadTransferDao = \Core::dao('loan_dealloadtransfer');
@@ -35,7 +37,7 @@ class  business_sys_dealloadrepay extends Business {
 			$load_repay['t_user_id'] = 0;
 
 			//TODO 根据不同还款方式，生成不同计划
-			if ($k + 1 == $true_repay_time) {
+			if ($idx + 1 == $true_repay_time) {
 				//最后一期 $loan['loantype'] 0 等额本息 1付息还本 2到期本息
 				if($loan['loantype'] == 0) {
 					$load_repay['repay_money'] = $repaymoney['last_month_repay_money'];
@@ -80,13 +82,13 @@ class  business_sys_dealloadrepay extends Business {
 					$load_repay['self_money'] = $loan['borrow_amount']/$true_repay_time;
 				}
 			}
-
+			//从借款者均摊下来的管理费（借款者管理费）
 			if($k+1 == count($load_users)){
-				$load_repay['repay_manage_money'] = $load_repay['manage_money'] - round($load_repay['manage_money'] / $loan['buy_count'],2) * ($loan['buy_count'] - 1);
+				$load_repay['repay_manage_money'] = $borrow_manage - round($borrow_manage / $loan['buy_count'],2) * ($loan['buy_count'] - 1);
 				$load_repay['mortgage_fee'] = $loan['mortgage_fee'] - round($loan['mortgage_fee'] / $loan['buy_count'],2) * ($loan['buy_count'] - 1);
 			}
 			else{
-				$load_repay['repay_manage_money'] = $load_repay['manage_money']/ $loan['buy_count'];
+				$load_repay['repay_manage_money'] = $borrow_manage/ $loan['buy_count'];
 				$load_repay['mortgage_fee'] = $loan['mortgage_fee'] / $loan['buy_count'];
 			}
 
@@ -143,7 +145,7 @@ class  business_sys_dealloadrepay extends Business {
 
 	}
 	//更新回款计划
-	public function updateLoadRepayPlan($user_load,$money,$status=0,$impose_money=0,$manage_impose_money=0){
+	public function updateLoadRepayPlan($user_load,$money,$status=0,$impose_money=0,$manage_impose_money=0,$is_site_repay=0){
 		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
 		//$user_load = $dealLoadRepayDao->getSomeOneLkeyPlan($deal_id,$l_key,$user_id);
 		if(!$user_load) {
@@ -154,7 +156,7 @@ class  business_sys_dealloadrepay extends Business {
 		//确认还款时间
 		$user_load_data['true_repay_time'] = time();
 		//是否网站代还
-		$user_load_data['is_site_repay'] = 0;
+		$user_load_data['is_site_repay'] = $is_site_repay;
 		//是否收到还款
 		$user_load_data['has_repay'] = 1;
 		//还款是否逾期状态

@@ -175,7 +175,7 @@ class AmqpConsumer implements Consumer
         $message = new AmqpMessage(
             $extEnvelope->getBody(),
             $extEnvelope->getHeaders(),
-            [
+            array(
                 'message_id' => $extEnvelope->getMessageId(),
                 'correlation_id' => $extEnvelope->getCorrelationId(),
                 'app_id' => $extEnvelope->getAppId(),
@@ -187,7 +187,7 @@ class AmqpConsumer implements Consumer
                 'reply_to' => $extEnvelope->getReplyTo(),
                 'timestamp' => $extEnvelope->getTimeStamp(),
                 'user_id' => $extEnvelope->getUserId(),
-            ]
+            )
         );
         $message->setRedelivered($extEnvelope->isRedelivery());
         $message->setDeliveryTag($extEnvelope->getDeliveryTag());
