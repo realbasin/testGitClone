@@ -159,7 +159,14 @@ class dao_loan_dealloadrepay extends Dao {
 		$where['user_id'] = $user_id;
 		return $this->getDb()->select($field)->from($this->getTable())->where($where)->execute()->row();
 	}
-
+	//add by zlz 获取某人某个标未回款计划
+	public function getSomeOnePlanByLoanId($deal_id,$user_id,$field='*'){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['user_id'] = $user_id;
+		$where['has_repay'] = 0;
+		return $this->getDb()->select($field)->from($this->getTable())->where($where)->execute()->key('l_key')->rows();
+	}
 	//某期已还款统计 add by zlz 201706081601
 	public function getHasRepayTotal($deal_id,$l_key){
 		$field="deal_id,l_key,sum(true_self_money) as	total_self_money,
@@ -174,5 +181,20 @@ class dao_loan_dealloadrepay extends Dao {
 		$this->getDb()->from($this->getTable());
 		$this->getDb()->where(array('deal_id'=>$deal_id,'l_key'=>$l_key,'has_repay'=>1));
 		return $this->getDb()->execute()->row();
+	}
+	//获取所有利息 add by zlz
+	public function getAllInterest($deal_id,$l_key,$user_id){
+		$field = 'sum(interest_money) as total_interest_money';
+		$this->getDb()->select($field,false);
+		$this->getDb()->from($this->getTable());
+		$this->getDb()->where(array('deal_id'=>$deal_id,'l_key >='=>$l_key,'user_id'=>$user_id));
+		return $this->getDb()->execute()->row();
+	}
+	//获取某个标未回款期数，用于判断某个标是否全部回款
+	public function getNoRepayCountByDealId($deal_id){
+		$where = array();
+		$where['deal_id'] = $deal_id;
+		$where['has_repay'] = 0;
+		return $this->getCount($where);
 	}
 }

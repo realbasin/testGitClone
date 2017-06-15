@@ -121,4 +121,74 @@ class Router_PathInfo_Default extends Router {
 	}
 
 }
+
+class Router_PathInfo_Api  extends Router
+{
+    public function find()
+    {
+        $config = \Base::getConfig();
+        $uri = $config->getRequest()->getPathInfo();
+        $uri = trim($uri, '/');
+        if (empty($uri)) {
+            //没有找到hmvc模块名称，或者控制器名称
+            return $this->route->setFound(FALSE);
+        } else {
+            if ($uriRewriter = $config->getUriRewriter()) {
+                $uri = $uriRewriter->rewrite($uri);
+            }
+        }
+        //到此$uri形如：Welcome/index.do , Welcome/User , Welcome
+        $_info = explode('/', $uri);
+        $_info = array_filter($_info);
+
+        $moduleName = $_info[0];
+        $hmvcModuleDirName = \Base::checkHmvc($moduleName, FALSE);
+        if($hmvcModuleDirName){
+            array_shift($_info);
+        }else{
+            //没找到hmvc下的模块，认定application下主模块
+            $moduleName = '';
+        }
+
+        $controllerName =  $controllerName = $config->getControllerDirName() . '_' . $_info[0];
+        if(class_exists($controllerName)){
+            array_shift($_info);
+        }else{
+            $controllerName = $config->getControllerDirName() . '_' .$config -> getDefaultController();
+        }
+
+        $method = $config->getMethodPrefix() . $_info[0];
+        if(method_exists($controllerName,$method)){
+            array_shift($_info);
+        }else{
+            $method = $config->getMethodPrefix() . $config -> getDefaultMethod();
+        }
+
+        PathInfoArgs::set($_info);
+
+        return $this->route->setHmvcModuleName($moduleName)->setController($controllerName)->setMethod($method)->setArgs($_info)->setFound(TRUE);
+    }
+}
+
+class PathInfoArgs{
+    private static $args = null;
+
+    public static function set($args){
+        self::$args = $args;
+    }
+
+    /**
+     * 获取通过PATH_INFO传递的参数
+     * @param $position int 位置，从1开始
+     * @return null|string
+     */
+    public static function get($position){
+        if(self::$args == null){
+            return null;
+        }else{
+            $index = $position - 1;
+            return isset(self::$args[$index]) ? self::$args[$index] : null;
+        }
+    }
+}
 ?>
