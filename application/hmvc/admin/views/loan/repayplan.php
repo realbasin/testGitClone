@@ -116,7 +116,6 @@
                 }).showModal();
                 return false;
             }
-            alert(is_overdue);
             if(is_overdue == 1){
                 parent.dialog({
                     title: '请确认还款金额',
