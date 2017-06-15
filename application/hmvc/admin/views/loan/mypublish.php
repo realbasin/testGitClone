@@ -31,7 +31,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('loan');?></span>
     <i class="arrow"></i>
-    <span><?php echo $title;?></span>
+    <span><?php echo \Core::L('my_publish');?></span>
 
 </div>
 <div class="line10"></div>
@@ -238,7 +238,7 @@
             ],
             sortname: "id",
             sortorder: "desc",
-            title: '<?php echo $title;?>'
+            title: '<?php echo \Core::L('my_publish');?>'
         });
 
         $('#submit').click(function(){
@@ -264,9 +264,9 @@
         }
     }
 
-    //编辑
-    function loan_edit(id){
-        location.href='<?php echo adminUrl('loan_loan','edit');?>';
+    //审核操作
+    function loan_audit(id){
+        location.href='<?php echo adminUrl('loan_audit','first_publish_edit',array('first_yn'=>2));?>&loan_id='+id;
     }
 
     //还款计划
@@ -316,7 +316,7 @@
         }
         //alert(ids);
         $.ajax({
-            url	: "<?php echo adminUrl('loan_audit','publish_audit_owner').'&way='.$way;?>",
+            url	: "<?php echo adminUrl('loan_audit','publish_audit_owner').'&way=2';?>",
             dataType: "json",
             async	: false,
             data	: {id: id, ids: ids},

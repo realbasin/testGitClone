@@ -38,7 +38,7 @@ class AmqpContext implements Context
      *
      * @return AmqpMessage
      */
-    public function createMessage($body = '', array $properties = [], array $headers = [])
+    public function createMessage($body = '', Array $properties = array(), Array $headers = array())
     {
         return new AmqpMessage($body, $properties, $headers);
     }
@@ -101,7 +101,7 @@ class AmqpContext implements Context
     }
 
     /**
-     * @param AmqpQueue|PsrDestination $destination
+     * @param AmqpQueue|Destination $destination
      *
      * @return int
      */
@@ -127,7 +127,7 @@ class AmqpContext implements Context
     }
 
     /**
-     *
+     * 创建临时队列
      * @return AmqpQueue
      */
     public function createTemporaryQueue()
@@ -141,7 +141,7 @@ class AmqpContext implements Context
     }
 
     /**
-     *
+     * 创建生产者
      * @return AmqpProducer
      */
     public function createProducer()
@@ -150,7 +150,7 @@ class AmqpContext implements Context
     }
 
     /**
-     * {@inheritdoc}
+     * 创建消费者
      *
      * @param Destination|AmqpQueue $destination
      *

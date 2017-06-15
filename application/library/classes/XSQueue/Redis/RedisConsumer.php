@@ -50,7 +50,7 @@ class RedisConsumer implements Consumer
         // redis默认自动应答
     }
 
-    public function reject(PsrMessage $message, $requeue = false)
+    public function reject(Message $message, $requeue = false)
     {
         InvalidMessageException::assertMessageInstanceOf($message, RedisMessage::class);
         // redis默认自动应答

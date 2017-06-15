@@ -2,6 +2,9 @@
 
 namespace XSQueue\AmqpExt;
 
+/**
+ * 消息传递模式
+ */
 final class DeliveryMode
 {
 	//非持久化

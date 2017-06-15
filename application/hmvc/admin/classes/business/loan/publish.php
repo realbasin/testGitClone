@@ -21,8 +21,8 @@ class  business_loan_publish extends Business
                 $log_data[$k]['op_result'] = $op_result;
                 $log_data[$k]['id'] = $id;
             }
-            $loanoplog->updateBatch($log_data, 'id');
-            return;
+            $result = $loanoplog->updateBatch($log_data, 'id');
+            return $result;
         }
         if ($type == 1) {//初审操作修改
             $op_name = '初审操作';
@@ -52,34 +52,35 @@ class  business_loan_publish extends Business
         }
 
         $col_name_arr = array(
-            array(array('col' => 'city_id', 'name' => '所在城市', 'model' => 'DealCityLink', 'linktype' => 'model', 'linkmodel' => 'DealCity', 'linkcol' => 'name')),
+            array(array('col' => 'city_id', 'name' => '所在城市', 'model' => 'loan_dealcitylink', 'linktype' => 'model', 'linkmodel' => 'loan_dealcity', 'linkcol' => 'name')),
             array(array('col' => 'icon', 'name' => '缩略图', 'model' => 'loan_loanbase')),
             array(
-                array('col' => 'is_delete', 'name' => '资料状态', 'model' => 'Deal', 'linktype' => 'array', 'linkarray' => array(0 => '用户建立', 1 => '删除', 2 => '用户保存', 3 => '初审失败')),
-                array('col' => 'delete_real_msg', 'name' => '初审失败原因', 'model' => 'Deal'),
-                array('col' => 'publish_wait', 'name' => '发布状态', 'model' => 'Deal', 'linktype' => 'array', 'linkarray' => array(0 => '复审通过', 1 => '待发布', 2 => '初审通过', 3 => '复审失败')),
-                array('col' => 'publish_memo', 'name' => '复审失败原因', 'model' => 'Deal'),
-                array('col' => 'fund_type', 'name' => '资金源类型', 'model' => 'Deal', 'linktype' => 'model', 'linkmodel' => 'DealFundType', 'linkcol' => 'type_name'),
-                array('col' => 'start_time', 'name' => '开始招标时间', 'model' => 'Deal', 'calctype' => "time"),
-                array('col' => 'borrow_amount', 'name' => '借款金额', 'model' => 'Deal'),
-                array('col' => 'rate', 'name' => '年化利率 ', 'model' => 'Deal'),
-                array('col' => 'l_guarantees_amt', 'name' => '风险保证金', 'model' => 'Deal')),
+                array('col' => 'is_delete', 'name' => '资料状态', 'model' => 'loan_loanbase', 'linktype' => 'array', 'linkarray' => array(0 => '用户建立', 1 => '删除', 2 => '用户保存', 3 => '初审失败')),
+                array('col' => 'delete_real_msg', 'name' => '初审失败原因', 'model' => 'loan_loanbase'),
+                array('col' => 'publish_wait', 'name' => '发布状态', 'model' => 'loan_loanbase', 'linktype' => 'array', 'linkarray' => array(0 => '复审通过', 1 => '待发布', 2 => '初审通过', 3 => '复审失败')),
+                array('col' => 'publish_memo', 'name' => '复审失败原因', 'model' => 'loan_loanbase'),
+                array('col' => 'fund_type', 'name' => '资金源类型', 'model' => 'loan_loanbid', 'linktype' => 'model', 'linkmodel' => 'loan_dealloantype', 'linkcol' => 'type_name'),
+                array('col' => 'start_time', 'name' => '开始招标时间', 'model' => 'loan_loanbid', 'calctype' => "time"),
+                array('col' => 'borrow_amount', 'name' => '借款金额', 'model' => 'loan_loanbase'),
+                array('col' => 'rate', 'name' => '年化利率 ', 'model' => 'loan_loanbase'),
+                //array('col' => 'l_guarantees_amt', 'name' => '风险保证金', 'model' => 'loan_loanext')
+                ),
             array(
-                array('groupcol' => 'repay_time', 'name' => '借款期限', 'model' => 'Deal'),
-                array('groupcol' => 'repay_time_type', 'name' => '借款期限', 'model' => 'Deal', 'linktype' => 'array', 'linkarray' => array(0 => '天', 1 => '月'))),
+                array('groupcol' => 'repay_time', 'name' => '借款期限', 'model' => 'loan_loanbase'),
+                array('groupcol' => 'repay_time_type', 'name' => '借款期限', 'model' => 'loan_loanbase', 'linktype' => 'array', 'linkarray' => array(0 => '天', 1 => '月'))),
             array(
-                array('col' => 'name', 'name' => '贷款名称', 'model' => 'Deal'),
-                array('col' => 'sub_name', 'name' => '简短名称', 'model' => 'Deal'),
-                array('col' => 'loantype', 'name' => '还款方式', 'model' => 'Deal', 'linktype' => 'array', 'linkarray' => array(0 => '等额本息', 1 => '付息还本', 2 => '到期还本息', 3 => '本金均摊，利息固定'))),
-            array(array('col' => 'use_ecv', 'name' => '是否可使用红包', 'model' => 'Deal', 'linktype' => 'array', 'linkarray' => array(0 => '不可使用', 1 => '可使用'))),
-            array(array('col' => 'description', 'name' => '借款描述', 'model' => 'Deal')),
-            array(array('col' => 'risk_rank', 'name' => '风险等级', 'model' => 'Deal', 'linktype' => 'array', 'linkarray' => array(0 => '低', 1 => '中', 2 => '高'))),
-            array(array('col' => 'risk_security', 'name' => '风险控制', 'model' => 'Deal')),
-            array(array('col' => 'attachment', 'name' => '合同附件', 'model' => 'Deal')),
-            array(array('col' => 'tattachment', 'name' => '转让合同附件', 'model' => 'Deal')),
-            array(array('col' => 'use_type', 'name' => '借款用途', 'model' => 'Deal', 'linktype' => 'model', 'linkmodel' => 'DealUseType', 'linkcol' => 'name')),
-            array(array('col' => 'sort', 'name' => '排序', 'model' => 'Deal')),
-            array(array('col' => 'first_audit_admin_id', 'name' => '初审人', 'model' => 'Deal', 'linktype' => 'model', 'linkmodel' => 'Admin', 'linkcol' => 'real_name')),
+                array('col' => 'name', 'name' => '贷款名称', 'model' => 'loan_loanbase'),
+                array('col' => 'sub_name', 'name' => '简短名称', 'model' => 'loan_loanbase'),
+                array('col' => 'loantype', 'name' => '还款方式', 'model' => 'loan_loanbase', 'linktype' => 'array', 'linkarray' => array(0 => '等额本息', 1 => '付息还本', 2 => '到期还本息', 3 => '本金均摊，利息固定'))),
+            array(array('col' => 'use_ecv', 'name' => '是否可使用红包', 'model' => 'loan_loanbid', 'linktype' => 'array', 'linkarray' => array(0 => '不可使用', 1 => '可使用'))),
+            array(array('col' => 'description', 'name' => '借款描述', 'model' => 'loan_loanbase')),
+            array(array('col' => 'risk_rank', 'name' => '风险等级', 'model' => 'loan_loanbase', 'linktype' => 'array', 'linkarray' => array(0 => '低', 1 => '中', 2 => '高'))),
+            array(array('col' => 'risk_security', 'name' => '风险控制', 'model' => 'loan_loanbase')),
+            //array(array('col' => 'attachment', 'name' => '合同附件', 'model' => 'Deal')),
+            //array(array('col' => 'tattachment', 'name' => '转让合同附件', 'model' => 'Deal')),
+            array(array('col' => 'use_type', 'name' => '借款用途', 'model' => 'loan_loanbid', 'linktype' => 'model', 'linkmodel' => 'loan_dealusetype', 'linkcol' => 'name')),
+            //array(array('col' => 'sort', 'name' => '排序', 'model' => 'loan_loanbase')),
+            array(array('col' => 'first_audit_admin_id', 'name' => '初审人', 'model' => 'loan_loanbase', 'linktype' => 'model', 'linkmodel' => 'sys_admin_admin', 'linkcol' => 'real_name')),
         );
         $log_ids = 0;
         foreach ($col_name_arr as $k=>$col) {
@@ -88,9 +89,9 @@ class  business_loan_publish extends Business
             $old_val = '';
             $new_val = '';
             foreach ($col as $col1) {
-                if (\Core::arrayGet($data, $col1['groupcol']) || \Core::arrayGet($data, $col1['col'])) {//有值才处理
-                    if (empty(\Core::arrayGet($data, $col1['groupcol']))) {
-                        $col_old_val = \Core::dao($col1['model'])->findCol($col1['col'], array('id' => intval($data['id'])));
+                if (\Core::arrayGet($data, \Core::arrayGet($col1,'groupcol')) || \Core::arrayGet($data, \Core::arrayGet($col1,'col'))) {//有值才处理
+                    if (empty(\Core::arrayGet($data, \Core::arrayGet($col1,'groupcol')))) {
+                        $col_old_val = \Core::dao($col1['model'])->findCol($col1['col'],intval($data['id']));
                         if ($col_old_val != $data[$col1['col']]) { //有变化
                             $want_log = 1;
                             if (empty(\Core::arrayGet($col1, 'linktype'))) { //取本值
@@ -102,12 +103,12 @@ class  business_loan_publish extends Business
                                     $data_val = \Core::arrayGet($col1['linkarray'], intval($data[$col1['col']]));
                                 }
                                 if ($col1['linktype'] == 'model') {
-                                    $col_old_val = \Core::dao($col1['linkmodel'])->findCol($col1['linkcol'], array('id' => intval($col_old_val)));
-                                    $data_val = \Core::dao($col1['linkmodel'])->findCol($col1['linkcol'], array('id' => intval($data[$col1['col']])));
+                                    $col_old_val = \Core::dao($col1['linkmodel'])->findCol($col1['linkcol'],intval($col_old_val));
+                                    $data_val = \Core::dao($col1['linkmodel'])->findCol($col1['linkcol'], intval($data[$col1['col']]));
 
                                 }
                             }
-                            if ($col1['calctype'] == 'time') {
+                            if (\Core::arrayGet($col1,'calctype') == 'time') {
                                 $col_old_val = date('Y-m-d H:i:s', $col_old_val);
                                 $data_val = date('Y-m-d H:i:s', $data_val);
                             }
@@ -126,7 +127,7 @@ class  business_loan_publish extends Business
                             }
                         }
                     } else {//组装栏位
-                        $col_old_val = \Core::dao($col1['model'])->findCol($col1['groupcol'], array('id' => intval($data['id'])));
+                        $col_old_val = \Core::dao($col1['model'])->findCol($col1['groupcol'],intval($data['id']));
                         if ($col_old_val != $data[$col1['groupcol']]) { //有变化
                             $want_log = 2;
                         }
@@ -140,8 +141,8 @@ class  business_loan_publish extends Business
                                     $data[$col1['groupcol']]);
                             }
                             if ($col1['linktype'] == 'model') {
-                                $col_old_val = \Core::dao($col1['linkmodel'])->findCol($col1['linkcol'], array('id' => intval($col_old_val)));
-                                $data_val = \Core::dao($col1['linkmodel'])->findCol($col1['linkcol'], array('id' => intval($data[$col1['col']])));
+                                $col_old_val = \Core::dao($col1['linkmodel'])->findCol($col1['linkcol'],intval($col_old_val));
+                                $data_val = \Core::dao($col1['linkmodel'])->findCol($col1['linkcol'],intval($data[$col1['col']]));
                             }
                         }
                         if (\Core::arrayGet($col1, 'calctype') == 'time') {

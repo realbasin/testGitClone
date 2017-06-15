@@ -44,6 +44,7 @@ class dao_loan_loanbid extends Dao {
 				,'collec_times'//总计催收次数
 				,'collec_last_time'//最后一次催收时间
 				,'collec_allocation'//是否已做了催收分配
+				,'enddate'//投标期限
 				);
 	}
 

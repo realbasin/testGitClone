@@ -94,7 +94,8 @@
                 var tdArr = $(this).children();
                 var money = tdArr.eq(7).find("div").text();
                 var repay_str= tdArr.eq(11).find("div").text();
-                if (repay_str == '逾期待还' || repay_str == '严重逾期待还' || repay_str == '严重逾期') {
+                var is_repay_money = tdArr.eq(11).find("div").text().substring(1);
+                if (repay_str == '逾期待还' || repay_str == '严重逾期待还' || repay_str == '严重逾期' && is_repay_money == 0) {
                     is_overdue = 1;
                 }
                 if(repay_str == '待还'){
@@ -157,7 +158,33 @@
             cancel: function () { }
         }).showModal();
     }
-
+    //网站资金代还款
+    function site_repay(id,lkey) {
+        parent.dialog({
+            title: '请确认代还操作',
+            content: '是否替借款者还款',
+            width:300,
+            okValue: lang['ok'],
+            ok: function () {
+                $.ajax({
+                    type: "GET",
+                    dataType: "json",
+                    url: "<?php echo adminUrl('loan_loan','site_repay');?>",
+                    data: "id="+id+"&l_key="+lkey,
+                    success: function(data){
+                        if (data.code==200){
+                            jsprint(data.message);
+                            $("#flexitable").flexReload();
+                        } else {
+                            jsprint(data.message);
+                        }
+                    }
+                });
+            },
+            cancelValue: lang['cancel'],
+            cancel: function () { }
+        }).showModal();
+    }
     //导出计划列表
     function repay_plan_export_load(id,lkey){
         location.href='<?php echo adminUrl('loan_loan','repayplan_export');?>'+'&deal_id='+id+'&l_key='+lkey;
