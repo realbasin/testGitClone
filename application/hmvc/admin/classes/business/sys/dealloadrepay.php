@@ -21,6 +21,8 @@ class  business_sys_dealloadrepay extends Business {
 		unset($load_repay['manage_money_rebate']);
 		unset($load_repay['repay_money']);
 		unset($load_repay['self_money']);
+		//借款者管理费
+		$borrow_manage = $load_repay['manage_money'];
 		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
 		//转让标表dao
 		$dealLoadTransferDao = \Core::dao('loan_dealloadtransfer');
@@ -80,13 +82,13 @@ class  business_sys_dealloadrepay extends Business {
 					$load_repay['self_money'] = $loan['borrow_amount']/$true_repay_time;
 				}
 			}
-
+			//从借款者均摊下来的管理费（借款者管理费）
 			if($k+1 == count($load_users)){
-				$load_repay['repay_manage_money'] = $load_repay['manage_money'] - round($load_repay['manage_money'] / $loan['buy_count'],2) * ($loan['buy_count'] - 1);
+				$load_repay['repay_manage_money'] = $borrow_manage - round($borrow_manage / $loan['buy_count'],2) * ($loan['buy_count'] - 1);
 				$load_repay['mortgage_fee'] = $loan['mortgage_fee'] - round($loan['mortgage_fee'] / $loan['buy_count'],2) * ($loan['buy_count'] - 1);
 			}
 			else{
-				$load_repay['repay_manage_money'] = $load_repay['manage_money']/ $loan['buy_count'];
+				$load_repay['repay_manage_money'] = $borrow_manage/ $loan['buy_count'];
 				$load_repay['mortgage_fee'] = $loan['mortgage_fee'] / $loan['buy_count'];
 			}
 
