@@ -94,8 +94,9 @@
                 var tdArr = $(this).children();
                 var money = tdArr.eq(7).find("div").text();
                 var repay_str= tdArr.eq(11).find("div").text();
-                var is_repay_money = tdArr.eq(10).find("div").text().substring(1);
-                if (repay_str == '逾期待还' || repay_str == '严重逾期待还' || repay_str == '严重逾期' && is_repay_money != 0) {
+                var is_repay_money = tdArr.eq(4).find("div").text().substring(1);
+
+                if (repay_str == '逾期待还' || repay_str == '严重逾期待还' || (repay_str == '严重逾期' && is_repay_money == 0)) {
                     is_overdue = 1;
                 }
                 if(repay_str == '待还'){
@@ -115,6 +116,7 @@
                 }).showModal();
                 return false;
             }
+            alert(is_overdue);
             if(is_overdue == 1){
                 parent.dialog({
                     title: '请确认还款金额',
