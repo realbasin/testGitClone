@@ -11,31 +11,25 @@ class LockManager
 
 	public function __construct()
 	{
-		//正式部署后，去掉第2个参数或者设置为true
+		//第2个参数设置为true，表示缓存该config
 		$this->config=\Core::config('lock',false);
 	}
 
 	/**
 	 * 获取一个锁实例
+	 * 
 	 *
 	 * @param  string  $name
 	 * @return mixed
 	 */
 	public function lockStore($name='')
 	{
+		static $stores=array();
 		$name = $name ? $name : $this->getDefaultDriver();
-		return $this->get($name);
-	}
-
-	/**
-	 * 尝试获取锁的实例
-	 *
-	 * @param  string  $name
-	 * @return LockInterface
-	 */
-	protected function get($name)
-	{
-		return  $this->resolve($name);
+		if(!isset($stores[$name])){
+			$stores[$name]=$this->get($name);
+		}
+		return $stores[$name];
 	}
 
 	/**
@@ -45,11 +39,11 @@ class LockManager
 	 * @return LockInterface
 	 *
 	 */
-	protected function resolve($name)
+	protected function get($name)
 	{
 		$config = $this->getConfig($name);
 		$classType=$config['type'];
-		$classTypeName="\\Lock\\{$classType}";
+		$classTypeName="Lock\\{$classType}";
 		$filename = dirname(__FILE__) . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, $classType) . '.php';
         if(!class_exists($classTypeName)){
         	require($filename);
