@@ -115,6 +115,50 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 
 	}
+	//网站资金代还
+	public function do_site_repay(){
+		$result = array();
+		$result['code'] = 200;
+		$result['message'] = '测试';
+		$id = intval(Core::get('id',0));
+		if($id == 0) {
+			$result['message'] = '操作失败';
+			return @json_encode($result);
+		}
+		$lkey = intval(Core::get('l_key'));
+		if($lkey < 0 ) {
+			$result['message'] = '操作失败';
+			return @json_encode($result);
+		}
+		$loanBase = \Core::dao('loan_loanbase')->getloanbase($id,'id,user_id');
+		$loanBid = \Core::dao('loan_loanbid')->getOneLoanById($id,'loan_id,deal_status');
+		$loanExt = \Core::dao('loan_loanext')->getExtByLoanId($id);
+		if(!$loanBase || !$loanBid || !$loanExt){
+			$result['message'] = \Core::L('no_loan');
+			return @json_encode($result);
+		}
+
+		if($loanBid['deal_status'] != 4) {
+			$result['message'] = '借款不是还款状态！';
+			return @json_encode($result);
+		}
+
+		/*$no_repay_befor_lkey = \Core::dao('loan_dealrepay')->getCount(array('deal_id'=>$id,'has_repay'=>0,'l_key < '=>$lkey));
+		if($no_repay_befor_lkey > 0){
+			$result['message'] = '请先将往期的借款还完';
+			return @json_encode($result);
+		}*/
+		//TODO 网站代还款还款
+		$status = \Core::business('loan_loanenum')->siteRepay($id,$lkey,$loanBase['user_id']);
+		if($status['status'] == 1) {
+			$result['code'] = 200;
+			$result['message'] = $status['show_err'];
+			return @json_encode($result);
+		}else {
+			$result['message'] = $status['show_err'];
+			return @json_encode($result);
+		}
+	}
 	//投标详情
 	public function do_detail(){
 		$loan_id = \Core::get('loan_id',0);
@@ -825,13 +869,15 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 		$loadrepayDao = \Core::dao('loan_dealloadrepay');
 		$loanenumBusiness = \Core::business('loan_loanenum');
+		$dealRepayBusiness = \Core::business('sys_dealrepay');
 		foreach ($data as $v) {
 			$row = array();
 			$overdue_day = 0;
 			//判断是否逾期，计算应还金额等
 			//是否还款
-			$imposeInfo = \Core::business('sys_dealrepay')->repayPlanImpose($deal_id,$v['l_key']);
-
+			$imposeInfo = $dealRepayBusiness->repayPlanImpose($deal_id,$v['l_key']);
+			//是否网站代还
+			$is_site_repay = $loadrepayDao->findCol('is_site_repay',array('deal_id'=>$deal_id,'l_key'=>$v['l_key']));
 			if($v['has_repay'] == 1) {
 				//已还总额
 				$isrepay = $v['true_repay_money'] + $v['true_manage_money'] + $v['impose_money'] + $v['manage_impose_money'];
@@ -851,6 +897,24 @@ class  controller_loan_loan extends controller_sysBase {
 				$repaydate = date('Y-m-d H:i:s',$v['true_repay_time']);
 				$overdue_day = $imposeInfo['overday'];
 
+			}elseif($is_site_repay == 1) {
+				//已还总额
+				$isrepay = $v['true_repay_money'] + $v['true_manage_money'] + $v['impose_money'] + $v['manage_impose_money'];
+				//待还总额
+				$repay_all_money = $imposeInfo['need_repay_money'] + $v['manage_money'];
+				$need_repay_money = $imposeInfo['need_repay_money'];
+				//待还本息
+				$repay_money = $v['repay_money'];
+				//管理费
+				$manage_money = $v['true_manage_money'];
+				//逾期/违约金
+				$impose_money = $imposeInfo['impose_money'];
+				//逾期/违约金管理费
+				$manage_impose_money = $imposeInfo['manage_impose_money'];
+				//还款情况
+				$status = ($imposeInfo['status'] > 1)?($imposeInfo['status']+1):$imposeInfo['status'];
+				$repaydate = '';
+				$overdue_day = $imposeInfo['overday'];
 			}else {
 				//已还总额
 				$isrepay = '0.00';
@@ -879,7 +943,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$where['deal_id'] = $v['deal_id'];
 			$where['l_key'] = $v['l_key'];
 			if($loadrepayDao->getIsSiteRepay($where) == 0 && $v['has_repay'] == 0){
-				$opration.="<li><a href='javascript:site_repay(".$v['deal_id'].")'>网站资金代还款</a></li>";
+				$opration.="<li><a href='javascript:site_repay(".$v['deal_id'].",".$v['l_key'].")'>网站资金代还款</a></li>";
 			}
 			$opration.="<li><a href='javascript:repay_plan_export_load(".$v['deal_id'].",".$v['l_key'].")'>导出还款计划列表</a></li>";
 			$opration.="</ul></span>";
@@ -951,7 +1015,7 @@ class  controller_loan_loan extends controller_sysBase {
 			foreach ($data as $v) {
 				$row = array();
 				//TODO 1.未收到还款或借款用户未还款 2.已收到还款
-				if($v['has_repay'] == 0 || $realrepay == 0) {
+				if($v['has_repay'] == 0 ) {
 					$status = $v['status'];
 					$impose_money = 0;
 					$site_repay = "";
