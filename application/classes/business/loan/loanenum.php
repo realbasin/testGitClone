@@ -90,6 +90,19 @@ class  business_loan_loanenum extends Business {
 			}
 			return $usetype?\Core::arrayGet(\Core::arrayGet($useTypeList, $usetype,''),'name',''):$useTypeList;
 		}
+	
+		//资金源类型
+		public function enumDealFundType($fundtype='') {
+			$fundTypeList=\Core::cache()->get('deal_fund_type');
+			if(!$fundTypeList){
+				$dealFundTypeDao=\Core::dao('loan_dealfundtype');
+				$fundTypeList=$dealFundTypeDao->getAllDealFundType();
+				if($fundTypeList){
+					\Core::cache()->set('deal_fund_type',$fundTypeList);
+				}
+			}
+			return $fundtype?\Core::arrayGet(\Core::arrayGet($fundTypeList, $fundtype,''),'name',''):$fundTypeList;
+		}
 		
 		//贷款类型
 		public function enumDealLoanType($dealloantype=''){

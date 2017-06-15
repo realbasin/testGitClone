@@ -272,7 +272,12 @@
 
     //审核日志
     function loan_audit_log(id){
-        location.href='<?php echo adminUrl('loan_loan','audit_log');?>';
+        location.href='<?php echo adminUrl('loan_oplog','audit_log');?>'+'&loan_id='+id;
+    }
+
+    //审核操作
+    function loan_audit(id){
+        location.href='<?php echo adminUrl('loan_audit','true_publish_edit');?>&loan_id='+id;
     }
 
     $('#syshelp').on("click",function(){
@@ -282,6 +287,7 @@
         });
         d.show(this);
     });
+
 
 
 

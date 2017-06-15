@@ -20,4 +20,8 @@ class dao_loan_dealfundtype extends Dao {
 		return 'deal_fund_type';
 	}
 
+	public function getAllDealFundType(){
+		return $this->getDb()->select('*')->from($this->getTable())->where(array('is_effect'=>1))->execute()->key('fund_type')->rows();
+	}
+
 }

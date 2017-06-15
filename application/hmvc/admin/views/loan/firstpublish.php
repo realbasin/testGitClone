@@ -264,7 +264,7 @@
 
     //审核操作
     function loan_audit(id){
-        location.href='<?php echo adminUrl('loan_audit','first_publish_edit');?>&loan_id='+id;
+        location.href='<?php echo adminUrl('loan_audit','first_publish_edit',array('first_yn'=>1));?>&loan_id='+id;
     }
 
     //还款计划

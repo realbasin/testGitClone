@@ -31,7 +31,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('loan');?></span>
     <i class="arrow"></i>
-    <span><?php echo \Core::L('true_publish');?></span>
+    <span><?php echo \Core::L('my_publish');?></span>
 
 </div>
 <div class="line10"></div>
@@ -238,7 +238,7 @@
             ],
             sortname: "id",
             sortorder: "desc",
-            title: '<?php echo \Core::L('true_publish');?>'
+            title: '<?php echo \Core::L('my_publish');?>'
         });
 
         $('#submit').click(function(){
@@ -266,7 +266,7 @@
 
     //审核操作
     function loan_audit(id){
-        location.href='<?php echo adminUrl('loan_audit','first_publish_edit');?>&loan_id='+id;
+        location.href='<?php echo adminUrl('loan_audit','first_publish_edit',array('first_yn'=>2));?>&loan_id='+id;
     }
 
     //还款计划

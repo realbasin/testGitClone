@@ -21,8 +21,8 @@ class  business_loan_publish extends Business
                 $log_data[$k]['op_result'] = $op_result;
                 $log_data[$k]['id'] = $id;
             }
-            $loanoplog->updateBatch($log_data, 'id');
-            return;
+            $result = $loanoplog->updateBatch($log_data, 'id');
+            return $result;
         }
         if ($type == 1) {//初审操作修改
             $op_name = '初审操作';

@@ -47,7 +47,7 @@
             </div>
         </div>
     </div>
-    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update') ?>" enctype="multipart/form-data">
+    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn)) ?>" enctype="multipart/form-data">
         <input type="hidden" name="form_submit" value="ok" />
         <input type="hidden" name="loan_id" value="<?php echo $loanbase['id'];?>" />
         <input type="hidden" name="update_time" value="<?php echo $loanbase['update_time'];?>" />
@@ -317,14 +317,6 @@
                             <?php }?>
                         <?php }?>
                     </select>
-                </dd>
-            </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>借款状态</label>
-                </dt>
-                <dd class="opt">
-                    <?php echo (\Core::arrayGet($loanbase,'publish_wait') == 3)?'复审':'初审';?>
                 </dd>
             </dl>
             <!--<dl class="row">
