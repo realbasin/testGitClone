@@ -504,4 +504,28 @@ function addRabbitQueue($taskName,$taskArgs=array(),$hmvc=''){
 	//TODO 增加RabbitMQ队列
 
 }
+
+/**
+ * 获取post payload内容，同时把数据转为数组方式
+ * @return mixed
+ */
+function getRequestJSON(){
+    $content = file_get_contents('php://input');
+    return json_decode($content,true);
+}
+
+/**
+ * 兼容中文JSON编码
+ *
+ * @param string|array $var
+ * @return mixed
+ */
+function json_encode_cn($var)
+{
+    $var = json_encode($var);
+
+    return preg_replace_callback("/\\\u([0-9a-f]{4})/i", function ($r) {
+        return iconv('UCS-2BE', 'UTF-8', pack('H*', $r[1]));
+    }, $var);
+}
 ?>
