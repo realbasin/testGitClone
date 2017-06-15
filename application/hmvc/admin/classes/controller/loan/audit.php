@@ -962,6 +962,7 @@ class  controller_loan_audit extends controller_sysBase {
     {
         $loan_id = intval(\Core::post('loan_id'));
         $loanbaseDao = \Core::dao('loan_loanbase');
+        $loanbidDao = \Core::dao('loan_loanbid');
         $loan = $loanbaseDao->getloanbase($loan_id,'name,user_id,borrow_amount,type_id,update_time'); //获取更新前的数据
         $user_id = $loan['user_id'];
         $deal_loan_type_types = 0;  //贷款类型：0学生贷,1信用贷,2抵押贷,3普惠贷
@@ -1013,26 +1014,32 @@ class  controller_loan_audit extends controller_sysBase {
         //todo 事务
         $log_id = \Core::business('loan_publish')->updateDealOpLog($data,7);
         //更新数据
-        \Core::dao('loan_loanbase')->save($loanbase,$loan_id);
-        \Core::dao('loan_loanbid')->save($loanbid,$loan_id);
+        $loanbaseDao->save($loanbase,$loan_id);
+        $loanbidDao->save($loanbid,$loan_id);
         //todo 多人多窗口 操作提示
 
         $dealsatuslogBusiness = \Core::business('loan_dealstatuslog');
         if ($loanbase['publish_wait'] == 0) { //复审通过
             $dealsatuslogBusiness->saveDealStatusMsg($user_id,$loan_id,7);
+            //成功提示,触发自动投标
+            $loanBusiness=\Core::business('loan_loanenum');
+            $loanBusiness->synDealStatus($loan_id,true);
+            
             //todo 发送投标到期的检测队列
             //todo 推送产品id到希财网
-            //成功提示
-            //触发自动投标
+            //sys_deal_match 分词查询组件
+
+            
         } else {
             $dealsatuslogBusiness->saveDealStatusMsg($user_id,$loan_id,8);
         }
+        //保存日志
+        $this->saveLog("编号：" . $data['id'] . "，" . $loan['name'] . "复审更新成功", 1);
+        \Core::business('loan_publish')->updateDealOpLog($log_id,7,1);
+
+        $url = adminUrl('admin_audit','true_publish');
+        \Core::message('复审更新成功',$url,'suc',3,'message');
         
-
-
-
-
-
     }
 
 

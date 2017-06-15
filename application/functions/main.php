@@ -549,4 +549,16 @@ function json_encode_cn($var)
         return iconv('UCS-2BE', 'UTF-8', pack('H*', $r[1]));
     }, $var);
 }
+
+/**
+ * 获取指定时间戳过了指定月份之后的时间戳
+ *
+ * @param $time
+ * @param int $m
+ * @return mixed
+ */
+function next_replay_month($time,$m=1){
+	$str_t = strtotime(date($time,'Y-m-d H:i:s')." ".$m." month ");
+	return $str_t;
+}
 ?>

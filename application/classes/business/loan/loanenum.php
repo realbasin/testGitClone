@@ -685,7 +685,99 @@ class  business_loan_loanenum extends Business {
 		public function enumOverRepayTimes($user_id) {
 			return \Core::dao('loan_dealloadrepay')->getCount(array('user_id'=>$user_id,'status >'=>1));
 		}
-
 	
+		//检测并更正借款状态,触发自动投标，并发送提示信息
+		public function synDealStatus($loan_id,$is_autobid=true) {
+			$loanbidDao = \Core::dao('loan_loanbid');
+			$loanbaseDao = \Core::dao('loan_loanbase');
+			$dealloadDao = \Core::dao('loan_dealload');
+			$deals_time = time();
+			$loanbase_info = $loanbaseDao->getloanbase($loan_id,'borrow_amount,repay_time,repay_time_type,loantype');
+			$loanbid_info = $loanbidDao->getOneLoanById($loan_id,"load_money,deal_status,repay_start_time,success_time,is_autobid,(start_time+enddate*24*3600=".$deals_time.") as remain_time,(load_money/".$loanbase_info['borrow_amount']."*100) as progress_point");
+			if($loanbid_info['deal_status'] == 5) {
+				return true;
+			}
 
+			if($loanbid_info['deal_status'] != 3) {
+				if ($loanbid_info['progress_point'] < 100) {
+					$loanbid['load_money'] = $dealloadDao->getLoadMoneyByLoanId($loan_id);
+					$progress_point = $loanbid_info['progress_point'] = round($loanbid['loan_money'] / $loanbase_info['borrow_amount'] * 100,2);
+				}
+
+				if(($progress_point >= 100 || $loanbid_info['progress_point'] >= 100) && floatval($loanbid_info['load_money']) >= floatval($loanbase_info['borrow_amount'])) {
+					if(Core::dao('loan_dealinrepayrepay')->exists($loan_id)) {
+						$loanbid['deal_status'] = 5;
+						$loanbid['pay_off_status'] = 1;
+						$all_repay_money = \Core::dao('loan_dealloadrepay')->getAllRepayMoney($loan_id);
+						if ($all_repay_money) {
+							$loanbid['repay_money'] = round($all_repay_money,2);
+						}
+						$loanbid['last_repay_time'] = \Core::dao('loan_dealrepay')->getLastReapayTime($loan_id);
+					} elseif (($loanbid_info['deal_status'] == 4 && $loanbid_info['repay_start_time'] > 0) || ($loanbid_info['deal_status'] == 2 && $loanbid_info['repay_start_time'] > 0 && $loanbid_info['repay_start_time'] <= $deals_time)) { 
+						$all_repay_money = \Core::dao('loan_dealloadrepay')->getAllRepayMoney($loan_id);
+						if ($all_repay_money) {
+							$loanbid['repay_money'] = round($all_repay_money,2);
+							$last_repay_time = \Core::dao('loan_dealrepay')->getLastRepayTime($loan_id);
+							$loanbid['last_repay_time'] = $last_repay_time;
+							$loanbid['next_repay_time'] = next_replay_month($last_repay_time);
+						} elseif ($loanbid_info['deal_status'] == 4) {
+							if ($loanbase_info['repay_time_type'] == 0) {
+								$loanbid['next_repay_time'] = $loanbid_info['repay_start_time'] + $loanbase_info['repay_time'] * 24 *3600;
+							} else {
+								$is_last_repay = \Core::business('sys_dealrepay')->isLastRepay($loanbase_info['loantype']);
+								if ($is_last_repay) {
+									$loanbid['next_repay_time'] = next_replay_month($loanbid_info['repay_start_time'],$loanbase_info['repay_time']);
+								} else {
+									$loanbid['next_repay_time'] = next_replay_month($loanbid_info['repay_start_time']);
+								}
+							}
+						}
+						
+						//判断是否完成还款【投资用户回款完毕】
+						$dealrepayDao = \Core::dao('loan_dealrepaydao');
+						if($dealrepayDao->isAllRepay($loan_id)) {
+							$loanbid['deal_status'] = 5;
+							$loanbid['pay_off_status'] = 1;
+						} else {
+							$loanbid['deal_status'] = 4;
+						}
+					} else {
+						//获取最后一次投标记录
+						if ($loanbid_info['success_time'] == 0) {
+							$loanbid['success_time'] = $dealloadDao->getLastBidTime($loan_id);
+						}
+						$loanbid['deal_status'] = 2;
+					}
+				} elseif ($loanbid_info['remain_time'] <= 0 && $loanbid_info['deal_status'] == 1) {
+					//投标时间超出,更新为流标
+					$loanbid_info['deal_status'] = 1;
+					$loanbid_info['bad_time'] = time();
+				}
+			}
+			//投标人数及投标总额
+			$bid_info = $dealloadDao->getDealLoad('count(id) as buy_count,sum(money) as load_money',array('deal_id'=>$loan_id));
+			$loanbid['buy_count'] = $bid_info['buy_count'];
+			$loanbid['load_money'] = $bid_info['load_money'];
+			
+			//发送流标通知
+			if(($loanbid_info['deal_status'] == 3 || $loanbid['deal_status'] == 3) && $loanbid_info['is_send_bad_msg'] == 0) {
+				$loanbid['is_send_bad_msg'] = 1;
+				//todo 添加到动态
+				//todo 站内信
+			}
+
+			//更新数据
+			$loanbidDao->update($loanbid,$loan_id);
+
+			if(\Core::arrayGet($loanbid,'is_send_bad_msg') == 1) {
+				//todo 发邮件和短信
+			}
+
+			if($is_autobid && $loanbid_info['is_autobid']) {
+				//todo 触发自动投标
+			}
+
+			return $loanbid;
+			
+		}
 }

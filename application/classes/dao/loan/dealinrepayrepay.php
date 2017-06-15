@@ -25,5 +25,11 @@ class dao_loan_dealinrepayrepay extends Dao {
 	public function getTable() {
 		return 'deal_inrepay_repay';
 	}
+	
+	public function exists($loan_id)
+	{
+		$num =  $this->getDb()->select('COUNT(id) AS total')->from($this->getTable())->where(['deal_id'=>$loan_id])->execute()->value('total');
+		return $num > 0;
+	}
 
 }

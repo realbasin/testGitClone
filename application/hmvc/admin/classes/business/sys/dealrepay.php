@@ -383,4 +383,13 @@ class  business_sys_dealrepay extends Business {
 
 		return $return;
 	}
+	//根据还款方式判断是否最后才一期还款
+	public function isLastRepay($loantype) {
+		if($loantype == 2) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 }

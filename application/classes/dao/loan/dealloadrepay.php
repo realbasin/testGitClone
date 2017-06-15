@@ -197,4 +197,9 @@ class dao_loan_dealloadrepay extends Dao {
 		$where['has_repay'] = 0;
 		return $this->getCount($where);
 	}
+	
+	//获取某个标已回款金额
+	public function getAllReapyMoney($loan_id) {
+		return $this->getDb()->select('sum(true_repay_money) as all_repay_money')->from($this->getTable())->where(array('deal_id'=>$loan_id,'has_repay'=>1))->execute()->value('all_repay_money');
+	}
 }
