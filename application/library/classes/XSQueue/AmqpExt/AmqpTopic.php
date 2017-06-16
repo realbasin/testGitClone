@@ -18,7 +18,7 @@ class AmqpTopic implements Topic
 
         $this->type = AMQP_EX_TYPE_DIRECT;
         $this->flags = AMQP_NOPARAM;
-        $this->arguments = [];
+        $this->arguments = array();
     }
 
     public function getTopicName()
