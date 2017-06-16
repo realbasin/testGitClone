@@ -9,6 +9,7 @@ $menu = array(
 				'list' => array(
 					array('link'=>'dashboard,index','text'=>$lang['dashboard']),
 					array('link'=>'dashboard,locktest','text'=>'锁测试'),
+					array('link'=>'dashboard,queuetest','text'=>'队列测试'),
 				)
 			),
 			1 => array(

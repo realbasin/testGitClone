@@ -505,6 +505,27 @@ function addRabbitQueue($taskName,$taskArgs=array(),$hmvc=''){
 
 }
 
+function strim($str)
+{
+	return quotes(htmlspecialchars(trim($str)));
+}
+
+function quotes($content)
+{
+	//if $content is an array
+	if (is_array($content)) {
+		foreach ($content as $key => $value) {
+			//$content[$key] = mysql_real_escape_string($value);
+			$content[$key] = addslashes($value);
+		}
+	} else {
+		//if $content is not an array
+		$content = addslashes($content);
+		//mysql_real_escape_string($content);
+	}
+	return $content;
+}
+
 /**
  * 获取post payload内容，同时把数据转为数组方式
  * @return mixed
@@ -528,4 +549,73 @@ function json_encode_cn($var)
         return iconv('UCS-2BE', 'UTF-8', pack('H*', $r[1]));
     }, $var);
 }
-?>
+
+/**
+ * 获取指定时间戳过了指定月份之后的时间戳
+ *
+ * @param $time
+ * @param int $m
+ * @return mixed
+ */
+function next_replay_month($time,$m=1){
+	$str_t = strtotime(date($time,'Y-m-d H:i:s')." ".$m." month ");
+	return $str_t;
+}
+
+/**
+ * curl post方式请求
+ * @param $url
+ * @param $data
+ * @param array $headers
+ * @return mixed
+ */
+function curl_post($url, $data, $headers = [])
+{
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $url);
+    curl_setopt($curl, CURLOPT_HEADER, 0);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    if (!empty($headers)) {
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+    }
+
+    if (!empty($data) && count($data) > 0) {
+        $tmp = [];
+        foreach ($data as $k => $v) {
+            $tmp[] = "{$k}=" . urlencode($v);
+        }
+
+        $data_str = implode('&', $tmp);
+
+        curl_setopt($curl, CURLOPT_POST, 1);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data_str);
+    }
+
+    $http_response = curl_exec($curl);
+    curl_close($curl);
+
+    return $http_response;
+}
+
+/**
+ * 获取xssd_conf的配置
+ * @param $key string
+ * @param string $type type=value获取value的值,否则获取一行数据
+ * @return string|array
+ */
+function getXSConf($key , $type='value'){
+    $conf = \Core::cache() -> get('xssd_conf');
+    if($conf == null){
+        $conf = \Core::db() -> select('*') -> from('conf') -> execute() -> key('name') -> rows();
+        \Core::cache() -> set('xssd_conf', $conf);
+    }
+
+    if (\Core::arrayKeyExists($key, $conf)) {
+        if($type == 'value'){
+            return $conf[$key]['value'];
+        }else{
+            return $conf[$key];
+        }
+    }
+    return '';
+}

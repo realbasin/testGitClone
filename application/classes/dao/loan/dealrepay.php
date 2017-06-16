@@ -124,4 +124,20 @@ class dao_loan_dealrepay extends Dao {
 		$where['deal_id'] = $deal_id;
 		return $this->getDb()->select($field)->from($this->getTable())->where($where)->orderBy('l_key','asc')->execute()->key('l_key')->rows();
 	}
+	
+	//获取最后一次还款的时间
+	public function getLastRepayTime($loan_id) {
+		return $this->getDb()->select('max(repay_time) as last_repay_time')->from($this->getTable())->where(array('has_repay'=>1,'deal_id'=>$loan_id))->execute()->value('last_repay_time');
+	}
+
+	//是否全部还款
+	public function isAllRepay($loan_id) {
+		$where['deal_id'] = $loan_id;
+		$where['has_repay <>'] = 1;
+		if ($this->getCount($where) > 0) {
+			return false;
+		} else {
+			return true;
+		}
+	} 
 }

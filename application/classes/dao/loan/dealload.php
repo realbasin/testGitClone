@@ -96,5 +96,22 @@ class dao_loan_dealload extends Dao {
 	public function getList($where,$fields){
 		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->rows();
 	}
+
+	//获取某个标已投标总额
+	public function getLoadMoneyByLoanId($loan_id) {
+		return $this->getDb()->select('sum(money) as load_money')->from($this->getTale())->where(array('deal_id'=>$loan_id))->execute()->value('load_money');
+	}
+
+	//获取最后一次投标时间
+	public function getLastBidTime($loan_id) {
+		return $this->getDb()->select('max(create_time) as last_bid_time')->from($this->getTable())->where(array('deal_id'=>$loan_id))->execute()->value('last_big_time');
+	}
+	
+	//获取投标数据
+	public function getDealLoad($fields,$where) {
+		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->row();
+	}
+
+
 	
 }

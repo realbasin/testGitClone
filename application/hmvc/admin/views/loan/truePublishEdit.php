@@ -6,21 +6,28 @@
     <meta http-equiv="Content-Type" content="text/html; charset=<?php echo \Base::getConfig()->getLanguageCharset()?>" />
     <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,initial-scale=1.0,user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title><?php echo \Core::L('upload_setting');?></title>
+    <title></title>
     <link href="<?php echo RS_PATH?>artdialog/ui-dialog.css" rel="stylesheet" type="text/css" />
-    <link href="<?php echo RS_PATH?>admin/css/style.css" rel="stylesheet" type="text/css" />
-    <link href="<?php echo RS_PATH?>switchery/switchery.min.css" rel="stylesheet" type="text/css" />
-    <link href="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?php echo RS_PATH?>admin/css/style.css?v=201705041329" rel="stylesheet" type="text/css" />
+    <link href="<?php echo RS_PATH?>admin/css/flexigrid.css?v=201705031531" rel="stylesheet" type="text/css" />
+    <link href="<?php echo RS_PATH?>css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.css" rel="stylesheet" type="text/css" />
+    <link href="<?php echo RS_PATH?>jquery/jquery.daterangepicker.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/language_<?php echo strtolower(\Base::getConfig()->getLanguageTypeDirName());?>.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery-1.8.3.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.nicescroll.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/perfect-scrollbar.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>artdialog/dialog-plus-min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>moment.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.daterangepicker.js"></script>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/laymain.js"></script>
-    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>switchery/switchery.min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js"></script>
-    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/Validform_v5.3.2_min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>jquery/jquery.autocomplete.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/common.js?v=201705041335"></script>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>admin/js/flexigrid.js"></script>
     <!--[if lt IE 9]>
     <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5.js"></script>
+    <![endif]-->
+    <!--[if IE]>
+    <script type="text/javascript" charset="utf-8" src="<?php echo RS_PATH?>html5shiv.min.js"></script>
     <![endif]-->
 
 </head>
@@ -30,7 +37,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('audit');?></span>
     <i class="arrow"></i>
-    <span><a href="<?php echo adminUrl('loan_audit','index');?>"><?php echo \Core::L('first_publish');?></a></span>
+    <span><a href="<?php echo adminUrl('loan_audit','index');?>"><?php echo \Core::L('true_publish');?></a></span>
     <i class="arrow"></i>
     <span><?php echo $loanbase['name'];?></span>
 </div>
@@ -383,97 +390,63 @@
                     </select>
                 </dd>
             </dl>
-            <dl class="row">
-                <dt class="tit">
-                    <label>借款状态</label>
-                </dt>
-                <dd class="opt">
-                    <?php echo (\Core::arrayGet($loanbid,'publish_wait') == 3)?'复审':'初审';?>
-                </dd>
-            </dl>
-            <dl class="row">
+            <?php if($is_autobid_type == 1){ ?>
+                <?php
+                echo '<dl class="row">
+                    <dt class="tit">自动投标:</dt>
+                    <dd class="pot require_radio">
+                        <label><input type="radio" name="is_autobid" value="1" checked="checked"> 是</label>
+                        <label><input type="radio" name="is_autobid" value="0"> 否</label>
+                    </dd>
+                </dl>';
+                ?>
+            <?php }?>
+            <!--<dl class="row">
                 <dt class="tit">
                     <label>排序</label>
                 </dt>
                 <dd class="opt">
                     <input type="text" name="sort" id="sort" style="width: 80px;"  value="0">
                 </dd>
-            </dl>
-            <dl class="row">
+            </dl>-->
+            <dl class="row" id="publish_status">
                 <dt class="tit">
                     <label>审核状态</label>
                 </dt>
                 <dd class="opt">
-                    <label>审核失败<input type="radio" name="is_delete" value="3" /> </label>
-                    <label>审核成功<input type="radio" name="deal_status" value="1" /> </label>
+                    <label><input type="radio" name="publish" value="0"> 审核通过</label>
+                    <label><input type="radio" name="publish" value="3"> 回退初审</label>
                 </dd>
             </dl>
-            <dl class="row" id="delele_msg_box" style="display:none">
-                <dt class="tit">
-                    <label>短信回复:</label>
-                </dt>
+            <dl class="row" id="fund_type" style="display:none;">
+                <dt class="tit">资金源类型:</dt>
                 <dd class="opt">
-                    <select name="delete_msg">
-                        <option value="综合评分不足">综合评分不足</option>
-                        <option value="资料不完备">资料不完备</option>
-                        <option value="暂不支持成人高等教育">暂不支持成人高等教育</option>
-                        <option value="借款意愿变更">借款意愿变更</option>
+                    <select name="fund_type">
+                    <option value="-1">==选择资金源==</option>
+                        <?php if($deal_fund_types){?>
+                            <?php foreach($deal_fund_types as $k=>$v){?>
+                                <?php if($k == \Core::arrayGet($loanbid,'fund_type')) {?>
+                                    <?php echo "<option value='".$k."' selected='selected'>".$v['type_name']."</option>";?>
+                                <?php }?>
+                                <?php echo "<option value='".$k."'>".$v['type_name']."</option>";?>
+                            <?php }?>
+                        <?php }?>
                     </select>
                 </dd>
             </dl>
-            <dl class="row" id="delete_real_msg_box" style="display:none">
-                <dt class="tit">
-                    <label>真实原因:</label>
-                </dt>
+            <dl id="start_time_box" style="display:none">
+            <dt class="item_title">开始时间:</dt>
+            <dd class="item_input">
+                <span id="daterange">
+                <input type="text" class="s-input-txt" id="start_time" name="start_time" />
+                如有同步：时间只能是当天或者前一天
+                </span>
+            </dd>
+            </dl>
+            <dl class="row" id="publish_msg_box" style="display:none">
+                <dt class="tit">失败原因:</dt>
                 <dd class="opt">
-                    <select name="delete_real_msg">
-                        <option value="">请选择</option>
-                        <option value="学籍与产品不符">学籍与产品不符</option>
-                        <option value="已毕业">已毕业</option>
-                        <option value="偿还能力不足">偿还能力不足</option>
-                        <option value="成人教育">成人教育</option>
-                        <option value="网络教育">网络教育</option>
-                        <option value="待审核">待审核</option>
-                        <option value="当前逾期">当前逾期</option>
-                        <option value="电话审核失败">电话审核失败</option>
-                        <option value="风险客户">风险客户</option>
-                        <option value="网贷黑名单">网贷黑名单</option>
-                        <option value="小树黑名单">小树黑名单</option>
-                        <option value="客户不需要">客户不需要</option>
-                        <option value="没接电话">没接电话</option>
-                        <option value="没有学信网">没有学信网</option>
-                        <option value="偏远地区">偏远地区</option>
-                        <option value="已实习">已实习</option>
-                        <option value="视频审核失败">视频审核失败</option>
-                        <option value="资料虚假">资料虚假</option>
-                        <option value="学信网没有照片">学信网没有照片</option>
-                        <option value="资料不齐全">资料不齐全</option>
-                        <option value="用户不需要">用户不需要</option>
-                        <option value="客户不配合">客户不配合</option>
-                        <option value="客户态度不好">客户态度不好</option>
-                        <option value="严重逾期">严重逾期</option>
-                        <option value="风险分数过高">风险分数过高</option>
-                        <option value="学籍不符">学籍不符</option>
-                        <option value="休学">休学</option>
-                        <option value="借贷平台较多">借贷平台较多</option>
-                        <option value="负债高">负债高</option>
-                        <option value="客户不提供其他平台账号密码">客户不提供其他平台账号密码</option>
-                        <option value="没有身份证">没有身份证</option>
-                        <option value="没有服务密码">没有服务密码</option>
-                        <option value="芝麻信用分低于550">芝麻信用分低于550</option>
-                        <option value="没有还款记录">没有还款记录</option>
-                        <option value="入学年份不符">入学年份不符</option>
-                        <option value="未满18岁">未满18岁</option>
-                        <option value="资料审核失败">资料审核失败</option>
-                        <option value="资料不全">资料不全</option>
-                        <option value="通话记录不足3个月">通话记录不足3个月</option>
-                        <option value="手机号码非实名制">手机号码非实名制</option>
-                        <option value="3个月内申请平台超过16家">3个月内申请平台超过16家</option>
-                        <option value="联系人电话审核失败">联系人电话审核失败</option>
-                        <option value="优才贷">优才贷</option>
-                        <option value="毕业年份不符">毕业年份不符</option>
-                        <option value="工作单位审核失败">工作单位审核失败</option>
-                    </select>
+                    <textarea name="publish_msg" rows="5" cols="80"><?php echo $loanbase['publish_memo']?></textarea>
                 </dd>
             </dl>
         </div>
@@ -666,6 +639,17 @@
         }
         $("#"+type).append(str);
     }
+
+    //删除认证资料内的图片
+    $('.keimg_d').click(function() {
+        var str = $(this).attr('rel');
+        var nm = str.replace('img', 'name');
+        $("#" + nm).parent().next().remove();
+        $("#" + nm).parent().remove();
+        $("#keimg_a_" + str).parent().next().remove();
+        $("#keimg_a_" + str).parent().remove();
+    });
+    
     $('input[name=is_delete]').click(function() {
         var no_region = $("#no_region");
         if (no_region.length > 0) {
@@ -690,6 +674,18 @@
         deal_status_click();
         return true;
     });
+    $("input[name='publish']").live("click",function(){
+        if($(this).val()=="3"){
+            $("#publish_msg_box").show();
+            $("#fund_type").hide();
+            $("#start_time_box").hide();
+        }
+        else{
+            $("#publish_msg_box").hide();
+            $("#fund_type").show();
+            $("#start_time_box").show();
+        }
+    });
 
 
     function deal_status_click(obj){
@@ -705,6 +701,38 @@
                 break;
         }
     };
+
+    $('#daterange').dateRangePicker({
+        singleDate : true,
+        timePicker : true, //是否显示小时和分钟
+        timePicker12Hour : false, //是否使用12小时制来显示时间
+        timePickerIncrement : 10,
+        format : 'YYYY-MM-DD HH:mm:ss',
+        time: {
+            enabled: true
+        },
+        getValue: function()
+        {
+            if ($('#start_time').val())
+                return $('#start_time').val();
+            else
+                return '';
+        },
+        setValue: function(s,s1)
+        {
+            $('#start_time').val(s1);
+        }
+    });
+    $('#syshelp').on("click",function(){
+        var d = dialog({
+            content: "<?php echo \Core::L('loan_all_help');?>",
+            quickClose: true
+        });
+        d.show(this);
+    });
+    $(".date-picker-wrapper").css('z-index',999);
+
+
 
 </script>
 </body>

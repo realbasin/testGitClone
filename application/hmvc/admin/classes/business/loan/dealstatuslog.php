@@ -26,15 +26,9 @@ class  business_loan_dealstatuslog extends Business {
             'deal_id' => $deal_id,
             'user_id' => $user_id,
             'type' => $type,
-            'create_time' => TIME_UTC,
+            'create_time' => time(),
         );
-        if ($this->insert($data)) {
-            $result['status'] = 1;
-            $result['show_err'] = "保存成功";
-        } else {
-            $result['status'] = 0;
-            $result['show_err'] = "保存是失败";
-        }
-        return $result;
+        $deal_status_log_id = \Core::dao('loan_dealstatuslog')->insert($data);
+        return $deal_status_log_id;
     }
 }

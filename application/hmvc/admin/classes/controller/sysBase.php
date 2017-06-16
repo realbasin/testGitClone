@@ -106,7 +106,7 @@ class  controller_sysBase extends Controller {
 	protected final function saveLog($msg,$status)
 	{
 		if (!C('sys_log') || !is_string($msg))
-			return;
+			return true;
 		$route = \Base::getConfig() -> getRoute();
 		$controller = $route -> getControllerShort();
 		$method = $route -> getMethodShort();
@@ -118,7 +118,7 @@ class  controller_sysBase extends Controller {
 		$log_data['log_status'] = $status;
 		$log_data['module']	=	$controller;
 		$log_data['action'] = 	$method;
-		return \Core::dao('sys_log')->insert($log_data);
+		return \Core::dao('sys_log')->insert($log_data,false);
 	}
 	
 	protected final function createTaps($links = array(), $actived = '') {
