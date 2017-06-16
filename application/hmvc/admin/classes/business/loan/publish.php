@@ -172,11 +172,52 @@ class  business_loan_publish extends Business
         return $log_ids;
     }
 
-
-    public function true_publish_update()
+    public function getDealLoanTypeList($user_level_id)
     {
 
+        $now_time = time();
+        $field_string = "t.id,t.name,t.is_use_ecv,t.is_referral_award,e.guarantees_amt,e.manage_fee,e.user_loan_manage_fee,e.manage_impose_fee_day1,e.manage_impose_fee_day2,e.impose_fee_day1,e.impose_fee_day2,e.user_load_transfer_fee,e.compensate_fee,e.user_bid_rebate,e.generation_position,l.services_fee,l.repaytime";
+        $where = "t.is_delete=0 AND t.is_effect=1 AND t.is_extend_effect=1 AND t.is_user_level_effect=1 AND e.start_time<=" . $now_time . " AND e.end_time>=" . $now_time . " AND l.user_level_id=" . $user_level_id;
+        $sql = "SELECT " . $field_string . " FROM _tablePrefix_deal_loan_type t INNER JOIN _tablePrefix_deal_loan_type_extern e ON t.id=e.loan_type_id INNER JOIN _tablePrefix_deal_loan_type_user_level l ON t.id=l.loan_type_id
+WHERE " . $where;
+        $all_loan_type_list = \Core::db()->execute($sql)->rows();
 
+        $deal_loan_type_list = $user_level_list = array();
+
+        if (!empty($all_loan_type_list)) {
+            foreach ($all_loan_type_list as $key => $loan_type) {
+                $repay_time_list = explode("\n", $loan_type['repaytime']);
+                $key_arr = array();
+                foreach ($repay_time_list as $kk => $vv) {
+                    if (explode("|", $vv)) {
+                        $level_list = explode("|", str_replace("\r", "", $vv));
+                        //以月份为键
+                        $m = $level_list[0];
+
+                        //月份组成一个数组
+                        $key_arr[] = $m;
+
+                        //以月份为键，组成新数组
+                        $user_level_list[$m] = $level_list;
+
+                        //按月份大小排序
+                        ksort($user_level_list);
+                    }
+                }
+
+                $new_key = $loan_type['id'];
+                $deal_loan_type_list[$new_key] = $loan_type;
+
+                //取出最小月份
+                $deal_loan_type_list[$new_key]['min_month'] = min($key_arr);
+
+                $deal_loan_type_list[$new_key]['user_level_list'] = $user_level_list;
+
+                //删掉内容，避免将无用的数据添加到别的贷款类型去
+                unset($user_level_list);
+            }
+        }
+        return $deal_loan_type_list;
     }
 
 }

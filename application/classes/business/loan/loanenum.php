@@ -1067,7 +1067,10 @@ class  business_loan_loanenum extends Business {
 			}
 
 			//更新数据
-			$loanbidDao->update($loanbid,$loan_id);
+			$result = $loanbidDao->update($loanbid,$loan_id);
+			if(!$result) {
+				return false;
+			}
 
 			if(\Core::arrayGet($loanbid,'is_send_bad_msg') == 1) {
 				//todo 发邮件和短信
