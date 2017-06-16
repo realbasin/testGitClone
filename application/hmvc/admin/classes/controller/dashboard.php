@@ -51,108 +51,194 @@ class  controller_dashboard extends controller_sysBase {
 	
 	//工作队列，就是1个队列，多个消费者
 	public function do_queuetest_task(){
-		static $amqpContext=null;
-		if(!$amqpContext){
-			//初始化相关
-			$amqp=\Core::library('XSQueue/QueueManager');
-			$amqpConn=$amqp->queue();
-			$amqpContext=$amqpConn->createContext();
-		}
-		//声明工作队列
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
+		$workTopic = $amqpContext->createTopic('test.amqp.work');
+		$workTopic->addFlag(AMQP_DURABLE);//持久化
+		$workTopic->setType(AMQP_EX_TYPE_DIRECT);//直连
+		//$amqpContext->deleteTopic($workTopic);
+		$amqpContext->declareTopic($workTopic);
 		$workQueue = $amqpContext->createQueue('test.work');
 		$workQueue->addFlag(AMQP_DURABLE);
-		$amqpContext->deleteQueue($workQueue);
+		//$amqpContext->deleteQueue($workQueue);
 		$amqpContext->declareQueue($workQueue);
+		$amqpContext->bind($workTopic, $workQueue);
+		//声明工作队列
 		$producer=$amqpContext->createProducer();
 		//发送10条信息
 		$i=0;
 		for($i=0;$i<10;$i++){
 			$message = $amqpContext->createMessage("work{$i}");
-			$producer->send($amqpContext, $message);
+			$producer->send($workQueue, $message);
 			echo "send work{$i}<br>";
 		}
+		$amqpContext->close();
 	}
 	
 	//工作队列接收A
 	public function do_queuetest_task_A(){
-		static $consumer=null;
-		if(!$consumer){
-			//初始化相关
-			$amqp=\Core::library('XSQueue/QueueManager');
-			$amqpConn=$amqp->queue();
-			$amqpContext=$amqpConn->createContext();
-			$queue = $amqpContext->createQueue('test.work');
-			$consumer = $amqpContext->createConsumer($queue);
-		}
-		
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
+		$queue = $amqpContext->createQueue('test.work');
+		$consumer = $amqpContext->createConsumer($queue);
 		$m = $consumer->receive(1);
 		if($m){
 			$consumer->acknowledge($m);
 			echo "receive ".$m->getBody();
+		}else{
+			echo "no data yet";
 		}
+		$amqpContext->close();
 	}
 	
 	//工作队列接收B
 	public function do_queuetest_task_B(){
-		static $consumer=null;
-		if(!$consumer){
-			//初始化相关
-			$amqp=\Core::library('XSQueue/QueueManager');
-			$amqpConn=$amqp->queue();
-			$amqpContext=$amqpConn->createContext();
-			$queue = $amqpContext->createQueue('test.work');
-			$consumer = $amqpContext->createConsumer($queue);
-		}
-		
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
+		$queue = $amqpContext->createQueue('test.work');
+		$consumer = $amqpContext->createConsumer($queue);
 		$m = $consumer->receive(1);
 		if($m){
 			$consumer->acknowledge($m);
 			echo "receive ".$m->getBody();
+		}else{
+			echo "no data yet";
 		}
+		$amqpContext->close();
 	}
 	
 	//消息队列
 	public function do_queuetest_direct(){
-		static $amqpContext=null;
-		if(!$amqpContext){
-			//初始化相关
-			$amqp=\Core::library('XSQueue/QueueManager');
-			$amqpConn=$amqp->queue();
-			$amqpContext=$amqpConn->createContext();
-		}
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
 		$workTopic = $amqpContext->createTopic('test.amqp.work');
 		$workTopic->addFlag(AMQP_DURABLE);//持久化
 		$workTopic->setType(AMQP_EX_TYPE_DIRECT);//直连
-		$amqpContext->deleteTopic($workTopic);
 		$amqpContext->declareTopic($workTopic);
-		$workQueue = $amqpContext->createQueue('test.work');
-		$workQueue->addFlag(AMQP_DURABLE);
-		$amqpContext->deleteQueue($workQueue);
-		$amqpContext->declareQueue($workQueue);
-		$amqpContext->bind($workTopic, $workQueue);
+		$workQueueA = $amqpContext->createQueue('test.work.A');
+		$workQueueA->addFlag(AMQP_DURABLE);
+		$amqpContext->declareQueue($workQueueA);
+		$amqpContext->bind($workTopic, $workQueueA);
+		$workQueueB = $amqpContext->createQueue('test.work.B');
+		$workQueueB->addFlag(AMQP_DURABLE);
+		$amqpContext->declareQueue($workQueueB);
+		$amqpContext->bind($workTopic, $workQueueB);
+		//声明工作队列
+		$producer=$amqpContext->createProducer();
+		//发送10条信息
+		$i=0;
+		for($i=0;$i<10;$i++){
+			$messageA = $amqpContext->createMessage("directA{$i}");
+			$messageB = $amqpContext->createMessage("directB{$i}");
+			$producer->send($workQueueA, $messageA);
+			$producer->send($workQueueB, $messageB);
+			echo "send directA{$i}<br>";
+			echo "send directB{$i}<br>";
+		}
+		$amqpContext->close();
+	}
+
+	public function do_queuetest_direct_A(){
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
+		$queue = $amqpContext->createQueue('test.work.A');
+		$consumer = $amqpContext->createConsumer($queue);
+		$m = $consumer->receive(1);
+		if($m){
+			$consumer->acknowledge($m);
+			echo "receive ".$m->getBody();
+		}else{
+			echo "no data yet";
+		}
+		$amqpContext->close();
+	}
+	
+	public function do_queuetest_direct_B(){
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
+		$queue = $amqpContext->createQueue('test.work.B');
+		$consumer = $amqpContext->createConsumer($queue);
+		$m = $consumer->receive(1);
+		if($m){
+			$consumer->acknowledge($m);
+			echo "receive ".$m->getBody();
+		}else{
+			echo "no data yet";
+		}
+		$amqpContext->close();
 	}
 	
 	//广播
 	public function do_queuetest_boardcast(){
-		static $amqpContext=null;
-		if(!$amqpContext){
-			//初始化相关
-			$amqp=\Core::library('XSQueue/QueueManager');
-			$amqpConn=$amqp->queue();
-			$amqpContext=$amqpConn->createContext();
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
+		$workTopic = $amqpContext->createTopic('test.boardcast');
+		$workTopic->addFlag(AMQP_DURABLE);//持久化
+		$workTopic->setType(AMQP_EX_TYPE_FANOUT);//广播
+		$amqpContext->declareTopic($workTopic);
+		//声明2个空队列
+		$workQueueA = $amqpContext->createQueue('test.boardcast.A');
+		$workQueueA->addFlag(AMQP_DURABLE);
+		$amqpContext->declareQueue($workQueueA);
+		$amqpContext->bind($workTopic, $workQueueA);
+		$workQueueB = $amqpContext->createQueue('test.boardcast.B');
+		$workQueueB->addFlag(AMQP_DURABLE);
+		$amqpContext->declareQueue($workQueueB);
+		$amqpContext->bind($workTopic, $workQueueB);
+		
+		
+		//声明队列
+		$producer=$amqpContext->createProducer();
+		//发送10条广播信息
+		$i=0;
+		for($i=0;$i<10;$i++){
+			$message = $amqpContext->createMessage("boardcast{$i}");
+			$producer->send($workTopic, $message);
+			echo "send boardcast{$i}<br>";
 		}
+		$amqpContext->close();
 	}
 	
-	//topic
-	public function do_queuetest_topic(){
-		static $amqpContext=null;
-		if(!$amqpContext){
-			//初始化相关
-			$amqp=\Core::library('XSQueue/QueueManager');
-			$amqpConn=$amqp->queue();
-			$amqpContext=$amqpConn->createContext();
+	public function do_queuetest_boardcast_A(){
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
+		$queue = $amqpContext->createQueue('test.boardcast.A');
+		$consumer = $amqpContext->createConsumer($queue);
+		$m = $consumer->receive(1);
+		if($m){
+			$consumer->acknowledge($m);
+			echo "receive ".$m->getBody();
+		}else{
+			echo "no data yet";
 		}
+		$amqpContext->close();
 	}
+	
+	public function do_queuetest_boardcast_B(){
+		$amqp=\Core::library('XSQueue/QueueManager');
+		$amqpConn=$amqp->queue();
+		$amqpContext=$amqpConn->createContext();
+		$queue = $amqpContext->createQueue('test.boardcast.B');
+		$consumer = $amqpContext->createConsumer($queue);
+		$m = $consumer->receive(1);
+		if($m){
+			$consumer->acknowledge($m);
+			echo "receive ".$m->getBody();
+		}else{
+			echo "no data yet";
+		}
+		$amqpContext->close();
+	}
+	
+	
 	
 }
 ?>
