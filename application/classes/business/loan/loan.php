@@ -5,7 +5,7 @@ class  business_loan_loan extends Business {
 		
 	}
 	//TODO 发送放款成功短信邮件(修改通过传入模板名称，选取发送内容，可改为通用发送邮件短信方法)
-	public function sendDealSuccessMessage($loan_id,$template_name){
+	public function sendDealSuccessMessage($loan_id,$template_name=''){
 		if(intval($loan_id) == 0) {
 			return false;
 		}
@@ -24,16 +24,16 @@ class  business_loan_loan extends Business {
 		$is_send_success_msg = $loanBidDao->findCol('is_send_success_msg',array('loan_id'=>$loan_id));
 		$bad_msg = $loanBidDao->findCol('bad_msg',array('loan_id'=>$loan_id));
 		if(intval($is_send_success_msg) == 1) return false;
-		$user_info = $userDao->getUserInfo('user_name,mobile,email',array('id'=>$loan_base_info['user_id']));
+		$user_info = $userDao->getUserInfo('user_name,mobile,email',array('id'=>$loan_base_info['user_id']))->row();
 		//模板信息
 		$notice['user_name'] = $user_info['user_name'];
 		$notice['deal_name'] = $loan_base_info['name'];
 		$notice['deal_publish_time'] = date("Y年m月d日",$loan_base_info['create_time']);
-		$notice['site_name'] = C("SHOP_TITLE");
-		$notice['site_url'] = SITE_DOMAIN . APP_ROOT;
-		$notice['send_deal_url'] = SITE_DOMAIN . url("index", "borrow");
-		$notice['help_url'] = SITE_DOMAIN . url("index", "helpcenter");
-		$notice['msg_cof_setting_url'] = SITE_DOMAIN . url("index", "uc_msg#setting");
+		//$notice['site_name'] = C("SHOP_TITLE");
+		//$notice['site_url'] = SITE_DOMAIN . APP_ROOT;
+		//$notice['send_deal_url'] = SITE_DOMAIN . url("index", "borrow");
+		//$notice['help_url'] = SITE_DOMAIN . url("index", "helpcenter");
+		//$notice['msg_cof_setting_url'] = SITE_DOMAIN . url("index", "uc_msg#setting");
 		$notice['bad_msg'] = $bad_msg;
 		//发送数据
 		$msg_data['send_type'] = 1;
@@ -41,7 +41,7 @@ class  business_loan_loan extends Business {
 		$msg_data['send_time'] = 0;
 		$msg_data['is_send'] = 0;
 		$msg_data['create_time'] = $time;
-		$msg_data['user_id'] = $loan_base_info['id'];
+		$msg_data['user_id'] = $loan_base_info['user_id'];
 		$dealMsgListDao = \Core::dao('msg_dealmsglist');
 		//获取短信和邮件模板
 		if(C('MAIL_ON') == 1) {
@@ -49,12 +49,12 @@ class  business_loan_loan extends Business {
 			//模板内容
 			$msg = '【小树时代测试】<p>尊敬的用户'.$user_info['user_name'].'：&nbsp; </p>';
 			$msg .= '<p>很高兴的通知您，您于'.$notice['deal_publish_time'].'发布的借款“'.$loan_base_info['name'].'”满标，您的本次借款行为成功。&nbsp;</p><br><br>';
-			$msg .= '<p>点击 <a href="{$notice.send_deal_url}">这里</a>查看您所发布借款。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>点击 <a href="">这里</a>查看您所发布借款。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
 			$msg .= '<p>感谢您对我们的支持与关注。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
-			$msg .= '<p>{$notice.site_name}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>小树时代测试&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
 			$msg .= '<p>注：此邮件由系统自动发送，请勿回复！&nbsp; </p>';
-			$msg .= '<p>如果您有任何疑问，请您查看 <a href="{$notice.help_url}" target="_blank">帮助</a>，或访问 <a href="{$notice.site_url}" target="_blank">客服中心</a></p>';
-			$msg .= '<p>如果您觉得收到过多邮件，可以点击 <a href="{$notice.msg_cof_setting_url}" target="_blank">这里</a>进行设置&nbsp; </p>';
+			$msg .= '<p>如果您有任何疑问，请您查看 <a href="" target="_blank">帮助</a>，或访问 <a href="" target="_blank">客服中心</a></p>';
+			$msg .= '<p>如果您觉得收到过多邮件，可以点击 <a href="" target="_blank">这里</a>进行设置&nbsp; </p>';
 			$msg_data['content'] = addslashes($msg);
 			$msg_data['is_html'] = $tmpl['is_html'];
 			$msg_data['dest'] = $user_info['email'];
@@ -75,7 +75,7 @@ class  business_loan_loan extends Business {
 			foreach ($load_user_list as $v){
 				//获取个人邮件设置
 				$mail_bidsuccess = $msgConfDao->findCol('mail_bidsuccess',array('user_id'=>$v['user_id']));
-				$user_info = $userDao->getUserInfo('user_name,mobile,email',array('id'=>$v['user_id']));
+				$user_info = $userDao->getUserInfo('user_name,mobile,email',array('id'=>$v['user_id']))->row();
 				//是否发送邮件
 				$msg_data['send_type'] = 1;
 				$msg_data['title'] = "您的所投的借款“" . $loan_base_info['name'] . "”已满标！";
@@ -86,13 +86,13 @@ class  business_loan_loan extends Business {
 				if($mail_bidsuccess == 1 && C('MAIL_ON') == 1) {
 					$tmpl = $msgTemplateDao->getTemplateByName('TPL_MAIL_LOAD_SUCCESS','id,content,is_html');
 					$msg = '【小树时代测试】<p>尊敬的用户'.$user_info['user_name'].'：&nbsp; </p>';
-					$msg += '<p>很高兴的通知您，您于'.date('Y年m月d日',$v['create_time']).'所投的借款“{$notice.deal_name}”满标，您的本次投标行为成功。&nbsp;</p><br><br>';
-					$msg += '<p>点击 <a href="{$notice.send_deal_url}">这里</a>查看您所投的借款。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
-					$msg += '<p>感谢您对我们的支持与关注。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
-					$msg += '<p>{$notice.site_name}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
-					$msg += '<p>注：此邮件由系统自动发送，请勿回复！&nbsp; </p>';
-					$msg += '<p>如果您有任何疑问，请您查看 <a href="{$notice.help_url}" target="_blank">帮助</a>，或访问 <a href="{$notice.site_url}" target="_blank">客服中心</a></p>';
-					$msg += '<p>如果您觉得收到过多邮件，可以点击 <a href="{$notice.msg_cof_setting_url}" target="_blank">这里</a>进行设置 &nbsp; </p>';
+					$msg .= '<p>很高兴的通知您，您于'.date('Y年m月d日',$v['create_time']).'所投的借款“{$notice.deal_name}”满标，您的本次投标行为成功。&nbsp;</p><br><br>';
+					$msg .= '<p>点击 <a href="">这里</a>查看您所投的借款。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+					$msg .= '<p>感谢您对我们的支持与关注。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+					$msg .= '<p>小树时代测试&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+					$msg .= '<p>注：此邮件由系统自动发送，请勿回复！&nbsp; </p>';
+					$msg .= '<p>如果您有任何疑问，请您查看 <a href="" target="_blank">帮助</a>，或访问 <a href="" target="_blank">客服中心</a></p>';
+					$msg .= '<p>如果您觉得收到过多邮件，可以点击 <a href="" target="_blank">这里</a>进行设置 &nbsp; </p>';
 					$msg_data['content'] = addslashes($msg);
 					$msg_data['is_html'] = $tmpl['is_html'];
 					$msg_data['dest'] = $user_info['email'];
