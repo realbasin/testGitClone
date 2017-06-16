@@ -52,7 +52,7 @@ class  controller_loan_loan extends controller_sysBase {
 	//手动还款
 	public function do_manual_repay(){
 		$result = array();
-		$result['code'] = '000';
+		$result['code'] = 200;
 		$loan_id = \Core::get('id',0);
 		if(!$loan_id) {
 			$result['message'] = \Core::L('fail');
@@ -64,17 +64,20 @@ class  controller_loan_loan extends controller_sysBase {
 		$loanExt = \Core::dao('loan_loanext')->getExtByLoanId($loan_id);
 		$dealRepayDao = \Core::dao('loan_dealrepay');
 		if(!$loanBase || !$loanBid || !$loanExt){
+			$result['code'] = 404;
 			$result['message'] = \Core::L('no_loan');
 			return @json_encode($result);
 		}
 		//贷款人id
 		$borrow_user_id = $loanBase['user_id'];
 		if($loanBid['deal_status'] != 4) {
+			$result['code'] = 404;
 			$result['message'] = '借款不是还款状态！';
 			return @json_encode($result);
 		}
 		$user_total_money = \Core::dao('user_user')->getUserMoney($borrow_user_id);
 		if ($user_total_money <= 0) {
+			$result['code'] = 404;
 			$result['message'] = '余额不足,请先充值';
 			return @json_encode($result);
 		}
@@ -84,12 +87,14 @@ class  controller_loan_loan extends controller_sysBase {
 			//是否有部分还款的
 			$repay_count_ing = $dealRepayDao->getCount(array('deal_id'=>$loan_id,'has_repay'=>2));
 			if ($repay_count_ing > 0) {
+				$result['code'] = 404;
 				$result['message'] = '请将部分还款的借款还完才可以进行此操作！';
 				return @json_encode($result);
 			}
 			//防止提前还款操作未逾期且网站垫付的标
 			$has_site_repay_and_has_repay = $dealRepayDao->getCount(array('deal_id'=>$loan_id,'has_repay'=>0,'status'=>1));
 			if ($has_site_repay_and_has_repay > 0) {
+				$result['code'] = 404;
 				$result['message'] = '请手动将网站垫付的借款还完才可以进行此操作！';
 				return @json_encode($result);
 			}
@@ -100,6 +105,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$start_repay_time = $dealRepayDao->findCol('repay_time',array('deal_id'=>$loan_id,'l_key'=>$start_lkey));
 			//有逾期
 			if ($start_repay_time < strtotime(date('Y-m-d',time()).' 23:59:59')) {
+				$result['code'] = 404;
 				$result['message'] = '请将逾期未还的借款还完才可以进行此操作！';
 				return @json_encode($result);
 			}
@@ -108,6 +114,7 @@ class  controller_loan_loan extends controller_sysBase {
 		}else {
 			$no_repay_befor_lkey = $dealRepayDao->getCount(array('deal_id'=>$loan_id,'has_repay'=>0,'l_key < '=>$l_key));
 			if($no_repay_befor_lkey > 0){
+				$result['code'] = 404;
 				$result['message'] = '请先将往期的借款还完';
 				return @json_encode($result);
 			}
@@ -120,6 +127,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$result['message'] = $status['show_err'];
 			return @json_encode($result);
 		}else {
+			$result['code'] = 404;
 			$result['message'] = $status['show_err'];
 			return @json_encode($result);
 		}
@@ -215,6 +223,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$loanbid_info['loan_time'] = strtotime($loanbid_info['repay_start_time']);
 			$loanbid_info['repay_start_time'] = strtotime(date('Y-m-d', $loanbid_info['loan_time']));
 		}
+		$time = time();
 		//实例化dao
 		$loanBaseDao = \Core::dao('loan_loanbase');
 		$loanBidDao = \Core::dao('loan_loanbid');
@@ -322,24 +331,24 @@ class  controller_loan_loan extends controller_sysBase {
 					$result['message'] = "放款失败";
 					return @json_encode($result);
 				}else {
-					//TODO 记录贷款状态变更日志
+					//记录贷款状态变更日志
 					$dealStatusLogDao = \Core::dao('loan_dealstatuslog');
-					//TODO 记录贷款日志：满标放款
-					$dealStatusLogDao->insert(array('deal_id'=>$loanBase['id'],'user_id'=>$loanBase['user_id'],'type'=>9,'create_time'=>time()));
-					//TODO 记录贷款日志：借款协议生效
-					$dealStatusLogDao->insert(array('deal_id'=>$loanBase['id'],'user_id'=>$loanBase['user_id'],'type'=>10,'create_time'=>time()));
-					//TODO 借款分销返利
+					//记录贷款日志：满标放款
+					$dealStatusLogDao->insert(array('deal_id'=>$loanBase['id'],'user_id'=>$loanBase['user_id'],'type'=>9,'create_time'=>$time));
+					//记录贷款日志：借款协议生效
+					$dealStatusLogDao->insert(array('deal_id'=>$loanBase['id'],'user_id'=>$loanBase['user_id'],'type'=>10,'create_time'=>$time));
+					//借款分销返利
 					\Core::business('user_userinfo')->distributionRebate($deal_id,$loanBase['user_id'],1);
-					//TODO 理财分销返利
+					//理财分销返利
 					$load_list = \Core::dao('loan_dealload')->getLoads($deal_id,'id,deal_id,user_id,money,is_rebate,is_old_loan,rebate_money,bid_score,is_winning,income_type,income_value,ecv_id,bonus_user_id');
-
 					foreach ($load_list as $v){
 						\Core::business('user_userinfo')->bidDistributionRebate($deal_id,$v,$v['user_id'],1);
 					}
 					//TODO 检测借款用户是否都被扣除了服务费（5%）、咨询服务费（15%），若只扣除了其中一项，则冻结其可用余额
-					//TODO 发借款成功邮件
+
+					//发借款成功邮件
 					\Core::business('loan_loan')->sendDealSuccessMessage($deal_id);
-					//TODO 发借款成功站内信
+					//发借款成功站内信
 					\Core::business('loan_loan')->sendDealSiteMessage($deal_id);
 					//TODO 发送借款协议范本
 
