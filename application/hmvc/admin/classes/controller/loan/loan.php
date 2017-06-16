@@ -327,8 +327,9 @@ class  controller_loan_loan extends controller_sysBase {
 					//TODO 发借款成功邮件
 					\Core::business('loan_loan')->sendDealSuccessMessage($deal_id);
 					//TODO 发借款成功站内信
-
+					\Core::business('loan_loan')->sendDealSiteMessage($deal_id);
 					//TODO 发送借款协议范本
+
 					//TODO 手机端自动提现
 					if ($loanBase['is_mobile'] > 0) {
 						//$carryMoney = \Core::business('user_');
@@ -343,7 +344,7 @@ class  controller_loan_loan extends controller_sysBase {
 				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
-			//\Core::db()->rollback();
+			\Core::db()->rollback();
 			$result['message'] = '系统错误';
 			return @json_encode($result);
 		}finally{

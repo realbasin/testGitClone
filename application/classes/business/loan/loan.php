@@ -112,6 +112,34 @@ class  business_loan_loan extends Business {
 
 
 	}
+	//发送站内信
+	public function sendDealSiteMessage($loan_id,$template_name=''){
+		if(intval($loan_id) == 0) return false;
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$loan_base_info = $loanBaseDao->getloanbase($loan_id,'id,name,create_time');
+		if(!$loan_base_info) return false;
+		$loanBidDao = \Core::dao('loan_loanbid');
+		$is_send_success_msg = $loanBidDao->findCol('is_send_success_msg',array('loan_id'=>$loan_id));
+		if(intval($is_send_success_msg) == 1) return false;
+		$dealLoadDao = \Core::dao('loan_dealload');
+		$user_load_list = $dealLoadDao->getLoads($loan_id,'id,user_name,user_id,create_time');
+		if($user_load_list) {
+			$msgConfDao = \Core::dao('msg_msgconf');
+			foreach ($user_load_list as $v) {
+				$sms_bid_success = $msgConfDao->findCol('sms_bidsuccess',array('user_id'=>$v['user_id']));
+				//未设置或设置为1时发送（设置为0时不发送）
+				if( $sms_bid_success != 0) {
+					$notice['shop_title'] = C("SHOP_TITLE");
+					$notice['time'] = date("Y年m月d日",$v['create_time']);
+					$notice['deal_name'] = "“<a href=\"" . \Core::getUrl("index", "detail","deal", array("id" => $loan_base_info['id'])) . "\">" . $loan_base_info['name'] . "</a>”";
+					$content = '【小树时代测试】<p>感谢您使用'.$notice['shop_title'].'贷款融资，很高兴的通知您，您于'.$notice['time'].'投标的借款列表'.$notice['deal_name'].'满标';
+					//TODO 发送站内信
+					\Core::dao('msg_msgbox')->sendUserMsg("", $content, 0, $v['user_id'], time(), 0, true, 16);
+				}
+			}
+		}
+	}
+
 	//手动单期还款
 	public function repayLoanBills($id,$l_key,$user_id){
 		$id = intval($id);
@@ -903,4 +931,5 @@ class  business_loan_loan extends Business {
 		}
 
 	}
+
 }
