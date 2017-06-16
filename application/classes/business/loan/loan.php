@@ -139,7 +139,10 @@ class  business_loan_loan extends Business {
 			}
 		}
 	}
-
+	//发送电子协议邮件
+	public function sendDealContractEmail($loan_id){
+		if(intval($loan_id) == 0) return false;
+	}
 	//手动单期还款
 	public function repayLoanBills($id,$l_key,$user_id){
 		$id = intval($id);

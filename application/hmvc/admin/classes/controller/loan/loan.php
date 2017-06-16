@@ -195,15 +195,20 @@ class  controller_loan_loan extends controller_sysBase {
 		$result = array();
 		$loanbid_info = array();
 		$loanbase_info = array();
-		$result['code'] = '000';
-		$result['status'] = 0;
+		//默认返回成功
+		$result['code'] = 200;
+		$result['status'] = 1;
 		$deal_id = \Core::get('id',0);
 		$loanbid_info['repay_start_time'] = \Core::get('repay_start_time','');
 		if(!$deal_id) {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
 		}
 		if($loanbid_info['repay_start_time'] == '') {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = '放款失败，还款时间不能为空';
 			return @json_encode($result);
 		}else {
@@ -222,16 +227,22 @@ class  controller_loan_loan extends controller_sysBase {
 		$loanBase = $loanBaseDao->getloanbase($deal_id,'id,name,user_id,borrow_amount,repay_time_type,repay_time,rate,is_mobile,loantype');
 		$loanExt = $loanextDao->getExtByLoanId($deal_id);
 		if(!$loanBid || !$loanBase || !$loanExt) {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = '贷款不存在';
 			return @json_encode($result);
 		}
 		if(!in_array($loanBid['deal_status'],array(2, 4, 5))) {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = "放款失败，借款不是满标状态";
 			return @json_encode($result);
 		}
 		$borrow_money = $loanBaseDao->getloanbase($deal_id,'id,borrow_amount');
 
 		if($borrow_money['borrow_amount'] < $loanBid['load_money']) {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = "放款失败，问题标";
 			return @json_encode($result);
 		}
@@ -250,9 +261,10 @@ class  controller_loan_loan extends controller_sysBase {
 				$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],招标成功";
 				$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],$loanBase['borrow_amount'],$log_msg,3);
 				if($editMoneyStatus === false) {
+					$result['code'] = 404;
+					$result['status'] = 0;
 					$result['message'] = "放款失败，修改余额出错";
-					$result['status'] = 1;
-
+					return @json_encode($result);
 				}
 				//收取服务费
 				//获取普通配置中的服务费率等配置 loan_ext表的config_common字段
@@ -265,16 +277,18 @@ class  controller_loan_loan extends controller_sysBase {
 					$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBase['name'] . "</a>],服务费";
 					$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($loanBase['user_id'],-$services_fee,$log_msg,14);
 					if($editMoneyStatus === false) {
+						$result['code'] = 404;
+						$result['status'] = 0;
 						$result['message'] = "放款失败，收取服务费出错";
-						$result['status'] = 1;
 						return @json_encode($result);
 					}
 				}
 				//是否本地标，扣除本地标风险保证金
 				$status = \Core::business('sys_dealload')->dealLoadBond($deal_id,$loanBase['user_id']);
-				if($status['status'] == 1) {
-					$result['code'] = '000';
-					$result['message'] = $status['message'];
+				if($status === false) {
+					$result['code'] = 404;
+					$result['status'] = 0;
+					$result['message'] = '扣除本地标风险保证金失败';
 					return @json_encode($result);
 				}
 				//TODO 积分变动
@@ -283,16 +297,15 @@ class  controller_loan_loan extends controller_sysBase {
 				if($load_list) {
 					$status = \Core::business('sys_dealload')->dealLoadUserLoanMoney($load_list);
 					if($status['status'] == 1) {
-						$result['code'] = '000';
+						$result['code'] = 404;
+						$result['status'] = 0;
 						$result['message'] = $status['message'];
 						return @json_encode($result);
-					}else {
-						$result['code'] = 200;
 					}
-					//\Core::dump($result);
 				}else {
+					$result['code'] = 404;
+					$result['status'] = 0;
 					$result['message'] = "放款失败，投资不存在";
-					$result['status'] = 1;
 					return @json_encode($result);
 				}
 			}
@@ -334,22 +347,17 @@ class  controller_loan_loan extends controller_sysBase {
 					if ($loanBase['is_mobile'] > 0) {
 						//$carryMoney = \Core::business('user_');
 					}
-					$result['status'] = 0;
-					$result['code'] = 200;
 					$result['message'] = "放款成功,还/回款计划生成中";
 				}
 			}else{
-				$result['code'] = '000';
+				$result['code'] = 404;
+				$result['status'] = 0;
 				$result['message'] = "放款失败，生成还款、回款计划失败";
-				$result['status'] = 1;
 			}
 		}catch(\Exception $e){
-			\Core::db()->rollback();
 			$result['message'] = '系统错误';
-			return @json_encode($result);
 		}finally{
-
-			if($result['code'] == 200 && $result['status'] == 0){
+			if($result['code'] == 200 && $result['status'] == 1){
 				\Core::db()->commit();
 			}else{
 				\Core::db()->rollback();
@@ -365,15 +373,19 @@ class  controller_loan_loan extends controller_sysBase {
 	 */
 	public function do_received(){
 		$result = array();
-		$result['code'] = '000';
-		$result['status'] = 0;
+		$result['code'] = 200;
+		$result['status'] = 1;
 		$deal_id = \Core::get('id',0);
 		$reason = \Core::get('reason','');
 		if($deal_id == 0) {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = '返还失败，借款不存在';
 			return @json_encode($result);
 		}
 		if($reason == '') {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = '请填写流标原因';
 			return @json_encode($result);
 		}
@@ -389,10 +401,14 @@ class  controller_loan_loan extends controller_sysBase {
 		$loanBase = $loanBaseDao->getloanbase($deal_id,'id,name,user_id,borrow_amount,repay_time_type,repay_time,rate');
 		$loanExt = $loanextDao->getExtByLoanId($deal_id);
 		if(!$loanBid || !$loanBase || !$loanExt) {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = '返还失败，借款不存在';
 			return @json_encode($result);
 		}
 		if (intval($loanBid['deal_status']) >= 4) {
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = "返还失败，借款状态为还款状态";
 			return @json_encode($result);
 		}
@@ -411,7 +427,6 @@ class  controller_loan_loan extends controller_sysBase {
 					if($dealLoadDao->find(array('is_repay'=>0,'deal_id'=>$deal_id))) {
 						$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
 						$result['message'] = '部分返还';
-						$result['code'] = 200;
 					}else{
 						$bad_data['is_has_received'] = 1;
 						$bad_data['bad_time'] = time();
@@ -419,7 +434,6 @@ class  controller_loan_loan extends controller_sysBase {
 						$bad_data['deal_status'] = 3;
 						$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
 						$result['message'] = '返还成功';
-						$result['code'] = 200;
 					}
 				}
 			}else{
@@ -429,7 +443,6 @@ class  controller_loan_loan extends controller_sysBase {
 				$bad_data['deal_status'] = 3;
 				$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
 				$result['message'] = '流标成功';
-				$result['code'] = 200;
 			}
 			//保存贷款状态更改信息
 			$deal_log = array();
@@ -440,9 +453,8 @@ class  controller_loan_loan extends controller_sysBase {
 			\Core::dao('loan_dealstatuslog')->insert($deal_log);
 		}catch(\Exception $e){
 			$result['message'] = '系统错误';
-			return @json_encode($result);
 		}finally{
-			if($result['code'] == 200 && $result['status'] == 0){
+			if($result['code'] == 200 && $result['status'] == 1){
 				\Core::db()->commit();
 			}else{
 				\Core::db()->rollback();
