@@ -325,7 +325,7 @@ class  controller_loan_loan extends controller_sysBase {
 					}
 					//TODO 检测借款用户是否都被扣除了服务费（5%）、咨询服务费（15%），若只扣除了其中一项，则冻结其可用余额
 					//TODO 发借款成功邮件
-					$send_mseeage = \Core::business('loan_loan')->sendDealSuccessMessage($deal_id);
+					\Core::business('loan_loan')->sendDealSuccessMessage($deal_id);
 					//TODO 发借款成功站内信
 
 					//TODO 发送借款协议范本
