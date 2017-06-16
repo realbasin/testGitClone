@@ -8,11 +8,12 @@ class  business_sys_dealload extends Business {
 	public function dealLoadUserLoanMoney($load_list){
 		$result = array();
 		$result['status'] = 0;
-		$result['code'] = '000';
+		if(!$load_list) {
+			$result['status'] = 1;
+			return $result;
+		}
 		$userDao = \Core::dao('user_user');
 		$loanBaseDao = \Core::dao('loan_loanbase');
-		$loanBidDao = \Core::dao('loan_loanbid');
-
 		foreach ($load_list as $v) {
 			//扣除投资人的冻结金额，金额为投标金额 - 红包金额 - 优惠券金额
 			//实际扣款金额
@@ -42,6 +43,7 @@ class  business_sys_dealload extends Business {
 					if($editLockMoneyStatus === false){
 						$result['message'] = "放款失败，扣除投资金额失败";
 						$result['status'] = 1;
+						return $result;
 					}else {
 						//修改放款状态为已放款
 						$updateloan = array();
@@ -54,12 +56,13 @@ class  business_sys_dealload extends Business {
 						if($updateloanstatus === false) {
 							$result['message'] = "放款失败，修改放款状态失败";
 							$result['status'] = 1;
-							//return @json_encode($result);
+							return $result;
 						}
 					}
 				}else {
 					$result['message'] = "放款失败，投资人冻结资金不足";
 					$result['status'] = 1;
+					return $result;
 				}
 			}
 			//TODO 管理员提成 暂无
@@ -97,6 +100,7 @@ class  business_sys_dealload extends Business {
 						if($editMoneyStatus === false) {
 							$result['message'] = "放款失败，投资返利出错";
 							$result['status'] = 1;
+							return $result;
 						}
 					}
 					//返积分
@@ -109,6 +113,7 @@ class  business_sys_dealload extends Business {
 						if($editScoreStatus === false) {
 							$result['message'] = "放款失败，积分返还出错";
 							$result['status'] = 1;
+							return $result;
 						}
 					}
 					//TODO VIP奖励 暂时没用到
@@ -120,10 +125,13 @@ class  business_sys_dealload extends Business {
 	//处理投标人投标金额-流标返款
 	public function dealLoadUserBackMoney($load_list){
 		$result = array();
-		$result['yott_users'] = array();
 		$result['status'] = 0;
 		$dealLoadDao = \Core::dao('loan_dealload');
 		$loanBaseDao = \Core::dao('loan_loanbase');
+		if(!$load_list) {
+			$result['status'] = 1;
+			return $result;
+		}
 		foreach ($load_list as $v) {
 			//退还使用的优惠券
 			$bonus_msg = '';
@@ -172,33 +180,26 @@ class  business_sys_dealload extends Business {
 			}
 			//修改返还状态
 			$dealLoadDao->update(array('is_repay'=>1),array('id'=>$v['id']));
-			//获取投标用户的用户码
-			$admin_id = \Core::dao('user_user')->getUser($v['user_id'],'id,admin_id,platform_code');
-			//是否优投用户
-			if($admin_id[$v['user_id']]['platform_code'] == 'yott') {
-				//记录优投用户id
-				$result['yott_users'][] = $v['user_id'];
-			}
+
 		}
 		return $result;
 
 	}
 	//是否本地标，扣除本地标风险保证金
 	public function dealLoadBond($deal_id,$user_id){
-		$result = array();
-		$result['status'] = 0;
+		$deal_id = intval($deal_id);
+		$user_id = intval($user_id);
+		if($deal_id == 0 || $user_id == 0) return false;
 		$loanextDao = \Core::dao('loan_loanext');
 		$loanBaseDao = \Core::dao('loan_loanbase');
 		$amt_common = $loanextDao->getAmtconfig($deal_id);
+		if(!$amt_common) return false;
 		if($amt_common['l_guarantees_amt'] != 0){
 			$url = \Core::getUrl("deal","","deal", array("id" => $deal_id));
 			$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBaseDao->getName($deal_id) . "</a>],咨询服务费";
-			$editLockMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($user_id,-$amt_common['l_guarantees_amt'],$log_msg,120);
-			if($editLockMoneyStatus === false){
-				$result['message'] = "放款失败，扣除本地标风险保证金失败";
-				$result['status'] = 1;
-			}
+			return \Core::business('user_userinfo')->editUserLockMoney($user_id,-$amt_common['l_guarantees_amt'],$log_msg,120);
 		}
+		return true;
 	}
 
 }

@@ -756,18 +756,28 @@ class  controller_loan_audit extends controller_sysBase {
         \Core::view()->load('loan_preview');
     }
 
-    //初审阶段贷款类型修改
-    public function do_edit_loan_type()
-    {
-        $this->publish_edit();
-        \Core::view() -> load('loan_publish');
-    }
 
 
     //初审操作页面
     public function do_first_publish_edit()
     {
         $this->publish_edit();
+        $first_yn = \Core::get('first_yn');
+        switch ($first_yn) {
+            case 1:
+                $action = 'first_publish';
+                $title = \Core::L('first_publish');
+                break;
+            case 2:
+                $action = 'my_publish';
+                $title = \Core::L('my_publish');
+                break;
+            case 3:
+                $action = 'publish';
+                $title = \Core::L('publish');
+                break;
+        }
+        \Core::view() -> set('action',$action) -> set('title',$title);
         \Core::view() -> load('loan_firstPublishEdit');
     }
 
@@ -923,7 +933,7 @@ class  controller_loan_audit extends controller_sysBase {
                 $url = adminUrl('loan_audit','first_publish');
             } elseif($first_yn == 2) {
                 $url = adminUrl('loan_audit','my_publish');
-            } else {
+            } elseif($first_yn == 3) {
                 $url = adminUrl('loan_audit','publish');
             }
             \Core::message('初审更新成功',$url,'suc',3,'message');
@@ -939,7 +949,35 @@ class  controller_loan_audit extends controller_sysBase {
         }
 
     }
-    
+
+    //初审阶段修改贷款类型
+    public function do_publish_edit_loan_type()
+    {
+        $this->publish_edit();
+        $loan_id = \Core::get('loan_id');
+        $first_yn = \Core::get('first_yn');
+        switch ($first_yn) {
+            case 1:
+                $action = 'first_publish';
+                $title = \Core::L('first_publish');
+                break;
+            case 2:
+                $action = 'my_publish';
+                $title = \Core::L('my_publish');
+                break;
+            case 3:
+                $action = 'publish';
+                $title = \Core::L('publish');
+                break;
+        }
+        $user_id = \Core::dao('loan_loanbase')->findCol('user_id',$loan_id);
+        $user_level_id = \Core::dao('user_user')->findCol('level_id',$user_id);
+        $deal_loan_type_list = \Core::business('loan_publish')->getDealLoanTypeList($user_level_id);
+        \Core::view() -> set('deal_loan_type_list_json',json_encode($deal_loan_type_list))
+        -> set('action',$action)
+        -> set('title',$title);
+        \Core::view() -> load('loan_publishEditLoanType');
+    }
 
     //复审操作页面
     public function do_true_publish_edit()
@@ -968,7 +1006,7 @@ class  controller_loan_audit extends controller_sysBase {
         $deal_loan_type_types = 0;  //贷款类型：0学生贷,1信用贷,2抵押贷,3普惠贷
         $log_info = $loan['name'];
         $update_time = $loan['update_time'];
-        $loanbase['publish_wait'] = intval(\Core::post['publish']);
+        $loanbase['publish_wait'] = intval(\Core::post('publish'));
         $url = adminUrl('loan_audit','true_publish_edit',array('loan_id'=>$loan_id));
 
         if(intval($update_time) != intval(\Core::post('update_time'))) {
@@ -1012,32 +1050,56 @@ class  controller_loan_audit extends controller_sysBase {
         $data['admin_id'] = $this->admininfo['id'];
         $data['user_id'] = $user_id;
         //todo 事务
-        $log_id = \Core::business('loan_publish')->updateDealOpLog($data,7);
-        //更新数据
-        $loanbaseDao->save($loanbase,$loan_id);
-        $loanbidDao->save($loanbid,$loan_id);
-        //todo 多人多窗口 操作提示
+        try {
+            \Core::db()->begin();
+            $log_id = \Core::business('loan_publish')->updateDealOpLog($data, 7);
+            //更新数据
+            $loanbaseDao->save($loanbase, $loan_id);
+            $loanbidDao->save($loanbid, $loan_id);
+            //todo 多人多窗口 操作提示
 
-        $dealsatuslogBusiness = \Core::business('loan_dealstatuslog');
-        if ($loanbase['publish_wait'] == 0) { //复审通过
-            $dealsatuslogBusiness->saveDealStatusMsg($user_id,$loan_id,7);
-            //成功提示,触发自动投标
-            $loanBusiness=\Core::business('loan_loanenum');
-            $loanBusiness->synDealStatus($loan_id,true);
-            
-            //todo 发送投标到期的检测队列
-            //todo 推送产品id到希财网
-            //sys_deal_match 分词查询组件
+            $dealsatuslogBusiness = \Core::business('loan_dealstatuslog');
+            if ($loanbase['publish_wait'] == 0) { //复审通过
+                $result = $dealsatuslogBusiness->saveDealStatusMsg($user_id, $loan_id, 7);
+                if(!$result) {
+                    throw new Exception('1');
+                }
+                //成功提示,触发自动投标
+                $loanBusiness = \Core::business('loan_loanenum');
+                $result = $loanBusiness->synDealStatus($loan_id, true);
+                if(!$result) {
+                    throw new Exception('2');
+                }
 
-            
-        } else {
-            $dealsatuslogBusiness->saveDealStatusMsg($user_id,$loan_id,8);
+                //todo 发送投标到期的检测队列
+                //todo 推送产品id到希财网
+                //sys_deal_match 分词查询组件
+
+
+            } else {
+                $result = $dealsatuslogBusiness->saveDealStatusMsg($user_id, $loan_id, 8);
+                if(!$result) {
+                    throw new Exception('3');
+                }
+            }
+            //保存日志
+            $result = $this->saveLog("编号：" . $data['id'] . "，" . $log_info . "复审更新成功", 1);
+            if (!$result) {
+                throw new Exception('4');
+            }
+            $result = \Core::business('loan_publish')->updateDealOpLog($log_id, 7, 1);
+            if (!$result) {
+                throw new Exception('5');
+            }
+            \Core::db()->commit();
+        } catch( Exception $e) {
+            \Core::db()->rollback();
         }
-        //保存日志
-        $this->saveLog("编号：" . $data['id'] . "，" . $loan['name'] . "复审更新成功", 1);
-        \Core::business('loan_publish')->updateDealOpLog($log_id,7,1);
-
         $url = adminUrl('admin_audit','true_publish');
+        if(intval($deal_loan_type_types)==3){
+            $url = adminUrl('admin_audit','puhui_true_publish');
+        }
+        
         \Core::message('复审更新成功',$url,'suc',3,'message');
         
     }
@@ -1104,6 +1166,7 @@ class  controller_loan_audit extends controller_sysBase {
                 ->set('sorcode',$loanBusiness->enumSorCode());
         }
     }
+    
 
     private function mortgage_info($type = "infos")
     {

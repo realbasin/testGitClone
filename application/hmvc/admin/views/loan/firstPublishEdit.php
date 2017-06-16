@@ -30,7 +30,7 @@
     <i class="home"></i>
     <span><?php echo \Core::L('audit');?></span>
     <i class="arrow"></i>
-    <span><a href="<?php echo adminUrl('loan_audit','index');?>"><?php echo \Core::L('first_publish');?></a></span>
+    <span><a href="<?php echo adminUrl('loan_audit',$action);?>"><?php echo $title;?></a></span>
     <i class="arrow"></i>
     <span><?php echo $loanbase['name'];?></span>
 </div>
@@ -47,7 +47,7 @@
             </div>
         </div>
     </div>
-    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn)) ?>" enctype="multipart/form-data">
+    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn,'loan_id'=>$loanbase['id'])); ?>" enctype="multipart/form-data">
         <input type="hidden" name="form_submit" value="ok" />
         <input type="hidden" name="loan_id" value="<?php echo $loanbase['id'];?>" />
         <input type="hidden" name="update_time" value="<?php echo $loanbase['update_time'];?>" />
@@ -68,6 +68,7 @@
                 </dt>
                 <dd class="opt">
                     <input type="text" name="name" id="name" class="input-txt" readonly="readonly" value="<?php echo $loanbase['name'];?>">
+                    <a href="<?php echo adminUrl('loan_audit','publish_edit_loan_type',array('loan_id'=>$loanbase['id'],'first_yn'=>$first_yn));?>"><b>修改贷款类型</b></a>
                     <p class="notic">借款名称</p>
                 </dd>
             </dl>

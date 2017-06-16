@@ -108,7 +108,7 @@ class  business_sys_dealrepay extends Business {
 		$loan = array_merge($loanBase,$loanBid,$loanExt);
 		$repaymoney = $this->deal_repay_money($loan);
 		$true_repay_time = $loan['repay_time'];
-		$repay_day = $loan_time;
+		$repay_day = intval($loan_time);
 		$has_use_self_money = 0;
 		$dealRepayDao = \Core::dao('loan_dealrepay');
 		$dealLoadRepayBusiness = \Core::business('sys_dealloadrepay');
@@ -133,8 +133,6 @@ class  business_sys_dealrepay extends Business {
 				if($loan['loantype'] == 2) {
 					$load_repay['repay_money'] = $repaymoney['last_month_repay_money'];
 					$load_repay['self_money'] = $loan['borrow_amount'] ;
-					//管理费
-					//$load_repay['manage_money'] = $deal['all_manage_money'];
 				}
 				if($loan['loantype'] == 3) {
 					$load_repay['repay_money'] = $repaymoney['last_month_repay_money'];
@@ -153,8 +151,6 @@ class  business_sys_dealrepay extends Business {
 				if($loan['loantype'] == 2) {
 					$load_repay['repay_money'] = 0;
 					$load_repay['self_money'] = 0;
-					//管理费
-					//$load_repay['manage_money'] = 0;
 				}
 				if($loan['loantype'] == 3) {
 					$load_repay['repay_money'] = $repaymoney['month_repay_money'];
@@ -380,10 +376,6 @@ class  business_sys_dealrepay extends Business {
 		$return["true_mortgage_fee"] = round($mortgage_fee, 2);
 		$return["true_manage_money_rebate"] = round($return["true_manage_money"] * floatval(C('INVESTORS_COMMISSION_RATIO'))/100, 2);
 		$return["true_manage_money"] = round($loan['borrow_amount']*$manage_fee/100,2);
-		//利息管理费
-		$return["true_manage_interest_money"] = 0;
-		//$return["true_manage_interest_money_rebate"] = round($loaninfo['deal']['manage_interest_money_rebate'], 2);
-
 		return $return;
 	}
 	//根据还款方式判断是否最后才一期还款
