@@ -51,11 +51,13 @@ class  controller_loan_loan extends controller_sysBase {
 	}
 	//手动还款
 	public function do_manual_repay(){
+		$act = '手动还款操作：';
 		$result = array();
 		$result['code'] = 200;
 		$loan_id = \Core::get('id',0);
 		if(!$loan_id) {
 			$result['message'] = \Core::L('fail');
+			$this->log($act.$result['message'],'manual_repay');
 			return @json_encode($result);
 		}
 		$l_key = \Core::get('l_key',-1);
@@ -66,6 +68,7 @@ class  controller_loan_loan extends controller_sysBase {
 		if(!$loanBase || !$loanBid || !$loanExt){
 			$result['code'] = 404;
 			$result['message'] = \Core::L('no_loan');
+			$this->log($act.$result['message'],'manual_repay');
 			return @json_encode($result);
 		}
 		//贷款人id
@@ -73,22 +76,26 @@ class  controller_loan_loan extends controller_sysBase {
 		if($loanBid['deal_status'] != 4) {
 			$result['code'] = 404;
 			$result['message'] = '借款不是还款状态！';
+			$this->log($act.$result['message'],'manual_repay');
 			return @json_encode($result);
 		}
 		$user_total_money = \Core::dao('user_user')->getUserMoney($borrow_user_id);
 		if ($user_total_money <= 0) {
 			$result['code'] = 404;
 			$result['message'] = '余额不足,请先充值';
+			$this->log($act.$result['message'],'manual_repay');
 			return @json_encode($result);
 		}
 		//执行还款
 		if($l_key == -1 ) {
 			//手动提前还款
+			$act = '手动提前还款：';
 			//是否有部分还款的
 			$repay_count_ing = $dealRepayDao->getCount(array('deal_id'=>$loan_id,'has_repay'=>2));
 			if ($repay_count_ing > 0) {
 				$result['code'] = 404;
 				$result['message'] = '请将部分还款的借款还完才可以进行此操作！';
+				$this->log($act.$result['message'],'manual_repay');
 				return @json_encode($result);
 			}
 			//防止提前还款操作未逾期且网站垫付的标
@@ -96,6 +103,7 @@ class  controller_loan_loan extends controller_sysBase {
 			if ($has_site_repay_and_has_repay > 0) {
 				$result['code'] = 404;
 				$result['message'] = '请手动将网站垫付的借款还完才可以进行此操作！';
+				$this->log($act.$result['message'],'manual_repay');
 				return @json_encode($result);
 			}
 			//查看是否有逾期
@@ -107,6 +115,7 @@ class  controller_loan_loan extends controller_sysBase {
 			if ($start_repay_time < strtotime(date('Y-m-d',time()).' 23:59:59')) {
 				$result['code'] = 404;
 				$result['message'] = '请将逾期未还的借款还完才可以进行此操作！';
+				$this->log($act.$result['message'],'manual_repay');
 				return @json_encode($result);
 			}
 			//手动提前还款
@@ -116,36 +125,40 @@ class  controller_loan_loan extends controller_sysBase {
 			if($no_repay_befor_lkey > 0){
 				$result['code'] = 404;
 				$result['message'] = '请先将往期的借款还完';
+				$this->log($act.$result['message'],'manual_repay');
 				return @json_encode($result);
 			}
 			//手动单期还款
 			$status = \Core::business('loan_loan')->repayLoanBills($loan_id,$l_key,$borrow_user_id);
 		}
-		$this->log('手动还款','loan');
 		if($status['status'] == 1) {
 			$result['code'] = 200;
 			$result['message'] = $status['show_err'];
+			$this->log($act.$result['message'],'manual_repay');
 			return @json_encode($result);
 		}else {
 			$result['code'] = 404;
 			$result['message'] = $status['show_err'];
+			$this->log($act.$result['message'],'manual_repay');
 			return @json_encode($result);
 		}
 
 	}
 	//网站资金代还
 	public function do_site_repay(){
+		$act = '网站代还操作：';
 		$result = array();
 		$result['code'] = 200;
-		$result['message'] = '测试';
 		$id = intval(Core::get('id',0));
 		if($id == 0) {
 			$result['message'] = '操作失败';
+			$this->log($act.$result['message'],'site_repay');
 			return @json_encode($result);
 		}
 		$lkey = intval(Core::get('l_key'));
 		if($lkey < 0 ) {
 			$result['message'] = '操作失败';
+			$this->log($act.$result['message'],'site_repay');
 			return @json_encode($result);
 		}
 		$loanBase = \Core::dao('loan_loanbase')->getloanbase($id,'id,user_id');
@@ -153,23 +166,27 @@ class  controller_loan_loan extends controller_sysBase {
 		$loanExt = \Core::dao('loan_loanext')->getExtByLoanId($id);
 		if(!$loanBase || !$loanBid || !$loanExt){
 			$result['message'] = \Core::L('no_loan');
+			$this->log($act.$result['message'],'site_repay');
 			return @json_encode($result);
 		}
 
 		if($loanBid['deal_status'] != 4) {
 			$result['message'] = '借款不是还款状态！';
+			$this->log($act.$result['message'],'site_repay');
 			return @json_encode($result);
 		}
 
 		//TODO 网站代还款还款
 		$status = \Core::business('loan_loan')->siteRepay($id,$lkey,$loanBase['user_id']);
-		$this->log('网站代还款','loan');
+
 		if($status['status'] == 1) {
 			$result['code'] = 200;
 			$result['message'] = $status['show_err'];
+			$this->log($act.$result['message'],'site_repay');
 			return @json_encode($result);
 		}else {
 			$result['message'] = $status['show_err'];
+			$this->log($act.$result['message'],'site_repay');
 			return @json_encode($result);
 		}
 	}
@@ -203,6 +220,7 @@ class  controller_loan_loan extends controller_sysBase {
 		$result = array();
 		$loanbid_info = array();
 		$loanbase_info = array();
+		$act = '放款操作：';
 		//默认返回成功
 		$result['code'] = 200;
 		$result['status'] = 1;
@@ -212,12 +230,14 @@ class  controller_loan_loan extends controller_sysBase {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = '贷款不存在';
+			$this->log($act.$result['message'],'loans');
 			return @json_encode($result);
 		}
 		if($loanbid_info['repay_start_time'] == '') {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = '放款失败，还款时间不能为空';
+			$this->log($act.$result['message'],'loans');
 			return @json_encode($result);
 		}else {
 			$loanbid_info['loan_time'] = strtotime($loanbid_info['repay_start_time']);
@@ -239,12 +259,14 @@ class  controller_loan_loan extends controller_sysBase {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = '贷款不存在';
+			$this->log($act.$result['message'],'loans');
 			return @json_encode($result);
 		}
 		if(!in_array($loanBid['deal_status'],array(2, 4, 5))) {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = "放款失败，借款不是满标状态";
+			$this->log($act.$result['message'],'loans');
 			return @json_encode($result);
 		}
 		$borrow_money = $loanBaseDao->getloanbase($deal_id,'id,borrow_amount');
@@ -253,6 +275,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = "放款失败，问题标";
+			$this->log($act.$result['message'],'loans');
 			return @json_encode($result);
 		}
 		//放款给用户，放款时，将贷款设置为无效
@@ -328,7 +351,7 @@ class  controller_loan_loan extends controller_sysBase {
 				//修改为已放款
 				$effectBidNumbers =$loanBidDao->update($loanbid_info,array('loan_id'=>$deal_id,'is_has_loans'=>0));
 				if($effectBidNumbers === false) {
-					$result['message'] = "放款失败";
+					$result['message'] = "放款失败,更新贷款状态失败";
 					return @json_encode($result);
 				}else {
 					//记录贷款状态变更日志
@@ -356,23 +379,25 @@ class  controller_loan_loan extends controller_sysBase {
 					if ($loanBase['is_mobile'] > 0) {
 						//$carryMoney = \Core::business('user_');
 					}
-					$result['message'] = "放款成功,还/回款计划生成中";
+					$result['message'] = "放款成功";
 				}
+				return @json_encode($result);
 			}else{
 				$result['code'] = 404;
 				$result['status'] = 0;
 				$result['message'] = "放款失败，生成还款、回款计划失败";
+
+				return @json_encode($repayplan);
 			}
 		}catch(\Exception $e){
 			$result['message'] = '系统错误';
 		}finally{
 			if($result['code'] == 200 && $result['status'] == 1){
-
 				\Core::db()->commit();
 			}else{
 				\Core::db()->rollback();
 			}
-			$this->log('满标放款','loan');
+			$this->log($act.$result['message'],'loans');
 			return @json_encode($result);
 		}
 	}
@@ -382,6 +407,7 @@ class  controller_loan_loan extends controller_sysBase {
 	 * $id deal_id
 	 */
 	public function do_received(){
+		$act = '流标返还操作：';
 		$result = array();
 		$result['code'] = 200;
 		$result['status'] = 1;
@@ -391,12 +417,14 @@ class  controller_loan_loan extends controller_sysBase {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = '返还失败，借款不存在';
+			$this->log($act.$result['message'],'received');
 			return @json_encode($result);
 		}
 		if($reason == '') {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = '请填写流标原因';
+			$this->log($act.$result['message'],'received');
 			return @json_encode($result);
 		}
 		//实例化dao
@@ -414,12 +442,14 @@ class  controller_loan_loan extends controller_sysBase {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = '返还失败，借款不存在';
+			$this->log($act.$result['message'],'received');
 			return @json_encode($result);
 		}
 		if (intval($loanBid['deal_status']) >= 4) {
 			$result['code'] = 404;
 			$result['status'] = 0;
 			$result['message'] = "返还失败，借款状态为还款状态";
+			$this->log($act.$result['message'],'received');
 			return @json_encode($result);
 		}
 		//流标时返还
@@ -500,8 +530,7 @@ class  controller_loan_loan extends controller_sysBase {
 			}else{
 				\Core::db()->rollback();
 			}
-			$this->log('流标返款','loan');
-
+			$this->log($act.$result['message'],'received');
 		}
 	}
 	//贷款详细信息编辑
@@ -879,7 +908,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$row['id'] = $v['id'];
 			$opration="<span class='btn'><em><i class='fa fa-edit'></i>".\Core::L('operate')." <i class='arrow'></i></em><ul>";
 
-			if($v['loan_status']>=1)
+			if($v['loan_status']>=1 && (\Core::arrayKeyExists($v['id'],$loanInfos)?\Core::arrayGet(\Core::arrayGet($loanInfos, $v['id']),'is_has_loans'):0) == 1)
 			{
 				$opration.="<li><a href='javascript:loan_repay_plan(".$v['id'].")'>还款计划</a></li>";
 
