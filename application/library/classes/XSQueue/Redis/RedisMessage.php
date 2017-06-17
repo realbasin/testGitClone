@@ -2,9 +2,9 @@
 
 namespace XSQueue\Redis;
 
-use XSQueue\Message;
+use XSQueue\ClientMessage;
 
-class RedisMessage implements Message, \JsonSerializable
+class RedisMessage implements ClientMessage, \JsonSerializable
 {
     private $body;
     private $properties;

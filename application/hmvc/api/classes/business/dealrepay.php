@@ -7,23 +7,6 @@ defined('IN_XIAOSHU') or exit('Access Invalid!');
 class business_dealrepay extends Business
 {
 
-    private function getConfig()
-    {
-        $app_env = \Core::config()->getEnvironment();
-        $site['site_token'] = md5('api.xiaoshushidai.com');
-        if ($app_env == 'production') {
-            $site['www_host'] = 'www.xiaoshushidai.com';
-        } else if ($app_env == 'test') {
-            $site['www_host'] = 'test.xiaoshushidai.com';
-        } else if ($app_env == 'development') {
-            $site['www_host'] = 'mytest.xiaoshushidai.com';
-        } else {
-            $site['www_host'] = $app_env . '.xiaoshushidai.com';
-        }
-
-        return $site;
-    }
-
     /**
      * 用户自动还款
      */
@@ -34,7 +17,7 @@ class business_dealrepay extends Business
 
         $count = count($deal_repays);
 
-        $config = $this->getConfig();
+        $config = \Core::business('siteconfig')->getConfig();
         $www_host = $config['www_host'];
 
         $url = 'http://' . $www_host . '/ajax-autorepay';

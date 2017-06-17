@@ -1,5 +1,6 @@
 <?php
 defined('IN_XIAOSHU') or exit('Access Invalid!');
+
 /**
  * 用户业务类
  */
@@ -84,10 +85,10 @@ class business_user extends Business
                 ];
 
                 $bankerStatisticsDao = \Core::dao('bankerstatistics');
-                $bs2 = $bankerStatisticsDao->getBsByUserIdAndDate($p_id,$day);
-                if ($bs2){
-                    $bankerStatisticsDao->update($data,['id' => $bs2['id']]);
-                }else{
+                $bs2 = $bankerStatisticsDao->getBsByUserIdAndDate($p_id, $day);
+                if ($bs2) {
+                    $bankerStatisticsDao->update($data, ['id' => $bs2['id']]);
+                } else {
                     $bankerStatisticsDao->insert($data);
                 }
 
@@ -141,6 +142,130 @@ class business_user extends Business
     public function usersNew($ids, $start, $end)
     {
         return \Core::dao('userrelations')->usersNew($ids, $start, $end);
+    }
+
+    public function getUsersHasPid()
+    {
+        $key = md5(__CLASS__ . __FUNCTION__);
+
+        $count = \Core::dao('user')->getUsersHasPidCount();
+        $size = 3000;
+        $range = ceil($count / $size);
+
+        $users = array();
+
+        for ($i = 0; $i < $range; $i++) {
+            $key2 = $key . $i;
+            if ($tmp = \Core::cache()->get($key2)) {
+                for ($ii = 0; $ii < count($tmp); $ii++) {
+                    $users[] = $tmp[$ii];
+                }
+            } else {
+                // 防止只获取部分数据
+                $users = [];
+                break;
+            }
+        }
+
+        if (count($users) > 0)
+            return $users;
+
+        $users2 = [];
+        for ($i = 0; $i < $range; $i++) {
+            $start = $i * $size;
+            $users = \Core::dao('user')->getUsersHasPid($start, $size);
+
+            $key2 = $key . $i;
+            \Core::cache()->set($key2, $users, 3600);
+            $users2 = array_merge($users2, $users);
+        }
+
+        return $users2;
+    }
+
+    /**
+     * 获取指定用户的上线user_id
+     * @param int $user_id
+     * @param array $users 以用户user_id为键名，直属上线user_id为值的数组
+     * @param string $pids
+     * @param int $rank_level 递归时用于标记当前层级的数组,-1表示获取所有上线
+     * @return string
+     */
+    public function getUserPids($user_id, $users, $pids = '', $rank_level = -1)
+    {
+        if (!is_int($rank_level) || $rank_level < -1) {
+            return '';
+        }
+
+        //获取所有上线用户id
+        if ($rank_level == -1) {
+            if (isset($users[$user_id])) {
+                $pids .= ',' . $users[$user_id];
+                $pids = $this->getUserPids($users[$user_id], $users, $pids, -1);
+            }
+        } elseif ($rank_level > 0) {
+            if (isset($users[$user_id])) {
+                $pids .= ',' . $users[$user_id];
+                $pids = $this->getUserPids($users[$user_id], $users, $pids, $rank_level - 1);
+            }
+        }
+
+        if (!empty($pids)) {
+            $pids = ltrim($pids, ',');
+        }
+
+        return $pids;
+    }
+
+    /**
+     * 获取指定用户的所有下线user_id 及 根据USER_CHILDREN_RANGE限制下线层级数量的user_id
+     * @param int $user_id
+     * @param int $users 以上线用户(即：pid)为键名，直属下线user_id为子数组的数组
+     * @param array $ranks 递归时用于标记当前层级的数组
+     * @param array $children
+     * @return array 返回格式：array('all_children'=>'1,2,3,4,5', 'rank_children'=>array(1=>'1,2,3', 2=>'4', 3=>'5'))
+     */
+    public function getUserChildren($user_id, $users, $ranks = array(), $children = array())
+    {
+        if (empty($children)) {
+            $children = array('all_children' => '', 'rank_children' => '');
+
+            for ($i = 1; $i <= 3; $i++) {
+                $children['rank_children'][$i] = '';
+            }
+        }
+
+        if (isset($users[$user_id])) {
+            $ids = implode(',', $users[$user_id]);
+
+            $children['all_children'] .= ',' . $ids;
+
+            if (!isset($ranks[$user_id])) {
+                $ranks[$user_id] = 1;
+            }
+
+            $rank = intval($ranks[$user_id]);
+            if ($rank <= 3) {
+                $children['rank_children'][$rank] .= ',' . $ids;
+            }
+
+            foreach ($users[$user_id] as $v) {
+                $ranks[$v] = $ranks[$user_id] + 1;
+                $children = $this->getUserChildren($v, $users, $ranks, $children);
+            }
+        }
+
+        if (!empty($children['all_children'])) {
+            $children['all_children'] = ltrim($children['all_children'], ',');
+
+            foreach ($children['rank_children'] as $k => $v) {
+                if (!empty($v)) {
+                    $children['rank_children'][$k] = ltrim($v, ',');
+                }
+            }
+        }
+
+        return $children;
     }
 
 }
