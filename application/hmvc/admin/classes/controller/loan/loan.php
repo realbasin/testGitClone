@@ -55,6 +55,7 @@ class  controller_loan_loan extends controller_sysBase {
 		$result = array();
 		$result['code'] = 200;
 		$loan_id = \Core::get('id',0);
+		$time = time();
 		if(!$loan_id) {
 			$result['message'] = \Core::L('fail');
 			$this->log($act.$result['message'],'manual_repay');
@@ -147,6 +148,7 @@ class  controller_loan_loan extends controller_sysBase {
 	//网站资金代还
 	public function do_site_repay(){
 		$act = '网站代还操作：';
+		$time = time();
 		$result = array();
 		$result['code'] = 200;
 		$id = intval(Core::get('id',0));
@@ -526,11 +528,13 @@ class  controller_loan_loan extends controller_sysBase {
 			if($result['code'] == 200 && $result['status'] == 1){
 				\Core::db()->commit();
 				$result['message'] = '流标成功';
+				$this->log($act.$result['message'],'received');
 				return @json_encode($result);
 			}else{
 				\Core::db()->rollback();
+				$this->log($act.$result['message'],'received');
 			}
-			$this->log($act.$result['message'],'received');
+
 		}
 	}
 	//贷款详细信息编辑
@@ -573,12 +577,14 @@ class  controller_loan_loan extends controller_sysBase {
 				$bid_flag = $loanBidDao->update($loan_bid,array('loan_id'=>$loan_id));
 				$ext_flag = $loanExtDao->update($loan_ext,array('loan_id'=>$loan_id));
 			}catch (\Exception $e){
+				$loanBaseDao->getDb()->rollback();
 				\Core::redirect(adminUrl('loan_loan','all'),'系统错误');
 			}finally{
 				if($base_flag === false || $bid_flag === false || $ext_flag === false) {
 					$loanBaseDao->getDb()->rollback();
 					\Core::redirect(adminUrl('loan_loan','all'),'保存失败');
 				}else {
+					$this->log('保存贷款编号【'.$loan_id.'】信息保存成功','edit');
 					$loanBaseDao->getDb()->commit();
 					\Core::redirect(adminUrl('loan_loan','loan_show_edit',array('loan_id'=>$loan_id)),'保存成功');
 				}
