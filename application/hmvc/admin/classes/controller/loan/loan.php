@@ -1122,12 +1122,12 @@ class  controller_loan_loan extends controller_sysBase {
 						$next_time_span = $v['repay_time'];
 						$impose_day = $day = ceil(($time_span - $next_time_span) / 24 / 3600);
 						//是否严重逾期
-						if($impose_day > C('YZ_IMPSE_DAY')) {
+						if($impose_day >= C('YZ_IMPSE_DAY')) {
 							$status = 4;
 							$impose_fee = \Core::arrayKeyExists('impose_fee_day2',$config_common)?\Core::arrayGet($config_common,'impose_fee_day2'):0.9;
 						}else {
 							$status = 3;
-							$impose_fee = \Core::arrayKeyExists('impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'impose_fee_day1'):0.9;
+							$impose_fee = \Core::arrayKeyExists('impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'impose_fee_day1'):0.5;
 						}
 						$impose_fee = floatval($impose_fee);
 						//罚息/违约金
