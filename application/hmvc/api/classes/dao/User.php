@@ -1,6 +1,5 @@
 <?php
 defined('IN_XIAOSHU') or exit('Access Invalid!');
-define("AES_DECRYPT_KEY", "__FANWEP2P__");//数据库加密
 
 class dao_User extends Dao
 {

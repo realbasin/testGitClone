@@ -78,7 +78,7 @@ class dao_loanbase extends Dao
         return $this->getDb()
             ->select('COUNT(*) AS num')
             ->from($this->getTable(), 'base')
-            ->join('_tablePrefix_loan_bid AS bid', 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where($where)
             ->execute()
             ->value('num');
@@ -102,7 +102,7 @@ class dao_loanbase extends Dao
         return $this->getDb()
             ->select('sum(base.borrow_amount) sum_amount')
             ->from($this->getTable(), 'base')
-            ->join('_tablePrefix_loan_bid AS bid', 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where($where)
             ->execute()
             ->value('sum_amount');
@@ -126,7 +126,7 @@ class dao_loanbase extends Dao
         $data = $this->getDb()
             ->select('sum(base.borrow_amount) sum_amount,count(base.user_id) AS cnt')
             ->from($this->getTable(), 'base')
-            ->join('_tablePrefix_loan_bid AS bid', 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where($where)
             ->groupBy('base.user_id')
             ->having('cnt = 1')
@@ -160,7 +160,7 @@ class dao_loanbase extends Dao
         $data = $this->getDb()
             ->select('sum(base.borrow_amount) sum_amount,count(base.user_id) AS cnt')
             ->from($this->getTable(), 'base')
-            ->join(['loan_bid' => 'bid'], 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where($where)
             ->groupBy('base.user_id')
             ->having('cnt > 1')
@@ -185,12 +185,12 @@ class dao_loanbase extends Dao
         $data = $this->getDb()
             ->select('*')
             ->from($this->getTable(), 'base')
-            ->join(['loan_bid' => 'bid'], 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where(['base.id' => $dealId])
             ->execute()
             ->row();
 
-        $dealLoanTypeDao = \Core::dao('dealloantype');
+        $dealLoanTypeDao = \Core::dao('DealLoanType');
         $data['deal_loan_type'] = $dealLoanTypeDao->getRowById($data['type_id']);
         return $data;
     }
@@ -225,8 +225,8 @@ class dao_loanbase extends Dao
     {
         $where = [
             'is_delete' => [0, 3],
-            'create_time>=' => $start_time,
-            'create_time<' => $end_time
+            'create_time >=' => $start_time,
+            'create_time <' => $end_time
         ];
         $data = $this->getDb()
             ->select('IFNULL(SUM(IF(apply_borrow_amount>0,apply_borrow_amount,borrow_amount)),0) as applyAmount,IFNULL(COUNT(DISTINCT user_id),0) as applyUsers')
@@ -249,13 +249,13 @@ class dao_loanbase extends Dao
             'base.is_delete' => 0,
             'base.publish_wait' => 0,
             'bid.deal_status' => [4, 5],
-            'bid.loan_time>=' => $start_time,
-            'bid.loan_time<' => $end_time
+            'bid.loan_time >=' => $start_time,
+            'bid.loan_time <' => $end_time
         ];
         return $this->getDb()
             ->select('IFNULL(SUM(borrow_amount),0) as full_loan_amount')
             ->from($this->getTable(), 'base')
-            ->join('_tablePrefix_loan_bid AS bid', 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where($where)
             ->execute()
             ->value('full_loan_amount');
@@ -270,7 +270,7 @@ class dao_loanbase extends Dao
     public function getFailLoanAmountByDate($start_time, $end_time)
     {
         $sql = "SELECT IFNULL(SUM(borrow_amount),0) as fail_loan_amount FROM _tablePrefix_loan_base AS base INNER JOIN _tablePrefix_loan_bid AS bid WHERE base.is_delete=0 AND base.publish_wait=0 AND bid.deal_status=3 AND ((bid.loan_time>=" . $start_time . " AND bid.loan_time<" . $end_time . ") OR (bid.bad_time>=" . $start_time . " AND bid.bad_time<" . $end_time . "))";
-        return $this->getDb()->execute($sql);
+        return $this->getDb()->execute($sql)->value('fail_loan_amount');
     }
 
     /**
@@ -285,58 +285,58 @@ class dao_loanbase extends Dao
             'base.is_delete' => 0,
             'base.publish_wait' => 0,
             'bid.deal_status' => [1, 2, 3, 4, 5],
-            'base.second_audit_time>=' => $start_time,
-            'base.second_audit_time<' => $end_time
+            'base.second_audit_time >=' => $start_time,
+            'base.second_audit_time <' => $end_time
         ];
         return $this->getDb()
             ->select('IFNULL(SUM(borrow_amount),0) as pass_amount,IFNULL(COUNT(DISTINCT user_id),0) as pass_users')
             ->from($this->getTable(), 'base')
-            ->join('_tablePrefix_loan_bid AS bid', 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where($where)
             ->execute()
             ->row();
     }
 
     /**
-     * 查出昨天借款用户所申请的借款数据总数
+     * 查出借款用户所申请的借款数据总数
      * @param $start_time
      * @param $end_time
      * @return mixed
      */
-    public function getZhiMaBorrowDealDataTotalByYesterday($start_time, $end_time)
+    public function getBorrowDealCount($start_time, $end_time)
     {
         $where = [
             'base.is_effect' => 1,
-            'base.is_delete<>' => 2,
-            'bid.deal_status<' => 4,
-            'base.create_time>=' => $start_time,
-            'base.create_time<' => $end_time
+            'base.is_delete <>' => 2,
+            'bid.deal_status <' => 4,
+            'base.create_time >=' => $start_time,
+            'base.create_time <' => $end_time
         ];
         return $this->getDb()
             ->select('COUNT(*) AS num')
             ->from($this->getTable(), 'base')
-            ->join('_tablePrefix_loan_bid AS bid', 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where($where)
             ->execute()
             ->value('num');
     }
 
     /**
-     * 查出昨天借款用户所申请的借款数据
+     * 查出借款用户所申请的借款数据
      * @param $start_time
      * @param $end_time
      * @param $startLimit
      * @param $endLimit
      * @return mixed
      */
-    public function getZhiMaBorrowDealDataByYesterday($start_time, $end_time, $startLimit, $endLimit)
+    public function getBorrowDealData($start_time, $end_time, $startLimit, $endLimit)
     {
         $where = [
             'base.is_effect' => 1,
-            'base.is_delete<>' => 2,
-            'bid.deal_status<' => 4,
-            'base.create_time>=' => $start_time,
-            'base.create_time<' => $end_time
+            'base.is_delete <>' => 2,
+            'bid.deal_status <' => 4,
+            'base.create_time >=' => $start_time,
+            'base.create_time <' => $end_time
         ];
 
         $fieldList = ['base.id', 'base.borrow_amount', 'base.apply_borrow_amount', 'base.user_id', 'base.is_delete',
@@ -344,7 +344,7 @@ class dao_loanbase extends Dao
         return $this->getDb()
             ->select(implode(',', $fieldList))
             ->from($this->getTable(), 'base')
-            ->join('_tablePrefix_loan_bid AS bid', 'base.id = bid.loan_id', 'inner')
+            ->join(['loan_bid' => 'bid'], 'base.id=bid.loan_id', 'inner')
             ->where($where)
             ->limit($startLimit, $endLimit)
             ->execute()

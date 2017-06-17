@@ -11,7 +11,7 @@ define("BASE_PATH",str_replace('\\','/',dirname(__FILE__)));
 		//dirname(__FILE__) . '/packages/misc/'
 	))
 	->addAutoloadFunctions(array(
-		//'main'
+		'common'
 	))
 	//->setEnvironment(($env = (($cliEnv = \Core::getOpt('env')) ? $cliEnv : \Core::arrayGet($_SERVER, 'ENVIRONMENT'))) ? \Core::config()->getServerEnvironment($env) : \Core::ENV_DEVELOPMENT)
 	//->setShowError(\Core::config()->getEnvironment() != \Core::ENV_PRODUCTION)

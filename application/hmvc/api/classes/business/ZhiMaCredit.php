@@ -72,13 +72,13 @@ class business_ZhiMaCredit extends Business
 
         $loanBaseDao = \Core::dao('LoanBase');
         $userDao = \Core::dao('User');
-        $borrow_list_total = $loanBaseDao->getZhiMaBorrowDealDataTotalByYesterday($start_time, $end_time);
+        $borrow_list_total = $loanBaseDao->getBorrowDealCount($start_time, $end_time);
         if ($borrow_list_total > 0) {
             $records += $borrow_list_total;
             $allPage = ceil($borrow_list_total / $pageSize);
 
             for ($page = 1; $page <= $allPage; $page++) {
-                $borrow_list = $loanBaseDao->getZhiMaBorrowDealDataByYesterday($start_time, $end_time, ($page - 1) * $pageSize, $pageSize);
+                $borrow_list = $loanBaseDao->getBorrowDealData($start_time, $end_time, ($page - 1) * $pageSize, $pageSize);
                 foreach ($borrow_list as $key => $borrow) {
                     $borrow_data = array();
                     $borrow_data['user_credentials_type'] = "0";

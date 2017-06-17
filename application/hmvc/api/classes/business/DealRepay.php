@@ -13,7 +13,10 @@ class business_DealRepay extends Business
     public function autoDealRepay()
     {
         $dealRepayDao = \Core::dao('DealRepay');
-        $deal_repays = $dealRepayDao->getTodayNoRepayDealRepays();
+
+        $start_date = date('Y-m-d');
+        $end_date = $start_date;
+        $deal_repays = $dealRepayDao->getNoRepayDealRepaysByDate($start_date, $end_date);
 
         $count = count($deal_repays);
 

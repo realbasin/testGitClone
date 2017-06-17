@@ -27,16 +27,11 @@ class business_DealAuditStat extends Business
         } elseif ($theLatest != null && $theLatest['id'] > 0) {
             $new_date = $theLatest['date_time'];
             do {
-
                 $new_date = date("Y-m-d", strtotime($new_date) + 86400);
-
                 $this->saveDealAuditStatData($new_date);
-
             } while (strtotime(date("Y-m-d", strtotime($new_date) + 86400)) <= strtotime($date_time));
         } else {
-
             $this->saveDealAuditStatData($start_date);
-
             $this->statistics();
         }
     }
@@ -161,7 +156,7 @@ class business_DealAuditStat extends Business
         }
         //by xssd xbw 20160923 审核业绩统计与借款人数的数据有出入 WWW-321 End
 
-
+        print_r($op_log_list);exit;
         return $op_log_list;
     }
 
