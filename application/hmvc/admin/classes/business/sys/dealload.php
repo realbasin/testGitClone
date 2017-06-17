@@ -192,12 +192,17 @@ class  business_sys_dealload extends Business {
 		if($deal_id == 0 || $user_id == 0) return false;
 		$loanextDao = \Core::dao('loan_loanext');
 		$loanBaseDao = \Core::dao('loan_loanbase');
-		$amt_common = $loanextDao->getAmtconfig($deal_id);
-		if(!$amt_common) return false;
-		if($amt_common['l_guarantees_amt'] != 0){
+		$amt_config = $loanextDao->getAmtconfig($deal_id);
+		$l_guarantees_amt = \Core::arrayKeyExists('l_guarantees_amt',$amt_config)?\Core::arrayGet($amt_config,'l_guarantees_amt'):0;
+		if($l_guarantees_amt != 0){
+			//更新保证金
+			$amt_config['real_freezen_l_amt'] = $l_guarantees_amt;
+			$amt_config = serialize($amt_config);
+			$loanextDao->update(array('config_amt'=>$amt_config),array('loan_id'=>$deal_id));
+			//扣除保证金
 			$url = \Core::getUrl("deal","","deal", array("id" => $deal_id));
 			$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBaseDao->getName($deal_id) . "</a>],咨询服务费";
-			return \Core::business('user_userinfo')->editUserLockMoney($user_id,-$amt_common['l_guarantees_amt'],$log_msg,120);
+			return \Core::business('user_userinfo')->editUserLockMoney($user_id,-$l_guarantees_amt,$log_msg,120);
 		}
 		return true;
 	}
