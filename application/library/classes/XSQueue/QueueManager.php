@@ -2,7 +2,14 @@
 namespace XSQueue;
 
 use XSQueue\AmqpExt\AmqpConnectionFactory;
-use XSQueue\Redis\RedisConnectionFactory;
+use XSQueue\AmqpExt\AmqpContext;
+use XSQueue\AmqpExt\AmqpMessage;
+use XSQueue\AmqpExt\AmqpQueue;
+use XSQueue\AmqpExt\AmqpTopic;
+use XSQueue\Client\Config;
+use XSQueue\Client\Message;
+use XSQueue\Client\MessagePriority;
+use XSQueue\Client\Meta\QueueMetaRegistry;
 
 
 spl_autoload_register(function ($class) {
@@ -12,14 +19,12 @@ spl_autoload_register(function ($class) {
     }
 });
 
-/**
- * 
- * Type:AMQP_EX_TYPE_DIRECT,AMQP_EX_TYPE_FANOUT,AMQP_EX_TYPE_HEADERS, AMQP_EX_TYPE_TOPIC
- * Flag:默认AMQP_NOPARAM,可选AMQP_DURABLE,AMQP_PASSIVE,AMQP_AUTODELETE
- */
 class QueueManager{
 	
+	//配置
 	protected $config;
+	//优先级
+	private $priority;
 	
 	public function __construct()
 	{

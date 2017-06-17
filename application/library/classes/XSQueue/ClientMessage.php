@@ -5,7 +5,7 @@ namespace XSQueue;
 /**
  * 消息接口
  */
-interface Message
+interface ClientMessage
 {
     /**
      * @return string
