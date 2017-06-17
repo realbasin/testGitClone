@@ -29,5 +29,8 @@ class dao_loan_referrals extends Dao {
 	public function getTable() {
 		return 'referrals';
 	}
-
+	//获取通过id数据
+	public function getDataById($id,$field='*'){
+		return $this->getDb()->select($field)->from($this->getTable())->where(array('id'=>$id))->execute()->row();
+	}
 }
