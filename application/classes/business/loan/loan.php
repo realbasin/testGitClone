@@ -262,6 +262,10 @@ class  business_loan_loan extends Business {
 							}
 						}
 						//TODO 普通会员邀请返利
+						//判断该标是否参与分销返利
+						if ($loanbaseDao->findCol('is_referral_award',array('id'=>$id)) != 0) {
+							$this->getReferrals($id,$user_load['id'],$invest_user_id);
+						}
 						//投资者返佣金
 						if ($user_load['manage_interest_money_rebate'] != 0) {
 							//是否有上级，有上级则给上级返佣
@@ -569,6 +573,12 @@ class  business_loan_loan extends Business {
 						return $root;
 					}
 				}
+				//TODO 普通会员邀请返利
+				//判断该标是否参与分销返利
+				if ($loanBaseDao->findCol('is_referral_award',array('id'=>$id)) != 0) {
+					$deal_load_repay_id = $dealLoadRepayDao->findCol('id',array('deal_id'=>$id,'user_id'=>$user_id,'l_key'=>$start_lkey));
+					$this->getReferrals($id,$deal_load_repay_id,$repay_user_id);
+				}
 				//TODO 投资者返佣
 				if ($user_inrepay_info['true_manage_interest_money_rebate'] != 0) {
 					//是否有上级，有上级则给上级返佣
@@ -683,6 +693,7 @@ class  business_loan_loan extends Business {
 					$root['status'] = 1;
 					$root['show_err'] = '还款成功';
 				}
+
 				//TODO 借款者返佣金
 				$true_manage_money_rebate = round($user_repay['manage_money'] * floatval(C('BORROWER_COMMISSION_RATIO')) / 100,2);
 				if($true_manage_money_rebate != 0 ) {
@@ -974,6 +985,146 @@ class  business_loan_loan extends Business {
 			}
 		}
 
+	}
+	/*
+	 * 还款返利(普通会员邀请返利)
+	 * $loan_id 贷款id
+	 * $deal_repay_id 回款计划id
+	 * $user_id 回款用户id（有转标则为转标承接人id）
+	 * */
+	public function getReferrals($loan_id,$deal_repay_id,$user_id){
+		if(!$deal_repay_id) return false;
+		if(!$loan_id) return false;
+		if(!$user_id) return false;
+		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$userDao = \Core::dao('user_user');
+		$dealLoadDao = \Core::dao('loan_dealload');
+		$referralsDao = \Core::dao('loan_referrals');
+		$time = time();
+		//返利用户信息
+		$user_where = array('id'=>$user_id,'pid >'=>0,'referral_rate >'=>0,'user_type <'=>2);
+
+		$user_info = $userDao->getUserInfo('user_name,referral_rate,pid,create_time,referral_time',$user_where)->row();
+		if(!$user_info) return false;
+		if (intval(C("INVITE_REFERRALS_DATE")) > 0) {
+			//计算分销有效期
+			$after_year = 0;
+			if($user_info['referral_time'] > -1) {
+				$after_year = strtotime(date('Y-m-d',$time).'-'.$user_info['referral_time'].'month');
+			}else {
+				$after_year = strtotime(date('Y-m-d',$time).'-'.C('INVITE_REFERRALS_DATE').'month');
+			}
+		}
+		//用户注册时间不在返利时间内
+		if($user_info['create_time'] >= $after_year) return false;
+		//获取回款信息
+		$deal_load_repay_info = $dealLoadRepayDao->getDataById($deal_repay_id,'repay_time,l_key,load_id,true_interest_money,true_self_money');
+		if(!$deal_load_repay_info) return false;
+		$deal_load_info = $dealLoadDao->getDealLoad('id,create_time',array('create_time > '=>$after_year,'id'=>$deal_load_repay_info['load_id']));
+		if(!$deal_load_info) return false;
+		$referrals_money = 0;
+		if(C('INVITE_REFERRALS_TYPE') == 0) {
+			$referrals_money = $deal_load_repay_info['true_interest_money'] * $user_info['referral_rate'] *0.01;
+		}else {
+			$referrals_money = $deal_load_repay_info['true_self_money'] * $user_info['referral_rate'] *0.01;
+		}
+		if($referrals_money == 0) return false;
+		//整理返利数据
+		$data = array();
+		$data['deal_id'] = $loan_id;
+		$data['load_id'] = $deal_load_repay_info['load_id'];
+		$data['l_key'] = $deal_load_repay_info['l_key'];
+		$data['money'] = round($referrals_money,2);
+		$data['user_id'] = $user_id;
+		$data['rel_user_id'] = $user_info['pid'];
+		$data['referral_type'] = intval(C("INVITE_REFERRALS_TYPE")) == 0 ? 0 : 1;
+		$data['referral_rate'] = $user_info['referral_rate'];
+		$data['repay_time'] = $deal_load_repay_info['repay_time'];
+		$data['create_time'] = $time;
+		//TODO 对数据库进行修改，开启事务
+		$referralsDao->getDb()->begin();
+		try{
+			$referrals_id = true;
+			$referrals_id = $referralsDao->insert($data);
+			unset($data);
+			if($referrals_id === false) return false;
+			if(intval(C('INVITE_REFERRALS_AUTO')) == 1) {
+				//自动发放返利
+				$userBusiness = \Core::business('user_userinfo');
+				$msg = '[<a href="" target="_blank">' .$loanBaseDao->getName($loan_id). '</a>],第' . ($deal_load_repay_info['l_key'] + 1) . '期,还款获取邀请返利';
+				//修改用户余额
+				$edit_status = $userBusiness->editUserMoney($user_id,round($referrals_money,2),$msg,23);
+				if($edit_status === false) {
+					$referrals_id = $edit_status;
+					return $referrals_id;
+				}
+				//修改返利表时间
+				$update_status = $referralsDao->update(array('pay_time'=>time()),array('id'=>$referrals_id));
+				if($update_status === false) {
+					$referrals_id = $update_status;
+					return $referrals_id;
+				}
+			}
+		}catch(\Exception $e){
+			$referralsDao->getDb()->rollback();
+			$referrals_id = false;
+		}finally{
+			if($referrals_id === false) {
+				$referralsDao->getDb()->rollback();
+				return $referrals_id;
+			}else {
+				$referralsDao->getDb()->commit();
+				return $referrals_id;
+			}
+		}
+	}
+	/*
+	 * 手动还款返利(普通会员邀请返利)
+	 * $id 返利表id
+	 * */
+	public function payReferrals($id){
+		if(!$id) return false;
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$referralsDao = \Core::dao('loan_referrals');
+		$time = time();
+		if($loanBaseDao->findCol('is_referral_award',array('id'=>$id)) == 0) return false;
+		//返利信息
+		$referrals_info = $referralsDao->getDataById($id);
+		if(!$referrals_info) return false;
+		//TODO 对数据库进行修改，开启事务
+		$referralsDao->getDb()->begin();
+		try{
+			$referrals_id = true;
+			if($referrals_info['money'] != 0) {
+				//自动发放返利
+				$userBusiness = \Core::business('user_userinfo');
+				$msg = '[<a href="" target="_blank">' .$loanBaseDao->getName($referrals_info['deal_id']). '</a>],第' . ($referrals_info['l_key'] + 1) . '期,还款获取邀请返利';
+				//修改用户余额
+				$edit_status = $userBusiness->editUserMoney($referrals_info['user_id'],round($referrals_info['money'],2),$msg,23);
+				if($edit_status === false) {
+					$referrals_id = $edit_status;
+					return $referrals_id;
+				}
+				//修改返利表时间
+				$update_status = $referralsDao->update(array('pay_time'=>time()),array('id'=>$id));
+				if($update_status === false) {
+					$referrals_id = $update_status;
+					return $referrals_id;
+				}
+			}
+		}catch(\Exception $e){
+			$referralsDao->getDb()->rollback();
+			$referrals_id = false;
+		}finally{
+			if($referrals_id === false) {
+				$referralsDao->getDb()->rollback();
+				return $referrals_id;
+			}else {
+				$referralsDao->getDb()->commit();
+				return $referrals_id;
+			}
+		}
 	}
 
 }
