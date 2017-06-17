@@ -31,4 +31,8 @@ class dao_userrelations extends Dao {
             ->row();
     }
 
+    public function truncate(){
+        $this->getDb()->execute('truncate _tablePrefix_user_relations');
+    }
+
 }

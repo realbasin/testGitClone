@@ -273,4 +273,67 @@ class dao_user extends Dao
         return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->row();
     }
 
+    public function getUsersHasPidCount()
+    {
+        return $this->getDb()
+            ->select('COUNT(*) AS num')
+            ->from($this->getTable())
+            ->where(['pid>' => 0, 'is_delete' => 0])
+            ->execute()
+            ->value('num');
+    }
+
+    public function getUsersHasPid($start, $size)
+    {
+        $userList = $this->getDb()
+            ->select('id,pid')
+            ->from($this->getTable())
+            ->where(['pid>' => 0, 'is_delete' => 0])
+            ->limit($start, $size)
+            ->execute()
+            ->rows();
+
+        $result = [];
+        foreach ($userList as $item) {
+            $result[] = ['id' => $item['id'], 'pid' => $item['pid']];
+        }
+
+        return $result;
+    }
+
+    /**
+     * 返回指定时间注册的用户
+     * @param int $starttime 起始时间
+     * @param int $endtime 结束时间
+     * @param int $user_mark -1全部用户,0未确定,1借款用户,2理财用户
+     * @return array;
+     */
+    public function getUserIdsByTimes($starttime, $endtime, $user_mark = -1)
+    {
+        if ($starttime < 0 || $endtime < 0 || $starttime > $endtime) {
+            return array();
+        }
+
+        $where = ['create_time>=' => $starttime, 'create_time<=' => $endtime];
+
+        if (in_array($user_mark, array('0', '1', '2'))) {
+            $where['user_mark'] = $user_mark;
+        } elseif ($user_mark != -1) {
+            return array();
+        }
+
+        $userList = $this->getDb()
+            ->select('id')
+            ->from($this->getTable())
+            ->where($where)
+            ->execute()
+            ->rows();
+
+        $result = [];
+        foreach ($userList as $user) {
+            $result[] = $user['id'];
+        }
+        return $result;
+    }
+
 }

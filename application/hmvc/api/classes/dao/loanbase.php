@@ -141,7 +141,7 @@ class dao_loanbase extends Dao
         return $sum;
     }
 
-    public function usersMoreDealAmount($ids,$start,$end)
+    public function usersMoreDealAmount($ids, $start, $end)
     {
 
         if (!is_array($ids) || count($ids) == 0)
@@ -175,8 +175,9 @@ class dao_loanbase extends Dao
         return $sum;
     }
 
-    public function getRowById($dealId){
-        $data =  $this->getDb()
+    public function getRowById($dealId)
+    {
+        $data = $this->getDb()
             ->from($this->getTable())
             ->where(['id' => $dealId])
             ->execute()
@@ -185,6 +186,26 @@ class dao_loanbase extends Dao
         $dealLoanTypeDao = \Core::dao('dealloantype');
         $data['deal_loan_type'] = $dealLoanTypeDao->getRowById($data['type_id']);
         return $data;
+    }
+
+    // 检测是否为还款状态
+    public function checkRepayStatus($deal_id)
+    {
+        $where = [
+            'l.id' => $deal_id,
+            'l.is_effect' => 1,
+            'l.is_delete' => 0,
+            'l.publish_wait' => 0,
+            'lb.deal_status' => 4
+        ];
+        $data = $this->getDb()
+            ->select('COUNT(*) AS num')
+            ->from($this->getTable(), 'l')
+            ->join(['loan_bid', 'lb'], 'l.id = lb.loan_id', 'inner')
+            ->where($where)
+            ->execute()
+            ->value('num');
+        return $data > 0;
     }
 
 }

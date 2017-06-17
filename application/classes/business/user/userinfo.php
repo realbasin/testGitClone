@@ -86,12 +86,12 @@ class  business_user_userinfo extends Business {
 			$where['id'] = $user_id;
 			$flag = $userDao->update($data,$where);
 			//修改后记录日志
-			\Core::business('user_userlog')->addUserLockMoneyLog($user_id,$log_msg,$money,$type);
+			$user_lock_money_log_id = \Core::business('user_userlog')->addUserLockMoneyLog($user_id,$log_msg,$money,$type);
 		}catch (\Exception $e){
 			$userDao->getDb()->rollback();
 			return false;
 		}finally{
-			if($flag === false){
+			if($flag === false || $user_lock_money_log_id === false){
 				$userDao->getDb()->rollback();
 				return $flag;
 			}else {
@@ -123,13 +123,13 @@ class  business_user_userinfo extends Business {
 			$where['id'] = $user_id;
 			$flag = $userDao->update($data,$where);
 			//修改后记录日志
-			\Core::business('user_userlog')->addUserScoreLog($user_id,$log_msg,$score,$type);
-			\Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('score'=>$score));
+			$user_score_log_id = \Core::business('user_userlog')->addUserScoreLog($user_id,$log_msg,$score,$type);
+			$user_log_id = \Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('score'=>$score));
 		}catch (\Exception $e){
 			$userDao->getDb()->rollback();
 			return false;
 		}finally{
-			if($flag === false){
+			if($flag === false || $user_score_log_id === false || $user_log_id === false){
 				$userDao->getDb()->rollback();
 				return $flag;
 			}else {
@@ -161,12 +161,49 @@ class  business_user_userinfo extends Business {
 			$where['id'] = $user_id;
 			$flag = $userDao->update($data,$where);
 			//修改后记录日志
-			\Core::business('user_userlog')->addUserPointLog($user_id,$log_msg,$point,$type);
+			$user_point_log_id = \Core::business('user_userlog')->addUserPointLog($user_id,$log_msg,$point,$type);
 		}catch (\Exception $e){
 			$userDao->getDb()->rollback();
 			return false;
 		}finally{
-			if($flag === false){
+			if($flag === false || $user_point_log_id === false){
+				$userDao->getDb()->rollback();
+				return $flag;
+			}else {
+				$userDao->getDb()->commit();
+				return true;
+			}
+		}
+	}
+
+	/*
+	 *修改用户额度
+	 * @param $user_id 用户id
+	 * @param $quota 要变动的额度，带负号为减少，正数为增加
+	 * return 成功返回true 失败返回false
+	 *  */
+	public function editUserQuota($user_id,$quota,$log_msg,$type){
+		//TODO 加锁
+		$flag = false;
+		//TODO 开启事务
+		$userDao = \Core::dao('user_user');
+		$userDao->getDb()->begin();
+		try{
+			$userQuota = $userDao->findCol('quota',array('id'=>$user_id));
+			$newquota = $quota + $userQuota;
+			$data = array();
+			$data['quota'] = $newquota;
+			$where = array();
+			$where['quota'] = $userQuota;
+			$where['id'] = $user_id;
+			$flag = $userDao->update($data,$where);
+			//修改后记录日志
+			$user_log_id = \Core::business('user_userlog')->addUserLog($user_id,$log_msg,array('quota'=>$quota,'user_id'=>$user_id));
+		}catch (\Exception $e){
+			$userDao->getDb()->rollback();
+			return false;
+		}finally{
+			if($flag === false || $user_log_id === false){
 				$userDao->getDb()->rollback();
 				return $flag;
 			}else {
