@@ -224,9 +224,6 @@ class  business_sys_dealrepay extends Business {
 		//判断是否逾期
 		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
 		$config_common = \Core::dao('loan_loanext')->getCommonconfig($deal_id);
-		if ($config_common ){
-			unserialize($config_common);
-		}
 		//判断是否罚息(**到期还本息到最后一期才算罚息**)
 		if($time == 0){
 			$time = time();
@@ -351,7 +348,6 @@ class  business_sys_dealrepay extends Business {
 		if(!$loan_config) {
 			return false;
 		}
-		$loan_config = unserialize($loan_config);
 		$compensate_fee = \Core::arrayKeyExists('compensate_fee',$loan_config)?\Core::arrayGet($loan_config,'compensate_fee'):0;
 		$mortgage_fee = \Core::arrayKeyExists('mortgage_fee',$loan_config)?\Core::arrayGet($loan_config,'mortgage_fee'):0;
 		$manage_fee = \Core::arrayKeyExists('manage_fee',$loan_config)?\Core::arrayGet($loan_config,'manage_fee'):0;

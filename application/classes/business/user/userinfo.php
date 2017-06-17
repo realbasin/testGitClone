@@ -56,7 +56,7 @@ class  business_user_userinfo extends Business {
 		}finally{
 			if($flag === false || $user_log_id === false || $user_money_log_id === false){
 				$userDao->getDb()->rollback();
-				return $flag;
+				return false;
 			}else {
 				$userDao->getDb()->commit();
 				return true;
@@ -93,7 +93,7 @@ class  business_user_userinfo extends Business {
 		}finally{
 			if($flag === false || $user_lock_money_log_id === false){
 				$userDao->getDb()->rollback();
-				return $flag;
+				return false;
 			}else {
 				$userDao->getDb()->commit();
 				return true;
@@ -131,7 +131,7 @@ class  business_user_userinfo extends Business {
 		}finally{
 			if($flag === false || $user_score_log_id === false || $user_log_id === false){
 				$userDao->getDb()->rollback();
-				return $flag;
+				return false;
 			}else {
 				$userDao->getDb()->commit();
 				return true;
@@ -168,7 +168,7 @@ class  business_user_userinfo extends Business {
 		}finally{
 			if($flag === false || $user_point_log_id === false){
 				$userDao->getDb()->rollback();
-				return $flag;
+				return false;
 			}else {
 				$userDao->getDb()->commit();
 				return true;
@@ -205,7 +205,7 @@ class  business_user_userinfo extends Business {
 		}finally{
 			if($flag === false || $user_log_id === false){
 				$userDao->getDb()->rollback();
-				return $flag;
+				return false;
 			}else {
 				$userDao->getDb()->commit();
 				return true;

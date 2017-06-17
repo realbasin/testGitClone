@@ -367,6 +367,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$result['message'] = '系统错误';
 		}finally{
 			if($result['code'] == 200 && $result['status'] == 1){
+
 				\Core::db()->commit();
 			}else{
 				\Core::db()->rollback();
@@ -429,29 +430,49 @@ class  controller_loan_loan extends controller_sysBase {
 		\Core::db()->begin();
 		try{
 			if($load_list) {
-				$result = \Core::business('sys_dealload')->dealLoadUserBackMoney($load_list);
-				if($result['status'] == 0){
+				$status = \Core::business('sys_dealload')->dealLoadUserBackMoney($load_list);
+				if($status['status'] == 0){
 					//修改贷款状态，并返回结果信息
 					$bad_data['bad_msg'] = $reason;
 					if($dealLoadDao->find(array('is_repay'=>0,'deal_id'=>$deal_id))) {
-						$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
-						$result['message'] = '部分返还';
+						$update_status = $loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
+						if($update_status === false) {
+							$result['code'] = 404;
+							$result['status'] = 0;
+							$result['message'] = '部分返还失败';
+							return @json_encode($result);
+						}
 					}else{
 						$bad_data['is_has_received'] = 1;
 						$bad_data['bad_time'] = time();
 						//$bad_data['bad_date'] = to_date(TIME_UTC, "Y-m-d");
 						$bad_data['deal_status'] = 3;
-						$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
-						$result['message'] = '返还成功';
+						$update_status = $loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
+						if($update_status === false) {
+							$result['code'] = 404;
+							$result['status'] = 0;
+							$result['message'] = '返还失败';
+							return @json_encode($result);
+						}
 					}
+				}else {
+					$result['code'] = 404;
+					$result['status'] = 0;
+					$result['message'] = $status['message'];
+					return @json_encode($result);
 				}
 			}else{
 				//直接流标
 				$bad_data['bad_time'] = time();
 				//$bad_data['bad_date'] = to_date(TIME_UTC, "Y-m-d");
 				$bad_data['deal_status'] = 3;
-				$loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
-				$result['message'] = '流标成功';
+				$update_status = $loanBidDao->update($bad_data,array('loan_id'=>$deal_id));
+				if($update_status === false) {
+					$result['code'] = 404;
+					$result['status'] = 0;
+					$result['message'] = '返还失败';
+					return @json_encode($result);
+				}
 			}
 			//保存贷款状态更改信息
 			$deal_log = array();
@@ -459,17 +480,28 @@ class  controller_loan_loan extends controller_sysBase {
 			$deal_log['user_id'] = $loanBase['user_id'];
 			$deal_log['type'] = 19;
 			$deal_log['create_time'] = time();
-			\Core::dao('loan_dealstatuslog')->insert($deal_log);
+			$add_status = \Core::dao('loan_dealstatuslog')->insert($deal_log);
+			if($add_status === false) {
+				$result['code'] = 404;
+				$result['status'] = 0;
+				$result['message'] = '更新贷款状态失败';
+				return @json_encode($result);
+			}
 		}catch(\Exception $e){
+			$result['code'] = 404;
+			$result['status'] = 0;
 			$result['message'] = '系统错误';
+			return @json_encode($result);
 		}finally{
 			if($result['code'] == 200 && $result['status'] == 1){
 				\Core::db()->commit();
+				$result['message'] = '流标成功';
+				return @json_encode($result);
 			}else{
 				\Core::db()->rollback();
 			}
 			$this->log('流标返款','loan');
-			return @json_encode($result);
+
 		}
 	}
 	//贷款详细信息编辑
@@ -545,7 +577,7 @@ class  controller_loan_loan extends controller_sysBase {
 				$l_guarantees_amt = number_format($loanbase['borrow_amount'] * $guarantees_amt / 100,2);
 			}
 			//commconfig
-			$commonConfig = unserialize($loanextDao->getCommonconfig($loan_id));
+			$commonConfig = $loanextDao->getCommonconfig($loan_id);
 			//获取合同范本
 			$contract =  \Core::dao('loan_contract')->getContractList('id,title');
 			//根据借款id，获取标基本信息
@@ -897,10 +929,7 @@ class  controller_loan_loan extends controller_sysBase {
 		}
 		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
 		$loanextDao = \Core::dao('loan_loanext');
-		$config_common = $loanextDao->getCommonconfig($deal_id);
-		if ($config_common ){
-			unserialize($config_common);
-		}
+
 		$loadrepayDao = \Core::dao('loan_dealloadrepay');
 		$loanenumBusiness = \Core::business('loan_loanenum');
 		$dealRepayBusiness = \Core::business('sys_dealrepay');

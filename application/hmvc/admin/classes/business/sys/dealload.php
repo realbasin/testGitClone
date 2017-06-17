@@ -130,6 +130,7 @@ class  business_sys_dealload extends Business {
 		$loanBaseDao = \Core::dao('loan_loanbase');
 		if(!$load_list) {
 			$result['status'] = 1;
+			$result['message'] = '投标列表不存在';
 			return $result;
 		}
 		foreach ($load_list as $v) {
@@ -141,7 +142,12 @@ class  business_sys_dealload extends Business {
 				$ecv_money =  \Core::dao('loan_ecv')->getMoneyById($v['ecv_id']);
 				//红包使用数量-1
 				$use_count =  \Core::dao('loan_ecv')->getUseCountById($v['ecv_id']);
-				\Core::dao('loan_ecv')->update(array('id'=>$v['ecv_id']),array('use_count'=>$use_count-1));
+				$update_status = \Core::dao('loan_ecv')->update(array('id'=>$v['ecv_id']),array('use_count'=>$use_count-1));
+				if($update_status === false) {
+					$result['status'] = 1;
+					$result['message'] = '返还红包失败';
+					return $result;
+				}
 			}
 			$bonus_money = 0;
 			if ($v['bonus_user_id'] > 0) {
@@ -155,7 +161,12 @@ class  business_sys_dealload extends Business {
 				$update_bonus_info['module_pk_Id'] = 0;
 				$update_bonus_info['used_time'] = 0;
 				//返还优惠券
-				\Core::dao('user_bonususer')->update(array('id'=>$bonus_rule_id),$v['bonus_user_id']);
+				$update_status = \Core::dao('user_bonususer')->update(array('id'=>$bonus_rule_id),$v['bonus_user_id']);
+				if($update_status === false) {
+					$result['status'] = 1;
+					$result['message'] = '返还优惠券失败';
+					return $result;
+				}
 				$bonus_msg .= ",返还所使用的优惠券[" . $bonus_name['bonus_type_name'] . "]金额" . $bonus_money;
 			}
 			if ($v['money'] - $ecv_money > 0) {
@@ -172,15 +183,25 @@ class  business_sys_dealload extends Business {
 				$editMoneyStatus = false;
 				//修改用户余额
 				$editMoneyStatus = \Core::business('user_userinfo')->editUserMoney($v['user_id'],$return_money,$log_msg,19);
+				if($editMoneyStatus === false) {
+					$result['message'] = "返还失败，返还用户余额出错";
+					$result['status'] = 1;
+					return $result;
+				}
 				$editMoneyStatus = \Core::business('user_userinfo')->editUserLockMoney($v['user_id'],-$return_money,$log_msg,19);
 				if($editMoneyStatus === false) {
-					$result['message'] = "返还失败，修改余额出错";
+					$result['message'] = "返还失败，扣除冻结资金出错";
 					$result['status'] = 1;
+					return $result;
 				}
 			}
 			//修改返还状态
-			$dealLoadDao->update(array('is_repay'=>1),array('id'=>$v['id']));
-
+			$update_status = $dealLoadDao->update(array('is_repay'=>1),array('id'=>$v['id']));
+			if($update_status === false) {
+				$result['status'] = 1;
+				$result['message'] = '更新返回状态失败';
+				return $result;
+			}
 		}
 		return $result;
 
@@ -192,12 +213,17 @@ class  business_sys_dealload extends Business {
 		if($deal_id == 0 || $user_id == 0) return false;
 		$loanextDao = \Core::dao('loan_loanext');
 		$loanBaseDao = \Core::dao('loan_loanbase');
-		$amt_common = $loanextDao->getAmtconfig($deal_id);
-		if(!$amt_common) return false;
-		if($amt_common['l_guarantees_amt'] != 0){
+		$amt_config = $loanextDao->getAmtconfig($deal_id);
+		$l_guarantees_amt = \Core::arrayKeyExists('l_guarantees_amt',$amt_config)?\Core::arrayGet($amt_config,'l_guarantees_amt'):0;
+		if($l_guarantees_amt != 0){
+			//更新保证金
+			$amt_config['real_freezen_l_amt'] = $l_guarantees_amt;
+			$amt_config = serialize($amt_config);
+			$loanextDao->update(array('config_amt'=>$amt_config),array('loan_id'=>$deal_id));
+			//扣除保证金
 			$url = \Core::getUrl("deal","","deal", array("id" => $deal_id));
 			$log_msg = "[<a href='".$url."' target='_blank'>" . $loanBaseDao->getName($deal_id) . "</a>],咨询服务费";
-			return \Core::business('user_userinfo')->editUserLockMoney($user_id,-$amt_common['l_guarantees_amt'],$log_msg,120);
+			return \Core::business('user_userinfo')->editUserLockMoney($user_id,-$l_guarantees_amt,$log_msg,120);
 		}
 		return true;
 	}
