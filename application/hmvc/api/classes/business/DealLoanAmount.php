@@ -22,7 +22,7 @@ class business_DealLoanAmount extends Business
             //已保存最新数据与自动统计时的时间一致时，更新该数据
             if (strtotime($theLatest['date_time']) == strtotime($date_time)) {
                 return $this->saveBorrowAmountTotalDataByDate($date_time, $theLatest['id']);
-            } elseif (strtotime($theLatest->date_time) > strtotime($date_time)) {
+            } elseif (strtotime($theLatest['date_time']) > strtotime($date_time)) {
                 return 'no data';
             }
 
@@ -73,8 +73,8 @@ class business_DealLoanAmount extends Business
         $data['full_loan_amount'] = $fullLoanAmount;
 
         //流标失败金额
-        $failLoanData = $loanBaseDao->getFailLoanAmountByDate($start_time, $end_time);
-        $data['fail_loan_amount'] = $failLoanData[0]['fail_loan_amount'];
+        $failLoanAmount = $loanBaseDao->getFailLoanAmountByDate($start_time, $end_time);
+        $data['fail_loan_amount'] = $failLoanAmount;
 
         //审核通过金额
         $applyPassedData = $loanBaseDao->getPassedLoanAmountAndPassedApplyUsersByDate($start_time, $end_time);

@@ -4,8 +4,9 @@ defined('IN_XIAOSHU') or exit('Access Invalid!');
 class dao_DealAuditStat extends Dao
 {
 
-    public function __construct($groupName = 'stat', $isNewInstance = false)
+    public function __construct($groupName = '', $isNewInstance = false)
     {
+        $groupName = 'stat';
         parent::__construct($groupName, $isNewInstance);
     }
 

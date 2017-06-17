@@ -36,14 +36,14 @@ class dao_BonusUser extends Dao
      * 获取用户红包列表
      * @param $seven_day
      * @param $fifteen_day
-     * @return bool|DataBase_Resultset
+     * @return array
      */
     public function getBonusList($seven_day, $fifteen_day)
     {
         $sql = "SELECT bu.user_id FROM _tablePrefix_bonus_user bu INNER JOIN _tablePrefix_bonus_rule br ON bu.bonus_rule_id=br.id INNER JOIN _tablePrefix_bonus_type bt ON bu.bonus_type_id=bt.id 
          WHERE bu.used_time=0  AND ((bt.use_end_time_type=1 AND FROM_UNIXTIME(bt.use_end_time,'%Y-%m-%d') IN ('" . $seven_day . "','" . $fifteen_day . "')) OR (bt.use_end_time_type=2 AND FROM_UNIXTIME((bu.drawed_time+bt.use_end_day*86400),'%Y-%m-%d') IN ('" . $seven_day . "','" . $fifteen_day . "'))) AND bt.use_type=1
          GROUP BY bu.user_id";
-        $data = $this->getDb()->execute($sql);
+        $data = $this->getDb()->execute($sql)->rows();
         return $data;
     }
 

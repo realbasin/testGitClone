@@ -49,7 +49,7 @@ class business_BonusMsgRemind extends Business
         $list_arr = array();
         if ($count > 0) {
             for ($i = 0; $i < $count; $i++) {
-                $user_id = $list[$i]->user_id;
+                $user_id = $list[$i]['user_id'];
                 $user_info = \Core::dao('User')->getUserById($user_id);
                 $mobile = $user_info['mobile_encrypt'];
 

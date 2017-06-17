@@ -104,8 +104,8 @@ class dao_DealRepay extends Dao
         {
             $where['repay_date'] = $start_date;
         } else {
-            $where['repay_date>='] = $start_date;
-            $where['repay_date<'] = $end_date;
+            $where['repay_date >='] = $start_date;
+            $where['repay_date <'] = $end_date;
         }
 
         $data = $this->getDb()

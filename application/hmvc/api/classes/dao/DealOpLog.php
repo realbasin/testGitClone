@@ -60,7 +60,7 @@ class dao_DealOpLog extends Dao
 			AND dol." . $start_time_condition . " AND dol." . $end_time_condition . " 
 			GROUP BY dol.admin_id ";
 
-        return $this->getDb()->execute($sql);
+        return $this->getDb()->execute($sql)->rows();
     }
 
     // 统计首借审核总笔数
@@ -73,7 +73,7 @@ class dao_DealOpLog extends Dao
 			FROM _tablePrefix_deal_op_log lg INNER JOIN _tablePrefix_loan_base d ON lg.deal_id=d.id INNER JOIN _tablePrefix_admin adm ON lg.admin_id=adm.id AND " . $this->admin_condition . "
 			WHERE lg." . $this->op_id_condition . " AND (lg." . $this->fail_condition . " OR lg." . $this->pass_condition . ") AND lg." . $start_time_condition . " AND lg." . $end_time_condition . " AND d.b_status = 0 GROUP BY lg.admin_id";
 
-        return $this->getDb()->execute($sql);
+        return $this->getDb()->execute($sql)->rows();
     }
 
     // 统计首借审核成功笔数
@@ -86,7 +86,7 @@ class dao_DealOpLog extends Dao
 			FROM _tablePrefix_deal_op_log lg INNER JOIN _tablePrefix_loan_base d ON lg.deal_id=d.id INNER JOIN _tablePrefix_admin adm ON lg.admin_id=adm.id AND " . $this->admin_condition . "
 			WHERE lg." . $this->op_id_condition . " AND lg." . $this->pass_condition . " AND lg." . $start_time_condition . " AND lg." . $end_time_condition . " AND d.b_status = 0 GROUP BY lg.admin_id";
 
-        return $this->getDb()->execute($sql);
+        return $this->getDb()->execute($sql)->rows();
     }
 
     // 统计续借审核总笔数
@@ -99,7 +99,7 @@ class dao_DealOpLog extends Dao
 			FROM _tablePrefix_deal_op_log lg INNER JOIN _tablePrefix_loan_base d ON lg.deal_id=d.id INNER JOIN _tablePrefix_admin adm ON lg.admin_id=adm.id AND " . $this->admin_condition . "
 			WHERE lg." . $this->op_id_condition . " AND (lg." . $this->fail_condition . " OR lg." . $this->pass_condition . ") AND lg." . $start_time_condition . " AND lg." . $end_time_condition . " AND d.b_status = 1 GROUP BY lg.admin_id";
 
-        return $this->getDb()->execute($sql);
+        return $this->getDb()->execute($sql)->rows();
     }
 
     // 统计续借审核成功笔数
@@ -112,7 +112,7 @@ class dao_DealOpLog extends Dao
 			FROM _tablePrefix_deal_op_log lg INNER JOIN _tablePrefix_loan_base d ON lg.deal_id=d.id INNER JOIN _tablePrefix_admin adm ON lg.admin_id=adm.id AND " . $this->admin_condition . "
 			WHERE lg." . $this->op_id_condition . " AND lg." . $this->pass_condition . " AND lg." . $start_time_condition . " AND lg." . $end_time_condition . " AND d.b_status = 1 GROUP BY lg.admin_id";
 
-        return $this->getDb()->execute($sql);
+        return $this->getDb()->execute($sql)->rows();
     }
 
     //统计复审总笔数
@@ -127,7 +127,7 @@ class dao_DealOpLog extends Dao
         $sql = "SELECT COUNT(lg.deal_id) true_totals,lg.admin_id 
 			FROM _tablePrefix_deal_op_log lg INNER JOIN _tablePrefix_loan_base d ON lg.deal_id=d.id INNER JOIN _tablePrefix_admin adm ON lg.admin_id=adm.id AND " . $this->admin_condition . "
 			WHERE lg." . $op_id_condition . " AND (lg." . $pass_condition . " OR lg." . $fail_condition . ") AND lg." . $start_time_condition . " AND lg." . $end_time_condition . " GROUP BY lg.admin_id";
-        return $this->getDb()->execute($sql);
+        return $this->getDb()->execute($sql)->rows();
     }
 
     //统计复审成功笔数
@@ -142,7 +142,7 @@ class dao_DealOpLog extends Dao
 			FROM _tablePrefix_deal_op_log lg INNER JOIN _tablePrefix_loan_base d ON lg.deal_id=d.id INNER JOIN _tablePrefix_admin adm ON lg.admin_id=adm.id AND " . $this->admin_condition . "
 			WHERE lg." . $op_id_condition . " AND lg." . $pass_condition . " AND lg." . $start_time_condition . " AND lg." . $end_time_condition . " GROUP BY lg.admin_id";
 
-        return $this->getDb()->execute($sql);
+        return $this->getDb()->execute($sql)->rows();
     }
 
 }
