@@ -47,7 +47,7 @@
             </div>
         </div>
     </div>
-    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn,'loan_id'=>$loanbase['id'])); ?>" enctype="multipart/form-data">
+    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn,'loan_id'=>$loanbase['id'])); ?>" enctype="multipart/form-data" onsubmit="return checkForm();">
         <input type="hidden" name="form_submit" value="ok" />
         <input type="hidden" name="loan_id" value="<?php echo $loanbase['id'];?>" />
         <input type="hidden" name="update_time" value="<?php echo $loanbase['update_time'];?>" />
@@ -236,10 +236,20 @@
                     <label>风险保证金（非托管标）</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" readonly="readonly" value="<?php echo $l_guarantees_amt;?>">
+                    <input type="text" name="l_guarantees_amt" id="l_guarantees_amt" class="input-txt" readonly="readonly" value="<?php echo number_format($amtConfig['l_guarantees_amt'],2);?>">
                     <p class="notic">冻结借款人的金额，满标放款时从用户账户扣除</p>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>借款保证金（第三方托管）</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="guarantees_amt" id="guarantees_amt" class="input-txt" readonly="readonly" value="<?php echo number_format($amtConfig['guarantees_amt'],2);?>">
+                    <p class="notic">冻结借款人的金额，需要提前存钱</p>
+                </dd>
+            </dl>
+
             <dl class="row">
                 <dt class="tit">
                     <label>借款期限</label>
@@ -299,7 +309,10 @@
                     <label>所在城市</label>
                 </dt>
                 <dd class="opt">
-
+                    <?php if(!empty($region['region_location'])) ?>
+                        <?php echo $region['region_location']; ?>
+                    <?php if(!empty($region['no_region_reason'])) ?>
+                        <?php echo $region['no_region_reason'].' <input type="button" value="完成后请点击刷新页面" onclick="window.location.reload();"/>'; ?>
                 </dd>
             </dl>
             <dl class="row">
@@ -620,6 +633,51 @@
         return true;
     });
     //todo checkform
+    var submited = false; //不能重复提交
+    function checkForm(){
+        if(submited){
+            alert("提交中，请勿重复提交.....");
+            return false;
+        }
+
+        var no_region = $("#no_region");
+        var is_delete = $('input[name=is_delete]:checked').val();
+        var publish_wait = $('input[name=publish_wait]:checked').val();
+        var real_msg = $('select[name=delete_real_msg]').val();
+        if (is_delete == 3 && real_msg == '') {
+            alert('请填写真实原因');
+            return false;
+        }
+
+        var borrow_amount = $("input[name='borrow_amount']").val();
+        if(borrow_amount == 0){
+            alert("请输入借款金额！"); return false;
+        }
+        var use_type = $("select[name='use_type']").val();
+        if(use_type == 0){
+            /*alert("请选择借款用途！");*/ return false;
+        }
+
+        var status_0 = $("input[name='is_delete']").is(':checked');  //审核失败
+        var status_1 = $("input[name='publish_wait']").is(':checked'); //审核成功
+        if(!status_0 && !status_1){
+            /*alert("请选择审核状态！");*/ return false;
+        }
+
+        if(status_0){
+            var delete_msg = $("select[name='delete_msg']").val();
+            if(delete_msg == ''){
+                alert('请选择短信回复！'); return false;
+            }
+            var delete_real_msg = $("select[name='delete_real_msg']").val();
+            if(delete_real_msg == ''){
+                alert('请选择真实原因！'); return false;
+            }
+        }
+
+        submited = true;
+        return true;
+    }
 
 </script>
 </body>

@@ -54,10 +54,10 @@
             </div>
         </div>
     </div>
-    <form method="post" id="form1" name="form1" enctype="multipart/form-data">
+    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','true_publish_update')?>" enctype="multipart/form-data">
         <input type="hidden" name="form_submit" value="ok" />
         <input type="hidden" name="loan_id" value="<?php echo $loanbase['id'];?>" />
-        <input type="hidden" name="update_time" value="<?php echo time();?>" />
+        <input type="hidden" name="update_time" value="<?php echo $loanbase['update_time'];?>" />
         <!--基本信息-->
         <div class="tab-content">
             <dl class="row">
@@ -243,8 +243,17 @@
                     <label>风险保证金（非托管标）</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" readonly="readonly" value="<?php echo $l_guarantees_amt;?>">
+                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" readonly="readonly" value="<?php echo number_format($amtConfig['l_guarantees_amt'],2);?>">
                     <p class="notic">冻结借款人的金额，满标放款时从用户账户扣除</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>借款保证金（第三方托管）</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="guarantees_amt" id="guarantees_amt" class="input-txt" readonly="readonly" value="<?php echo number_format($amtConfig['guarantees_amt'],2);?>">
+                    <p class="notic">冻结借款人的金额，需要提前存钱</p>
                 </dd>
             </dl>
             <dl class="row">

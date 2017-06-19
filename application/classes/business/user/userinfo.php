@@ -355,4 +355,22 @@ class  business_user_userinfo extends Business {
 		}
 		return;
 	}
+
+	//获取芝麻信用信息
+	public function zhimaCredit()
+	{
+
+	}
+
+	//同盾决策
+	public function tongdun_credit()
+	{
+
+	}
+	
+	//百融黑名单处理
+	public function bairong_credit()
+	{
+		
+	}
 }
