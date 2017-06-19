@@ -255,7 +255,7 @@ class  business_sys_dealrepay extends Business {
 			$result['need_repay_money']  = $user_repay['repay_money'] + $result['impose_money'] + $result['manage_impose_money'];
 
 		}elseif(($user_repay['has_repay'] == 0) && ($time < ($user_repay['repay_time'] + 24 * 3600 - 1)) && ($user_repay['repay_money'] > 0)){
-			//未逾期未还
+			//未还未逾期
 			$result['status'] = 0;
 			$result['overday'] = 0;
 			$result['impose_money'] = 0;
@@ -302,7 +302,6 @@ class  business_sys_dealrepay extends Business {
 			$result['manage_impose_money'] = 0;
 			$result['need_repay_money'] = $user_repay['repay_money'];
 		}
-
 		return $result;
 	}
 	//更新还款计划

@@ -93,8 +93,7 @@ class dao_loan_dealrepay extends Dao {
 		return $this->getDb()->select($field)->from($this->getTable())->where($where)->execute()->row();
 	}
 	//获取下一条借款 add by zlz 201706081626
-	public function getNextLoan($deal_id,$l_key){
-		$field = 'id,deal_id,repay_time,repay_money';
+	public function getNextLoan($deal_id,$l_key,$field = 'id,deal_id,repay_time,repay_money'){
 		$this->getDb()->select($field);
 		$this->getDb()->from($this->getTable());
 		$this->getDb()->where(array('deal_id'=>$deal_id,'l_key >'=>$l_key));
