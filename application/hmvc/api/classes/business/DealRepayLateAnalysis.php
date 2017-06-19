@@ -1,5 +1,6 @@
 <?php
 defined('IN_XIAOSHU') or exit('Access Invalid!');
+
 /**
  * 逾期贷款统计业务类
  */
@@ -8,8 +9,7 @@ class business_DealRepayLateAnalysis extends Business
 
     public function getDealRepayLateData()
     {
-        $now_date = date('Y-m-d');
-        $yesterday = date('Y-m-d', strtotime($now_date) - 86400);
+        $yesterday = date('Y-m-d', time() - 86400);
 
         $analysisDailyDetailDao = \Core::dao('DealRepayLateAnalysisDailyDetail');
         $yesterdayDataExists = $analysisDailyDetailDao->dataExists($yesterday);
@@ -20,8 +20,7 @@ class business_DealRepayLateAnalysis extends Business
         } else {
             // 备份逾期数据
             $dealRepayDao = \Core::dao('DealRepay');
-            $list = $dealRepayDao->getYesterdayDealRepayLateData($now_date);
-
+            $list = $dealRepayDao->getDealRepayLateData($yesterday);
             foreach ($list as $item) {
                 $analysisDailyDetailDao->insert($item);
             }
@@ -33,8 +32,7 @@ class business_DealRepayLateAnalysis extends Business
 
     public function saveDealRepayLateAnalysisDetail()
     {
-        $now_date = date('Y-m-d');
-        $yesterday = date('Y-m-d', strtotime($now_date) - 86400);
+        $yesterday = date('Y-m-d', time() - 86400);
 
         $analysisDetailDao = \Core::dao('DealRepayLateAnalysisDetail');
         $yesterdayDataExists = $analysisDetailDao->dataExists($yesterday);
@@ -43,16 +41,13 @@ class business_DealRepayLateAnalysis extends Business
         } else {
             // 备份逾期数据
             $analysisDailyDetailDao = \Core::dao('DealRepayLateAnalysisDailyDetail');
-            $list = $analysisDailyDetailDao->getDealRepayLateAnalysisDailyDetailData($now_date);
-
+            $list = $analysisDailyDetailDao->getDealRepayLateAnalysisDailyDetailData($yesterday);
             foreach ($list as $item) {
                 $dealRepayDao = \Core::dao('DealRepay');
                 $overMoney = $dealRepayDao->getDealRepayNoPaySumSelfMoney($item['deal_id']);
                 $item['over_money'] = $overMoney;
 
                 $analysisDetailDao->insert($item);
-
-                $yesterday = date('Y-m-d', strtotime($now_date) - 86400);
                 $analysisDailyDetailDao->update(['level' => $item['level']], ['date_time' => $yesterday, 'deal_id' => $item['deal_id']]);
             }
 
@@ -63,8 +58,7 @@ class business_DealRepayLateAnalysis extends Business
 
     public function saveDealRepayLateAnalysis()
     {
-        $now_date = date('Y-m-d');
-        $yesterday = date('Y-m-d', strtotime($now_date) - 86400);
+        $yesterday = date('Y-m-d', time() - 86400);
 
         $analysisDao = \Core::dao('DealRepayLateAnalysis');
         $yesterdayDataExists = $analysisDao->dataExists($yesterday);
@@ -77,18 +71,29 @@ class business_DealRepayLateAnalysis extends Business
 
         // 先保存合计的统计数据
         $analysisDetailDao = \Core::dao('DealRepayLateAnalysisDetail');
-        $data = $analysisDetailDao->getDealRepayLateAnalysisDetailData($now_date, true);
+        $data = $analysisDetailDao->getDealRepayLateAnalysisDetailData($yesterday, true);
 
-        $data[0]['create_time'] = $create_time;
-        $analysisDao->insert($data[0]);
+        $analysis = $data[0];
+        foreach ($analysis as &$value) {
+            if (empty($value) && !is_numeric($value)) {
+                $value = 0;
+            }
+        }
+        $analysis['create_time'] = $create_time;
+        $analysis['date_time'] = $yesterday;
+        $analysisDao->insert($analysis);
 
 
         // 之后再保存各个等级对应的统计数据
-        $dataList = $analysisDetailDao->getDealRepayLateAnalysisDetailData($now_date);
-
+        $dataList = $analysisDetailDao->getDealRepayLateAnalysisDetailData($yesterday);
         foreach ($dataList as $item) {
             $item['create_time'] = $create_time;
             $item['level'] = 'M' . $item['level'];
+            foreach ($item as &$value) {
+                if (empty($value) && !is_numeric($value)) {
+                    $value = 0;
+                }
+            }
             $analysisDao->insert($item);
         }
     }

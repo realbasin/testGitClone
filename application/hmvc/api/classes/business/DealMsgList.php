@@ -4,7 +4,7 @@ defined('IN_XIAOSHU') or exit('Access Invalid!');
 /**
  * 贷款消息列表业务类
  */
-class business_dealmsglist extends Business
+class business_DealMsgList extends Business
 {
 
     // 短信内容模版(账单日7天前)
@@ -17,126 +17,96 @@ class business_dealmsglist extends Business
     public function sendMessageToUser()
     {
         //@TODO 短信发送方案   发送到mq队列，非实时
-        $send_should_repay_user_file = STORAGE_PATH . '/app/send_to_repay_user';
-        if (!file_exists($send_should_repay_user_file)) {
-            mkdir($send_should_repay_user_file);
-        }
+        $data = $this->getShouldRepayDealUserList();
 
-        // 已整理出来需要发送消息的用户数据存放文件
-        $toSendMessageUserFile = $send_should_repay_user_file . '/user_list_' . date('Y-m-d') . '.txt';
-
-        try {
-            $file_data = trim(file_get_contents($toSendMessageUserFile));
-        } catch (\Exception $e) {
-
-        }
-
-        // 整理并保存要发送消息的用户数据
-        if (empty($file_data)) {
-            $file_list_str = $this->getShouldRepayDealUserList();
-
-            file_put_contents($toSendMessageUserFile, $file_list_str);
-        } // 进行对用户数据发送消息
-        else {
-            $data = explode("\n", $file_data);
-
-            $today_time = strtotime(date('Y-m-d')) - 3600 * 8;
-
-            $param = array();
-            foreach ($data as $vv) {
-                list($id, $deal_id, $user_id, $mobile, $repay_money, $repay_date, $repay_time) = explode("\t", $vv);
-
-                $param['mobile'] = $mobile;
-                $param['user_id'] = $user_id;
-
-                $year = date('Y', strtotime($repay_date));
-                $month = date('n', strtotime($repay_date));
-                $day = date('j', strtotime($repay_date));
-
-                // 检查是否已还款
-                $deal_repay = \Core::dao('DealRepay')->getDealRepayById($id);
-                if ($deal_repay['has_repay'] == 1) {
-                    continue;
-                }
-
-                $dealRepayBusiness = \Core::business('DealRepay');
-                $deal_repay_money = $dealRepayBusiness->getDealRepaysByUserId($deal_id, $repay_time);
-                $has_repay_money_all = $deal_repay_money['has_repay_money_all'];
-                $need_repay_money_all = $deal_repay_money['need_repay_money_all'];
-                $days = ceil(($repay_time - $today_time) / (3600 * 24));
-
-                $result = false;
-                if ($days == 0) {
-                    $param['content'] = sprintf(self::$todaySMSContent, $repay_money, $has_repay_money_all, $need_repay_money_all);
-
-                    $content = $repay_money . "," . $has_repay_money_all . "," . $need_repay_money_all;
-                    //@TODO    发送短信
-//                    $result = SMSService::sendSMSViaUcpaas($mobile, $content, 'TPL_DEAL_REPAY_TODAY_SMS');
-
-                } elseif ($days == 3) {
-                    $param['content'] = sprintf(self::$threeDaysAgoSMSContent, $repay_money, $month, $day, $need_repay_money_all);
-
-                    $content = $repay_money . "," . $month . "," . $day . "," . $need_repay_money_all;
-                    //@TODO    发送短信
-//                    $result = SMSService::sendSMSViaUcpaas($mobile, $content, 'TPL_DEAL_REPAY_THREE_SMS');
-                } elseif ($days == 7) {
-                    $param['content'] = sprintf(self::$sevenDaysAgoSMSContent, $repay_money, $month, $day, $need_repay_money_all);
-
-                    $content = $repay_money . "," . $month . "," . $day . "," . $need_repay_money_all;
-                    //@TODO    发送短信
-//                    $result = SMSService::sendSMSViaUcpaas($mobile, $content, 'TPL_DEAL_REPAY_SEVEN_SMS');
-                }
-
-                // 处理发送短信后所返回的结果
-                if ($result === true) {
-                    $param['status'] = 1;
-                    $param['msg'] = '';
-                } else {
-                    $param['status'] = 0;
-                    $param['msg'] = $result;
-                }
-
-                $this->saveDealMsgList($param);
+        $today_time = strtotime(date('Y-m-d'));
+        foreach ($data as $item) {
+            // 检查是否已还款
+            $deal_repay = \Core::dao('DealRepay')->getDealRepayById($item['id']);
+            if ($deal_repay['has_repay'] == 1) {
+                continue;
             }
 
-            // 发送完成后删除文件
-            unlink($toSendMessageUserFile);
+            $dealRepayBusiness = \Core::business('DealRepay');
+            $deal_repay_money = $dealRepayBusiness->getDealRepaysByUserId($item['deal_id'], $item['repay_time']);
+            $has_repay_money_all = $deal_repay_money['has_repay_money_all'];
+            $need_repay_money_all = $deal_repay_money['need_repay_money_all'];
+            $days = ceil(($item['repay_time'] - $today_time) / (3600 * 24));
+
+            $month = date('n', strtotime($item['repay_date']));
+            $day = date('j', strtotime($item['repay_date']));
+
+            $result = false;
+            if ($days == 0) {
+                $param['content'] = sprintf(self::$todaySMSContent, $item['repay_time'], $has_repay_money_all, $need_repay_money_all);
+
+                $content = $item['repay_money'] . "," . $has_repay_money_all . "," . $need_repay_money_all;
+                //@TODO    发送短信
+//                    $result = SMSService::sendSMSViaUcpaas($mobile, $content, 'TPL_DEAL_REPAY_TODAY_SMS');
+
+            } elseif ($days == 3) {
+                $param['content'] = sprintf(self::$threeDaysAgoSMSContent, $item['repay_time'], $month, $day, $need_repay_money_all);
+
+                $content = $item['repay_money'] . "," . $month . "," . $day . "," . $need_repay_money_all;
+                //@TODO    发送短信
+//                    $result = SMSService::sendSMSViaUcpaas($mobile, $content, 'TPL_DEAL_REPAY_THREE_SMS');
+            } elseif ($days == 7) {
+                $param['content'] = sprintf(self::$sevenDaysAgoSMSContent, $item['repay_time'], $month, $day, $need_repay_money_all);
+
+                $content = $item['repay_money'] . "," . $month . "," . $day . "," . $need_repay_money_all;
+                //@TODO    发送短信
+//                    $result = SMSService::sendSMSViaUcpaas($mobile, $content, 'TPL_DEAL_REPAY_SEVEN_SMS');
+            }
+
+            $param['mobile'] = $item['mobile'];
+            $param['user_id'] = $item['user_id'];
+
+            // 处理发送短信后所返回的结果
+            if ($result === true) {
+                $param['status'] = 1;
+                $param['msg'] = '';
+            } else {
+                $param['status'] = 0;
+                $param['msg'] = $result;
+            }
+
+            $this->saveDealMsgList($param);
         }
     }
 
-    // 获取待催款用户数据，整理成字符串形式，待保存到文本
+    // 获取待催款用户数据
     private function getShouldRepayDealUserList()
     {
         $list = \Core::dao('DealRepay')->getShouldRepayDealUserList();
-        $count = count($list);
 
-        $list_str = '';
-        if ($count > 0) {
-            for ($i = 0; $i < $count; $i++) {
-                $id = $list[$i]['id'];
-                $deal_id = $list[$i]['deal_id'];
-                $user_id = $list[$i]['user_id'];
-                $user_info = \Core::dao('User')->getUserById($user_id);
-                $mobile = $user_info['mobile_encrypt'];
-                if (strlen($mobile) != 11 || !is_numeric($mobile)) {
-                    continue;
-                }
-                $repay_money = $list[$i]['repay_money'] + $list[$i]['manage_money'] + $list[$i]['manage_impose_money'] + $list[$i]['impose_money'];
-                $repay_date = $list[$i]['repay_date'];
-                $repay_time = $list[$i]['repay_time'];
-
-                $list_str .= $id . "\t" . $deal_id . "\t" . $user_id . "\t" . $mobile . "\t" . $repay_money . "\t" . $repay_date . "\t" . $repay_time . "\n";
+        $result = [];
+        foreach ($list as $item) {
+            $user = \Core::dao('User')->getUserById($item['user_id']);
+            $mobile = $user['mobile_encrypt'];
+            if (strlen($mobile) != 11 || !is_numeric($mobile)) {
+                continue;
             }
+
+            $data = [
+                'id' => $item['id'],
+                'deal_id' => $item['deal_id'],
+                'mobile' => $mobile,
+                'repay_money' => $item['repay_money'] + $item['manage_money'] + $item['manage_impose_money'] + $item['impose_money'],
+                'repay_date' => $item['repay_date'],
+                'repay_time' => $item['repay_time']
+            ];
+            $result[] = $data;
         }
 
-        return $list_str;
+        return $result;
     }
 
-    private function saveDealMsgList($param){
+    private function saveDealMsgList($param)
+    {
         $app_env = \Core::config()->getEnvironment();
         if ($app_env != 'production') {
             $content_prefix = "【小树时代测试】";
-        }  else {
+        } else {
             $content_prefix = "【小树时代】";
         }
 
@@ -144,7 +114,7 @@ class business_dealmsglist extends Business
         $data = [
             'dest' => $param['mobile'],
             'send_type' => 0,
-            'content' => $content_prefix.$param['content'],
+            'content' => $content_prefix . $param['content'],
             'user_id' => $param['user_id'],
             'is_success' => $param['status'],
             'result' => $param['msg'],

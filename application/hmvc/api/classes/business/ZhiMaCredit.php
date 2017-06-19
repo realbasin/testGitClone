@@ -17,13 +17,9 @@ class business_ZhiMaCredit extends Business
 
         if ($user_list != null && !empty($user_list)) {
             foreach ($user_list as $key => $zm_user) {
-                $transaction_id = $this->setTransactionId();
                 $open_id = $zm_user['zm_openid'];
-
                 $credit = \Core::library("ZhimaCredit/Loader");
-                $credit->setParamData('transaction_id', $transaction_id);
-                $credit->setParamData('open_id', $open_id);
-                $creditScore = $credit->ZhiMaCreditScoreGet();
+                $creditScore = $credit->scoreGet($open_id);
 
                 //可查询到用户的芝麻信用评分
                 if (!empty($creditScore['success']) || $creditScore['success'] == 'true') {
@@ -173,7 +169,11 @@ class business_ZhiMaCredit extends Business
             }
         }
 
-        $file_records = STORAGE_PATH . 'app/zmxy/' . $date . '_feedback.json';
+        $dir = STORAGE_PATH . 'app/zmxy/';
+        if (!is_dir(STORAGE_PATH . 'app/zmxy/')) {
+            mk_dir($dir);
+        }
+        $file_records = $dir . $date . '_feedback.json';
         file_put_contents($file_records, json_encode(array('records' => $borrow_records), JSON_UNESCAPED_UNICODE));
 
         return $this->zhiMaDataBatchFeedback($records, $file_records);
@@ -188,10 +188,8 @@ class business_ZhiMaCredit extends Business
     public function zhiMaDataBatchFeedback($records, $file_records)
     {
         $credit = \Core::library("ZhimaCredit/Loader");
-        $credit->setParamData('records', $records);
-        $credit->setParamData('file_records', $file_records);
 
-        $response = $credit->ZhimaDataBatchFeedback();
+        $response = $credit->ZhimaDataBatchFeedback($records, $file_records);
 
         return json_decode($response, true);
     }
