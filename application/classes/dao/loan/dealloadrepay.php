@@ -217,4 +217,8 @@ class dao_loan_dealloadrepay extends Dao {
 		$this->getDb()->where(array('deal_id'=>$deal_id,'l_key'=>$l_key,'has_repay'=>1,'is_site_repay'=>1));
 		return $this->getDb()->execute()->row();
 	}
+	//通过id获取数据
+	public function getDataById($id,$field='*'){
+		return $this->getDb()->select($field)->from($this->getTable())->where(array('id'=>$id))->execute()->row();
+	}
 }

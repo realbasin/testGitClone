@@ -2,9 +2,9 @@
 
 namespace XSQueue\AmqpExt;
 
-use XSQueue\Message;
+use XSQueue\ClientMessage;
 
-class AmqpMessage implements Message
+class AmqpMessage implements ClientMessage
 {
     private $body;
     private $properties;

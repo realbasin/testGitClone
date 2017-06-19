@@ -112,6 +112,37 @@ class  business_loan_loan extends Business {
 
 
 	}
+	//发送站内信
+	public function sendDealSiteMessage($loan_id,$template_name=''){
+		if(intval($loan_id) == 0) return false;
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$loan_base_info = $loanBaseDao->getloanbase($loan_id,'id,name,create_time');
+		if(!$loan_base_info) return false;
+		$loanBidDao = \Core::dao('loan_loanbid');
+		$is_send_success_msg = $loanBidDao->findCol('is_send_success_msg',array('loan_id'=>$loan_id));
+		if(intval($is_send_success_msg) == 1) return false;
+		$dealLoadDao = \Core::dao('loan_dealload');
+		$user_load_list = $dealLoadDao->getLoads($loan_id,'id,user_name,user_id,create_time');
+		if($user_load_list) {
+			$msgConfDao = \Core::dao('msg_msgconf');
+			foreach ($user_load_list as $v) {
+				$sms_bid_success = $msgConfDao->findCol('sms_bidsuccess',array('user_id'=>$v['user_id']));
+				//未设置或设置为1时发送（设置为0时不发送）
+				if( $sms_bid_success != 0) {
+					$notice['shop_title'] = C("SHOP_TITLE");
+					$notice['time'] = date("Y年m月d日",$v['create_time']);
+					$notice['deal_name'] = "“<a href=\"" . \Core::getUrl("index", "detail","deal", array("id" => $loan_base_info['id'])) . "\">" . $loan_base_info['name'] . "</a>”";
+					$content = '【小树时代测试】<p>感谢您使用'.$notice['shop_title'].'贷款融资，很高兴的通知您，您于'.$notice['time'].'投标的借款列表'.$notice['deal_name'].'满标';
+					//TODO 发送站内信
+					\Core::dao('msg_msgbox')->sendUserMsg("", $content, 0, $v['user_id'], time(), 0, true, 16);
+				}
+			}
+		}
+	}
+	//发送电子协议邮件
+	public function sendDealContractEmail($loan_id){
+		if(intval($loan_id) == 0) return false;
+	}
 	//手动单期还款
 	public function repayLoanBills($id,$l_key,$user_id){
 		$id = intval($id);
@@ -130,8 +161,7 @@ class  business_loan_loan extends Business {
 		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
 		$dealRepayDao = \Core::dao('loan_dealrepay');
 		$dealLoadDao = \Core::dao('loan_dealload');
-		$loanbaseDao = \Core::dao('loan_loanbase');
-		$loanextDao = \Core::dao('loan_loanext');
+		$loanBaseDao = \Core::dao('loan_loanbase');
 		$userDao = \Core::dao('user_user');
 		$userBusiness = \Core::business('user_userinfo');
 		$dealLoadRepayBusiness = \Core::business('sys_dealloadrepay');
@@ -162,6 +192,8 @@ class  business_loan_loan extends Business {
 			$root['show_err'] = '余额不足，还款还需'.$need_repay_money-$user_total_money.'，请先充值';
 			return $root;
 		}else {
+			//贷款名称
+			$loan_name = $loanBaseDao->getName($id);
 			//进行还款系列操作 启用事务
 			$userDao->getDb()->begin();
 			try{
@@ -175,7 +207,7 @@ class  business_loan_loan extends Business {
 					}
 					$update_status = $dealLoadRepayBusiness->updateLoadRepayPlan($user_load,$v['money'],$status,$impose_money,$manage_impose_money);
 					if($update_status === false) {
-						$root['show_err'] = '回款修改失败';
+						$root['show_err'] = '更新回款计划失败';
 						return $root;
 					}else {
 						//更新成功，修改相关投资人余额等
@@ -183,63 +215,66 @@ class  business_loan_loan extends Business {
 						if ($user_load['t_user_id'] != 0) {
 							$invest_user_id = $v['t_user_id'];
 							$log_msg = '<a href="" target="_blank">债权标</a>' . $user_load['id'] . '第' . ($l_key + 1) . '期，回报本息';
+							$log_impose_msg = '<a href="" target="_blank">债权标</a>' . $user_load['id'] . '第' . ($l_key + 1) . '期，逾期罚息';
 						} else {
 							$invest_user_id = $v['user_id'];
-							$log_msg = '<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>第' . ($l_key + 1) . '期，回报本息';
+							$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($l_key + 1) . '期，回报本息';
+							$log_impose_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($l_key + 1) . '期，逾期罚息';
 						}
 						//修投资人余额
 						$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, $user_load['repay_money'], $log_msg, 5);
 						if($editMoneyStatus === false){
 							$root['show_err'] = '回款失败，回报本息发放失败';
+							return $root;
 						}
 						if ($user_load['manage_money'] > 0) {
-							$log_msg = '[<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>]第' . ($l_key + 1) . '期，投标管理费';
+							$log_msg = '[<a href="" target="_blank">' . $loan_name . '</a>]第' . ($l_key + 1) . '期，投标管理费';
 							$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, -$user_load['manage_money'], $log_msg, 20);
 							if($editMoneyStatus === false){
 								$root['show_err'] = '回款失败，扣除投标管理费失败';
+								return $root;
 							}
 						}
 						if ($user_load['manage_interest_money'] > 0) {
-							$log_msg = '[<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>]第' . ($l_key + 1) . '期，投标利息管理费';
+							$log_msg = '[<a href="" target="_blank">' . $loan_name . '</a>]第' . ($l_key + 1) . '期，投标利息管理费';
 							$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, -$user_load['manage_interest_money'], $log_msg, 20);
 							if($editMoneyStatus === false){
 								$root['show_err'] = '回款失败，扣除投标利息管理费失败';
+								return $root;
 							}
 						}
 						//逾期罚息
 						if (($impose_money*($user_load['repay_money']/$v['money'])) != 0) {
-							if ($user_load['t_user_id'] == 0) { //无债权转让
-								$log_msg = '<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>第' . ($l_key + 1) . '期，逾期罚息';
-								$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, number_format($impose_money*($user_load['repay_money']/$v['money']),2), $log_msg, 21);
-								if($editMoneyStatus === false){
-									$root['show_err'] = '回款失败，逾期罚息发放失败';
-								}
-							} else {//有债权转让
-								$log_msg = '<a href="" target="_blank">债权标</a>' . $user_load['id'] . '第' . ($l_key + 1) . '期，逾期罚息';
-								$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, number_format($impose_money*($user_load['repay_money']/$v['money']),2), $log_msg, 21);
-								if($editMoneyStatus === false){
-									$root['show_err'] = '回款失败，逾期罚息发放失败';
-								}
+							$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, number_format($impose_money*($user_load['repay_money']/$v['money']),2), $log_impose_msg, 21);
+							if($editMoneyStatus === false){
+								$root['show_err'] = '回款失败，逾期罚息发放失败';
+								return $root;
 							}
 						}
 						//投资者奖励
 						if ($user_load['reward_money'] != 0) {
-							$log_msg = '<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>第' . ($l_key + 1) . '期，奖励收益';
+							$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($l_key + 1) . '期，奖励收益';
 							$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, $user_load['reward_money'], $log_msg, 28);
 							if($editMoneyStatus === false){
 								$root['show_err'] = '回款失败，奖励收益发放失败';
+								return $root;
 							}
 						}
 						//TODO 普通会员邀请返利
+						//判断该标是否参与分销返利
+						if ($loanBaseDao->findCol('is_referral_award',array('id'=>$id)) != 0) {
+							$this->getReferrals($id,$user_load['id'],$invest_user_id);
+						}
 						//投资者返佣金
 						if ($user_load['manage_interest_money_rebate'] != 0) {
 							//是否有上级，有上级则给上级返佣
-							$rebate_user = $userDao->getUser($invest_user_id, 'id,pid');
-							if ($rebate_user[$invest_user_id]['pid'] != 0) {
-								$log_msg = '<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>第' . ($l_key + 1) . '期，返佣金';
-								$editMoneyStatus = $userBusiness->editUserMoney($rebate_user[$invest_user_id]['pid'], $user_load['manage_interest_money_rebate'], $log_msg, 23);
+							$rebate_user = $userDao->findCol('pid',array('id'=>$invest_user_id));
+							if ($rebate_user != 0) {
+								$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($l_key + 1) . '期，返佣金';
+								$editMoneyStatus = $userBusiness->editUserMoney($rebate_user, $user_load['manage_interest_money_rebate'], $log_msg, 23);
 								if($editMoneyStatus === false){
 									$root['show_err'] = '回款失败，返佣金发放失败';
+									return $root;
 								}
 							}
 						}
@@ -260,55 +295,104 @@ class  business_loan_loan extends Business {
 					//TODO 修改借款者还款计划信息
 					$dealRepayStatus = $dealRepayBusiness->updateRepayPlan($hasRepayTotal,$impose_money,$manage_impose_money,$getManage,$status);
 					if($dealRepayStatus === false) {
-						$root['show_err'] = '还款失败，修改还款计划失败';
+						$root['show_err'] = '还款失败，更新还款计划失败';
 						return $root;
 					}
 					//借款人扣款
-					$log_repay_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($l_key+1).'期，偿还本息'.$ext_str;
+					$log_repay_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，偿还本息'.$ext_str;
 					$editMoneyStatus = $userBusiness->editUserMoney($user_id,-$hasRepayTotal['total_repay_money'],$log_repay_msg,4);
+					if($editMoneyStatus === false) {
+						$root['show_err'] = '还款失败，扣除借款人本息失败';
+						return $root;
+					}
 					//记录还款日志
 					$repay_msg = '会员还款，本息：' . $hasRepayTotal['total_repay_money'];
-					$dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+					$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+					if($add_repay_log_status === false) {
+						$root['show_err'] = '还款失败，保存还款记录失败';
+						return $root;
+					}
 					//罚息
 					if($hasRepayTotal['total_impose_money'] != 0) {
-						$log_impose_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($l_key+1).'期，逾期罚息'.$ext_str;
+						$log_impose_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，逾期罚息'.$ext_str;
 						$editMoneyStatus = $userBusiness->editUserMoney($user_id,-$hasRepayTotal['total_impose_money'],$log_impose_msg,11);
+						if($editMoneyStatus === false) {
+							$root['show_err'] = '还款失败，扣除借款人逾期罚息失败';
+							return $root;
+						}
 						$repay_msg = '会员还款，逾期费用：' . $hasRepayTotal['total_impose_money'];
-						$dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+						$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+						if($add_repay_log_status === false) {
+							$root['show_err'] = '还款失败，保存还款记录失败';
+							return $root;
+						}
+
 					}
 					//借款管理费
 					if ($user_repay['manage_money'] > 0 && $getManage == 0) {
-						$log_manage_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($l_key+1).'期，借款管理费'.$ext_str;
+						$log_manage_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，借款管理费'.$ext_str;
 						$editMoneyStatus = $userBusiness->editUserMoney($user_id,-$user_repay['manage_money'],$log_manage_msg,10);
+						if($editMoneyStatus === false) {
+							$root['show_err'] = '还款失败，扣除借款人借款管理费失败';
+							return $root;
+						}
 						$repay_msg = '会员还款，管理费：' . $user_repay['manage_money'];
-						$dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+						$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+						if($add_repay_log_status === false) {
+							$root['show_err'] = '还款失败，保存还款记录失败';
+							return $root;
+						}
 					}
 					//抵押物管理费
 					if($user_repay['mortgage_fee'] > 0 ) {
-						$log_mortgage_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($l_key+1).'期，抵押物管理费'.$ext_str;
+						$log_mortgage_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，抵押物管理费'.$ext_str;
 						$editMoneyStatus = $userBusiness->editUserMoney($user_id,-$user_repay['mortgage_fee'],$log_mortgage_msg,27);
+						if($editMoneyStatus === false) {
+							$root['show_err'] = '还款失败，扣除借款人借款管理费失败';
+							return $root;
+						}
 						$repay_msg = '会员还款，抵押物管理费：' . $user_repay['mortgage_fee'];
-						$dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+						$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+						if($add_repay_log_status === false) {
+							$root['show_err'] = '还款失败，保存还款记录失败';
+							return $root;
+						}
 					}
 					//逾期管理费
 					if($manage_impose_money > 0) {
-						$log_impose_manage_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($l_key+1).'期，逾期管理费'.$ext_str;
+						$log_impose_manage_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，逾期管理费'.$ext_str;
 						$editMoneyStatus = $userBusiness->editUserMoney($user_id,-$manage_impose_money,$log_impose_manage_msg,12);
+						if($editMoneyStatus === false) {
+							$root['show_err'] = '还款失败，扣除借款人借款管理费失败';
+							return $root;
+						}
 						$repay_msg = '会员还款，逾期管理费：' . $manage_impose_money;
-						$dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+						$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($user_repay['id'],$user_id,$repay_msg);
+						if($add_repay_log_status === false) {
+							$root['show_err'] = '还款失败，保存还款记录失败';
+							return $root;
+						}
 					}
 					//逾期扣除信用积分point
 					if($status == 3 ) {
 						//严重逾期
-						$log_impose_point_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($l_key+1).'期，严重逾期'.$ext_str;
+						$log_impose_point_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，严重逾期'.$ext_str;
 						$point = C('YZ_IMPOSE_POINT');
 						$editMoneyStatus = $userBusiness->editUserPoint($user_id,-$point,$log_impose_point_msg,11);
+						if($editMoneyStatus === false) {
+							$root['show_err'] = '还款失败，扣除借款人逾期信用积分失败';
+							return $root;
+						}
 
 					}elseif($status == 2) {
 						//普通逾期
-						$log_impose_point_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($l_key+1).'期，逾期还款'.$ext_str;
+						$log_impose_point_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，逾期还款'.$ext_str;
 						$point = C('IMPOSE_POINT')?C('IMPOSE_POINT'):10;
 						$editMoneyStatus = $userBusiness->editUserPoint($user_id,-$point,$log_impose_point_msg,11);
+						if($editMoneyStatus === false) {
+							$root['show_err'] = '还款失败，扣除借款人逾期信用积分失败';
+							return $root;
+						}
 					}
 					//借款者返佣
 					$true_manage_money_rebate = $user_repay['manage_money'] * floatval(C('BORROWER_COMMISSION_RATIO')) / 100;
@@ -316,8 +400,12 @@ class  business_loan_loan extends Business {
 						//是否有上级，有上级则给上级返佣
 						$rebate_user = $userDao->getUser($user_id,'id,pid');
 						if($rebate_user[$invest_user_id]['pid'] != 0) {
-							$log_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($v['l_key']+1).'期，返佣金';
+							$log_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($v['l_key']+1).'期，返佣金';
 							$editMoneyStatus = $userBusiness->editUserMoney($rebate_user[$invest_user_id]['pid'],$true_manage_money_rebate,$log_msg, 23);
+							if($editMoneyStatus === false) {
+								$root['show_err'] = '还款失败，发放借款者返佣失败';
+								return $root;
+							}
 						}
 					}
 					//TODO 修改代还款表信息
@@ -330,24 +418,29 @@ class  business_loan_loan extends Business {
 						$notices['next_repay_time'] = date("Y年m月d日",$next_loan['repay_time']);
 						$notices['next_repay_money'] = number_format($next_loan['repay_money'], 2);
 					}
-					if($editMoneyStatus === false) {
-						$root['show_err'] = '还款失败，修改余额失败';
-					}else {
-						//判断是否最后一期还款
-						//全部还清
-						$bid_no_repay = $dealRepayDao->getAllNoRepay($id);
-						if($bid_no_repay == 0) {
-							$bidflag = \Core::dao('loan_loanbid')->update(array('deal_status'=>5,'pay_off_status'=>1),array('loan_id'=>$id));
-							if($bidflag === false){
-								$root['show_err'] = '还款失败';
-							}
-							//TODO 用户获得信用
-							//判断获取的信用是否超过限制
-							//TODO 用户获得额度
+
+					//判断是否最后一期还款
+					//全部还清
+					$bid_no_repay = $dealRepayDao->getAllNoRepay($id);
+					if($bid_no_repay == 0) {
+						$bidflag = \Core::dao('loan_loanbid')->update(array('deal_status'=>5,'pay_off_status'=>1),array('loan_id'=>$id));
+						if($bidflag === false){
+							$root['show_err'] = '还款失败，更新借款状态失败';
+							return $root;
 						}
-						$root['show_err'] = '还款成功';
-						$root['status'] = 1;
+						//TODO 用户获得信用
+						//判断获取的信用是否超过限制
+						//TODO 用户获得额度
+						$log_msg = "[<a href='' target='_blank'>" .$loan_name. "</a>],还清借款获得额度";
+						$update_quota_status = $userBusiness->editUserQuota($user_id,trim(C('USER_REPAY_QUOTA')),$log_msg, 6);
+						if($update_quota_status === false) {
+							$root['show_err'] = '还款失败，更新用户额度失败';
+							return $root;
+						}
 					}
+					$root['show_err'] = '还款成功';
+					$root['status'] = 1;
+					return $root;
 
 				}else {
 					//部分还款
@@ -360,22 +453,23 @@ class  business_loan_loan extends Business {
 					$updateWhere['l_key'] = $l_key;
 					$updateStatus = $dealRepayDao->update($updateData,$updateWhere);
 					if($updateStatus === false) {
-						$root['show_err'] = '部分还款失败，修改还款计划状态失败';
+						$root['show_err'] = '部分还款失败，更新还款计划状态失败';
+						return $root;
 					}else{
 						$root['show_err'] = '部分还款成功';
 						$root['status'] = 1;
+						return $root;
 					}
 				}
 			}catch (\Exception $e){
+				$userDao->getDb()->rollback();
 				$root['show_err'] = '系统错误';
 				return $root;
 			}finally{
 				if($root['status'] == 1) {
 					$userDao->getDb()->commit();
-					return $root;
 				}else {
 					$userDao->getDb()->rollback();
-					return $root;
 				}
 			}
 		}
@@ -396,6 +490,8 @@ class  business_loan_loan extends Business {
 		$loanBaseDao = \Core::dao('loan_loanbase');
 		$loanBidDao = \Core::dao('loan_loanbid');
 		$loanextDao = \Core::dao('loan_loanext');
+		$userDao = \Core::dao('user_user');
+		$userBusiness = \Core::business('user_userinfo');
 		$dealInrepayDao = \Core::dao('loan_dealinrepayrepay');
 		$load_user_list = $dealLoadDao->getList(array('deal_id'=>$id),'id,deal_id,user_id,money,is_winning,income_type,income_value');
 		if(!$load_user_list) {
@@ -416,11 +512,12 @@ class  business_loan_loan extends Business {
 		//贷款基本配置信息
 		$comon_config = $loanextDao->getCommonconfig($id);
 		if($comon_config){
-			unserialize($comon_config);
 			$user_loan_early_interest_manage_fee = \Core::arrayKeyExists('user_loan_early_interest_manage_fee',$comon_config)?\Core::arrayGet($comon_config,'user_loan_early_interest_manage_fee'):1;
+			$user_loan_interest_manage_fee = \Core::arrayKeyExists('user_loan_interest_manage_fee',$comon_config)?\Core::arrayGet($comon_config,'user_loan_interest_manage_fee'):0;
 		}
 		$time = time();
-
+		//贷款名称
+		$loan_name = $loanBaseDao->getName($id);
 		//开启事务
 		$loanBaseDao->getDb()->begin();
 		try{
@@ -451,6 +548,10 @@ class  business_loan_loan extends Business {
 				$need_interest_money = $dealLoadRepayDao->getAllInterest($id,$need_interest_money_lkey,$v['user_id']);
 				//计算利息管理费
 				$user_inrepay_info['true_manage_early_interest_money'] = $user_inrepay_info['manage_early_interest_money'] = round(floatval($need_interest_money['total_interest_money'])*floatval($user_loan_early_interest_manage_fee)/100,2);
+				//利息管理费
+				$user_inrepay_info["true_manage_interest_money"] = round($need_interest_money['total_interest_money']*floatval($user_loan_interest_manage_fee)/100,2);
+				//投资者返佣金额
+				$user_inrepay_info["true_manage_interest_money_rebate"] = round($user_inrepay_info['true_manage_interest_money']* floatval(C('INVESTORS_COMMISSION_RATIO'))/100,2);
 				//计算投资奖励
 				$user_inrepay_info['true_reward_money'] = 0;
 				if ((int)$v['is_winning'] == 1 && (int)$v['income_type'] == 2 && (float)$v['income_value'] != 0) {
@@ -472,36 +573,40 @@ class  business_loan_loan extends Business {
 				}
 				//修改loanbid表中的pay_off_status为1,表示所有投资人已回款
 				$loanbid_status = $loanBidDao->update(array('pay_off_status'=>1),array('loan_id'=>$id));
-				if($dealload_status === false) {
+				if($loanbid_status === false) {
 					$root['show_err'] = '回款失败，修改投资人已回款状态失败';
 					return $root;
 				}
 				//TODO 投资人资金变动
 				$repay_user_id = $v['user_id'];
-				//判断是否有转标
-				$log_msg = '回报本息';
-				$edit_user_money = \Core::business('user_userinfo')->editUserMoney($repay_user_id,round($user_inrepay_info['true_repay_money'],2),$log_msg,5);
+				//TODO 判断是否有转标
+				if ($t_user_id = $dealLoadRepayDao->findCol('t_user_id',array('deal_id'=>$id,'user_id'=>$user_id,'l_key'=>$start_lkey)) != 0) {
+					$repay_user_id = $t_user_id;
+				}
+
+				$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，回报本息';
+				$edit_user_money = $userBusiness->editUserMoney($repay_user_id,round($user_inrepay_info['true_repay_money'],2),$log_msg,5);
 				if($edit_user_money === false){
 					$root['show_err'] = '还款失败！发放回报本息';
 				}
 				if($user_inrepay_info['impose_money'] >0 ) {
-					$log_msg = '提前回收违约金';
-					$edit_user_money = \Core::business('user_userinfo')->editUserMoney($repay_user_id,round($user_inrepay_info['impose_money'],2),$log_msg,7);
+					$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，提前回收违约金';
+					$edit_user_money = $userBusiness->editUserMoney($repay_user_id,round($user_inrepay_info['impose_money'],2),$log_msg,7);
 					if($edit_user_money === false){
 						$root['show_err'] = '还款失败！提前回收违约金';
 						return $root;
 					}
 				}
 
-				$log_msg = '投标管理费';
-				$edit_user_money = \Core::business('user_userinfo')->editUserMoney($repay_user_id,-round($user_inrepay_info['true_manage_money'],2),$log_msg,20);
+				$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，投标管理费';
+				$edit_user_money = $userBusiness->editUserMoney($repay_user_id,-round($user_inrepay_info['true_manage_money'],2),$log_msg,20);
 				if($edit_user_money === false){
 					$root['show_err'] = '还款失败！扣除投标管理费出错';
 					return $root;
 				}
 				if($user_inrepay_info['true_reward_money'] > 0){
-					$log_msg = '投标奖励';
-					$edit_user_money = \Core::business('user_userinfo')->editUserMoney($repay_user_id,-round($user_inrepay_info['true_reward_money'],2),$log_msg,28);
+					$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，投标奖励';
+					$edit_user_money = $userBusiness->editUserMoney($repay_user_id,-round($user_inrepay_info['true_reward_money'],2),$log_msg,28);
 					if($edit_user_money === false){
 						$root['show_err'] = '还款失败！扣除投标奖励出错';
 						return $root;
@@ -509,22 +614,39 @@ class  business_loan_loan extends Business {
 				}
 
 				if ($user_inrepay_info['true_manage_early_interest_money'] > 0) {
-					$log_msg = '提前还款利息管理费';
-					$edit_user_money = \Core::business('user_userinfo')->editUserMoney($repay_user_id,-round($user_inrepay_info['true_manage_early_interest_money'],2),$log_msg,7);
+					$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，提前还款利息管理费';
+					$edit_user_money = $userBusiness->editUserMoney($repay_user_id,-round($user_inrepay_info['true_manage_early_interest_money'],2),$log_msg,7);
 					if($edit_user_money === false){
 						$root['show_err'] = '还款失败！扣除提前还款利息管理费出错';
 						return $root;
 					}
 				}
 				if($user_inrepay_info['true_manage_interest_money'] > 0) {
-					$log_msg = '投标利息管理费';
-					$edit_user_money = \Core::business('user_userinfo')->editUserMoney($repay_user_id,-round($user_inrepay_info['true_manage_interest_money'],2),$log_msg,28);
+					$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，投标利息管理费';
+					$edit_user_money = $userBusiness->editUserMoney($repay_user_id,-round($user_inrepay_info['true_manage_interest_money'],2),$log_msg,28);
 					if($edit_user_money === false){
 						$root['show_err'] = '还款失败！扣除投标奖励出错';
 						return $root;
 					}
 				}
+				//TODO 普通会员邀请返利
+				//判断该标是否参与分销返利
+				if ($loanBaseDao->findCol('is_referral_award',array('id'=>$id)) != 0) {
+					$deal_load_repay_id = $dealLoadRepayDao->findCol('id',array('deal_id'=>$id,'user_id'=>$user_id,'l_key'=>$start_lkey));
+					$this->getReferrals($id,$deal_load_repay_id,$repay_user_id);
+				}
 				//TODO 投资者返佣
+				if ($user_inrepay_info['true_manage_interest_money_rebate'] != 0) {
+					//是否有上级，有上级则给上级返佣
+					$rebate_user = $userDao->findCol('pid',array('id'=>$repay_user_id));
+					if ($rebate_user != 0) {
+						$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，返佣金';
+						$editMoneyStatus = $userBusiness->editUserMoney($rebate_user, $user_inrepay_info['true_manage_interest_money_rebate'], $log_msg, 23);
+						if($editMoneyStatus === false){
+							$root['show_err'] = '回款失败，返佣金发放失败';
+						}
+					}
+				}
 				//TODO 发送通知短信、邮件、站内信
 			}
 			//2.借款人扣款
@@ -536,7 +658,6 @@ class  business_loan_loan extends Business {
 				$loan = $loanBaseDao->getloanbase($id,'id,borrow_amount,rate,repay_time,loantype');
 				//提前第一期数据
 				$inrepay_info = \Core::business('sys_dealrepay')->inrepayRepay($loan, $start_lkey);
-				unset($inrepay_info['true_manage_interest_money']);
 				//整理更新数据
 				//还款计划信息，（提前非第一期）
 				$repay_data = array();
@@ -565,7 +686,7 @@ class  business_loan_loan extends Business {
 				//当前提前第一期
 				$repay_status = $dealRepayDao->update($inrepay_info,array('deal_id'=>$id,'user_id'=>$user_id,'l_key'=>$start_lkey));
 				if($repay_status === false) {
-					$root['show_err'] = '修改当前期数据失败';
+					$root['show_err'] = '更新当前期数据失败';
 					return $root;
 				}
 				//第一期之后的期数
@@ -575,18 +696,18 @@ class  business_loan_loan extends Business {
 				$where_after_start_lkey['l_key > '] = $start_lkey;
 				$repay_status = $dealRepayDao->update($repay_data,$where_after_start_lkey);
 				if($repay_status === false) {
-					$root['show_err'] = '修改后续期数据失败';
+					$root['show_err'] = '更新后续期数据失败';
 					return $root;
 				}
 				$insert_inrepay = $dealInrepayDao->insert($inrepay_data);
 				if($insert_inrepay === false) {
-					$root['show_err'] = '添加提前还款数据失败';
+					$root['show_err'] = '保存提前还款数据失败';
 					return $root;
 				}
 				//数据修改成功，扣除借款人资金
 				//提前还款违约金
 				if($inrepay_info['impose_money'] >0 ) {
-					$log_msg = '提前还款违约金';
+					$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，提前还款违约金';
 					$edit_user_money = \Core::business('user_userinfo')->editUserMoney($user_id,-round($inrepay_info['impose_money'],2),$log_msg,6);
 					if($edit_user_money === false){
 						$root['show_err'] = '还款失败！扣除提前还款违约金失败';
@@ -595,7 +716,7 @@ class  business_loan_loan extends Business {
 				}
 				//提前还款管理费
 				if($inrepay_info['true_manage_money'] >0 ) {
-					$log_msg = '提前还款管理费';
+					$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，提前还款管理费';
 					$edit_user_money = \Core::business('user_userinfo')->editUserMoney($user_id,-round($inrepay_info['true_manage_money'],2),$log_msg,10);
 					if($edit_user_money === false){
 						$root['show_err'] = '还款失败！扣除提前还款管理费失败';
@@ -604,7 +725,7 @@ class  business_loan_loan extends Business {
 				}
 				//提前还款抵押物管理费
 				if($inrepay_info['true_mortgage_fee'] >0 ) {
-					$log_msg = '提前还款抵押物管理费';
+					$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，提前还款抵押物管理费';
 					$edit_user_money = \Core::business('user_userinfo')->editUserMoney($user_id,-round($inrepay_info['true_mortgage_fee'],2),$log_msg,27);
 					if($edit_user_money === false){
 						$root['show_err'] = '还款失败！扣除提前还款抵押物管理费失败';
@@ -613,7 +734,7 @@ class  business_loan_loan extends Business {
 				}
 				//提前还款本息
 				if($inrepay_info['true_repay_money'] >0 ) {
-					$log_msg = '提前还款本息';
+					$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($start_lkey + 1) . '期，提前还款本息';
 					$edit_user_money = \Core::business('user_userinfo')->editUserMoney($user_id,-round($inrepay_info['true_repay_money'],2),$log_msg,6);
 					if($edit_user_money === false){
 						$root['show_err'] = '还款失败！扣除提前还款本息失败';
@@ -624,29 +745,68 @@ class  business_loan_loan extends Business {
 				if($update_deal_status === false) {
 					$root['show_err'] = '更新贷款状态出错！';
 					return $root;
-				}else {
-					$root['status'] = 1;
-					$root['show_err'] = '还款成功';
+				}
+				//TODO 借款者返佣金
+				$true_manage_money_rebate = round($inrepay_info['true_manage_money'] * floatval(C('BORROWER_COMMISSION_RATIO')) / 100,2);
+				if($true_manage_money_rebate != 0 ) {
+					//是否有上级，有上级则给上级返佣
+					$rebate_user = $userDao->findCol('pid',array('id'=>$user_id));
+					if($rebate_user != 0) {
+						$log_msg = '<a href="" target="_blank">'.$loanBaseDao->getName($id).'</a>第'.($v['l_key']+1).'期，返佣金';
+						$edit_user_money = $userBusiness->editUserMoney($rebate_user,$true_manage_money_rebate,$log_msg, 23);
+						if($edit_user_money === false) {
+							$root['show_err'] = '借款者返佣出错！';
+							return $root;
+						}
+					}
 				}
 				//TODO 用户获得额度
-				//TODO 借款者返佣金
+				$log_msg = "[<a href='' target='_blank'>" .$loanBaseDao->getName($id). "</a>],还清借款获得额度";
+				$userBusiness->editUserQuota($user_id,trim(C('USER_REPAY_QUOTA')),$log_msg, 6);
 				//TODO 判断借款人是否获得信用
+				//判断获得信用是否超过上限
+				$point_sum = \Core::dao('user_userPointLog')->getSumPoint(array('user_id'=>$user_id,'type'=>6));
+				if($point_sum < intval(C('REPAY_SUCCESS_LIMIT'))) {
+					//获取上一次还款时间
+					$max_time =  \Core::dao('user_userPointLog')->getMaxTime(array('user_id'=>$user_id,'type'=>6));
+					$day = ceil(($time - $max_time) / 24 / 3600);
+					if($day >= intval(C('REPAY_SUCCESS_DAY'))) {
+						$point = intval(C('REPAY_SUCCESS_POINT'));
+						$log_msg = "[<a href='' target='_blank'>" . $loan_name . "</a>],还清借款";
+						//增加借款用户信用
+						$userBusiness->editUserPoint($user_id,$point,$log_msg,4);
+					}
+				}
+				$root['status'] = 1;
+				$root['show_err'] = '还款成功';
+				return $root;
 			}
 		}catch (\Exception $e){
+			$loanBaseDao->getDb()->rollback();
 			$root['show_err'] = '系统错误';
 			return $root;
 		}finally{
 			if($root['status'] == 1) {
 				$loanBaseDao->getDb()->commit();
-				return $root;
 			}else {
 				$loanBaseDao->getDb()->rollback();
-				return $root;
 			}
 		}
 	}
 	//网站资金代还
 	public function siteRepay($id,$lkey,$user_id){
+		$root = array();
+		$root['status'] = 0;//0:出错;1:正确;
+		$id = intval($id);
+		if($id == 0 ) {
+			$root['show_err'] = '操作失败';
+			return $root;
+		}
+		$user_id = intval($user_id);
+		if($user_id == 0 ) {
+			$root['show_err'] = '操作失败';
+			return $root;
+		}
 		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
 		$dealRepayDao = \Core::dao('loan_dealrepay');
 		$dealLoadDao = \Core::dao('loan_dealload');
@@ -663,22 +823,34 @@ class  business_loan_loan extends Business {
 			return $root;
 		}
 		$repay_id = $dealRepayDao->findCol('id',array('deal_id'=>$id,'l_key'=>$lkey));
+		if(!$repay_id) {
+			$root['show_err'] = '数据异常';
+			return $root;
+		}
 		$time = time();
 		//判断是否逾期
 		$userRepayImposeInfo = \Core::business('sys_dealrepay')->repayPlanImpose($id,$lkey);
-
+		if(!$userRepayImposeInfo) {
+			$root['show_err'] = '数据异常';
+			return $root;
+		}
 		$need_repay_money = $userRepayImposeInfo['need_repay_money'];
 		$status = ($userRepayImposeInfo['status']<2)?($userRepayImposeInfo['status']+1):$userRepayImposeInfo['status'];
 		$impose_money = $userRepayImposeInfo['impose_money'];
 		$manage_impose_money  = $userRepayImposeInfo['manage_impose_money'];
 		//TODO 开启事务
 		$loanbaseDao->getDb()->begin();
+		//贷款名称
+		$loan_name = $loanbaseDao->getName($id);
 		try{
 			//1.投资人回款
 			foreach ($load_user_list as $v) {
 				//获取所有投资用户该期的回款计划
 				$user_load = $dealLoadRepayDao->getSomeOneLkeyPlan($id,$lkey,$v['user_id']);
-
+				if(!$user_load ) {
+					$root['show_err'] = '数据异常';
+					return $root;
+				}
 				//TODO 网站代还 或已收到回款
 				if($user_load['is_site_repay'] == 1 || $user_load['has_repay'] == 1){
 					continue;
@@ -693,63 +865,67 @@ class  business_loan_loan extends Business {
 					if ($user_load['t_user_id'] != 0) {
 						$invest_user_id = $v['t_user_id'];
 						$log_msg = '<a href="" target="_blank">债权标</a>' . $user_load['id'] . '第' . ($lkey + 1) . '期，回报本息';
+						$log_impose_msg = '<a href="" target="_blank">债权标</a>' . $user_load['id'] . '第' . ($lkey + 1) . '期，逾期罚息';
 					} else {
 						$invest_user_id = $v['user_id'];
-						$log_msg = '<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>第' . ($lkey + 1) . '期，回报本息';
+						$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($lkey + 1) . '期，回报本息';
+						$log_impose_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($lkey + 1) . '期，逾期罚息';
 					}
 					//修投资人余额
 					$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, $user_load['repay_money'], $log_msg, 5);
 					if($editMoneyStatus === false){
 						$root['show_err'] = '回款失败，回报本息发放失败';
+						return $root;
 					}
 					if ($user_load['manage_money'] > 0) {
-						$log_msg = '[<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>]第' . ($lkey + 1) . '期，投标管理费';
+						$log_msg = '[<a href="" target="_blank">' . $loan_name . '</a>]第' . ($lkey + 1) . '期，投标管理费';
 						$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, -$user_load['manage_money'], $log_msg, 20);
 						if($editMoneyStatus === false){
 							$root['show_err'] = '回款失败，扣除投标管理费失败';
+							return $root;
 						}
 					}
 					if ($user_load['manage_interest_money'] > 0) {
-						$log_msg = '[<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>]第' . ($lkey + 1) . '期，投标利息管理费';
+						$log_msg = '[<a href="" target="_blank">' . $loan_name . '</a>]第' . ($lkey + 1) . '期，投标利息管理费';
 						$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, -$user_load['manage_interest_money'], $log_msg, 20);
 						if($editMoneyStatus === false){
 							$root['show_err'] = '回款失败，扣除投标利息管理费失败';
+							return $root;
 						}
 					}
 					//逾期罚息
 					if (($impose_money*($user_load['repay_money']/$v['money'])) != 0) {
-						if ($user_load['t_user_id'] == 0) { //无债权转让
-							$log_msg = '<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>第' . ($lkey + 1) . '期，逾期罚息';
-							$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, number_format($impose_money*($user_load['repay_money']/$v['money']),2), $log_msg, 21);
-							if($editMoneyStatus === false){
-								$root['show_err'] = '回款失败，逾期罚息发放失败';
-							}
-						} else {//有债权转让
-							$log_msg = '<a href="" target="_blank">债权标</a>' . $user_load['id'] . '第' . ($lkey + 1) . '期，逾期罚息';
-							$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, number_format($impose_money*($user_load['repay_money']/$v['money']),2), $log_msg, 21);
-							if($editMoneyStatus === false){
-								$root['show_err'] = '回款失败，逾期罚息发放失败';
-							}
+						$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, number_format($impose_money*($user_load['repay_money']/$v['money']),2), $log_impose_msg, 21);
+						if($editMoneyStatus === false){
+							$root['show_err'] = '回款失败，逾期罚息发放失败';
+							return $root;
 						}
 					}
 					//投资者奖励
 					if ($user_load['reward_money'] != 0) {
-						$log_msg = '<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>第' . ($lkey + 1) . '期，奖励收益';
+						$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($lkey + 1) . '期，奖励收益';
 						$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, $user_load['reward_money'], $log_msg, 28);
 						if($editMoneyStatus === false){
 							$root['show_err'] = '回款失败，奖励收益发放失败';
+							return $root;
 						}
 					}
 					//TODO 普通会员邀请返利
+					//判断该标是否参与分销返利
+					if ($loanbaseDao->findCol('is_referral_award',array('id'=>$id)) != 0) {
+						$deal_load_repay_id = $dealLoadRepayDao->findCol('id',array('deal_id'=>$id,'user_id'=>$user_id,'l_key'=>$lkey));
+						$this->getReferrals($id,$deal_load_repay_id,$invest_user_id);
+					}
 					//投资者返佣金
 					if ($user_load['manage_interest_money_rebate'] != 0) {
 						//是否有上级，有上级则给上级返佣
-						$rebate_user = $userDao->getUser($invest_user_id, 'id,pid');
-						if ($rebate_user[$invest_user_id]['pid'] != 0) {
-							$log_msg = '<a href="" target="_blank">' . $loanbaseDao->getName($id) . '</a>第' . ($lkey + 1) . '期，返佣金';
-							$editMoneyStatus = $userBusiness->editUserMoney($rebate_user[$invest_user_id]['pid'], $user_load['manage_interest_money_rebate'], $log_msg, 23);
+						$rebate_user = $userDao->findCol('pid',array('id'=>$invest_user_id));
+						if ($rebate_user != 0) {
+							$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($lkey + 1) . '期，返佣金';
+							$editMoneyStatus = $userBusiness->editUserMoney($rebate_user, $user_load['manage_interest_money_rebate'], $log_msg, 23);
 							if($editMoneyStatus === false){
 								$root['show_err'] = '回款失败，返佣金发放失败';
+								return $root;
 							}
 						}
 					}
@@ -784,10 +960,14 @@ class  business_loan_loan extends Business {
 				//借款者返佣
 				if($repay_data['true_manage_money_rebate'] != 0 ) {
 					//是否有上级，有上级则给上级返佣
-					$rebate_user = $userDao->getUser($user_id,'id,pid');
-					if($rebate_user[$invest_user_id]['pid'] != 0) {
-						$log_msg = '<a href="" target="_blank">'.$loanbaseDao->getName($id).'</a>第'.($v['l_key']+1).'期，返佣金';
-						$editMoneyStatus = $userBusiness->editUserMoney($rebate_user[$invest_user_id]['pid'],$repay_data['true_manage_money_rebate'],$log_msg, 23);
+					$rebate_user = $userDao->findCol('pid',array('id'=>$user_id));
+					if($rebate_user != 0) {
+						$log_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($v['l_key']+1).'期，返佣金';
+						$editMoneyStatus = $userBusiness->editUserMoney($rebate_user,$repay_data['true_manage_money_rebate'],$log_msg, 23);
+						if($editMoneyStatus === false) {
+							$root['show_err'] = '代还失败，返佣失败';
+							return $root;
+						}
 					}
 				}
 				//更新数据
@@ -801,14 +981,18 @@ class  business_loan_loan extends Business {
 					if($userRepayImposeInfo['overday'] < C('YZ_IMPSE_DAY')) {
 						//普通逾期扣分
 						$point = C('IMPOSE_POINT')?C('IMPOSE_POINT'):0;
-						$log_msg = "[<a href='' target='_blank'>" . $loanbaseDao->getName($id). "</a>],第" . ($lkey + 1) . "期,逾期还款";
+						$log_msg = "[<a href='' target='_blank'>" . $loan_name. "</a>],第" . ($lkey + 1) . "期,逾期还款";
 					}else {
 						//严重逾期扣分
 						$point = C('YZ_IMPOSE_POINT')?C('YZ_IMPOSE_POINT'):0;
-						$log_msg = "[<a href='' target='_blank'>" . $loanbaseDao->getName($id). "</a>],第" . ($lkey + 1) . "期,严重逾期";
+						$log_msg = "[<a href='' target='_blank'>" . $loan_name. "</a>],第" . ($lkey + 1) . "期,严重逾期";
 					}
 					if($point != 0) {
-						\Core::business('user_userinfo')->editUserPoint($user_id,$point,$log_msg,11);
+						$update_point_status = \Core::business('user_userinfo')->editUserPoint($user_id,$point,$log_msg,11);
+						if($update_point_status === false) {
+							$root['show_err'] = '代还失败，扣除借款者逾期积分失败';
+							return $root;
+						}
 					}
 				}
 				//整理还款记录数据
@@ -818,26 +1002,46 @@ class  business_loan_loan extends Business {
 				if($site_repay_sum) {
 					//记录还款日志
 					$repay_msg = '网站代还款，本息：' . $site_repay_sum['total_repay_money'];
-					$dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+					$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+					if($add_repay_log_status === false) {
+						$root['show_err'] = '保存还款日志失败';
+						return $root;
+					}
 					//罚息
 					if($site_repay_sum['total_impose_money'] != 0) {
 						$repay_msg = '网站代还款，逾期费用：' . $site_repay_sum['total_impose_money'];
-						$dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+						$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+						if($add_repay_log_status === false) {
+							$root['show_err'] = '保存还款日志失败';
+							return $root;
+						}
 					}
 					//借款管理费
 					if ($site_repay_sum['total_manage_money'] > 0 && $get_manage == 0) {
 						$repay_msg = '网站代还款，管理费：' .$site_repay_sum['total_manage_money'];
-						$dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+						$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+						if($add_repay_log_status === false) {
+							$root['show_err'] = '保存还款日志失败';
+							return $root;
+						}
 					}
 					//抵押物管理费
 					if($site_repay_sum['total_mortgage_fee'] > 0 ) {
 						$repay_msg = '网站代还款，抵押物管理费：' . $site_repay_sum['total_mortgage_fee'];
-						$dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+						$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+						if($add_repay_log_status === false) {
+							$root['show_err'] = '保存还款日志失败';
+							return $root;
+						}
 					}
 					//逾期管理费
 					if($site_repay_sum['total_repay_manage_impose_money'] > 0) {
 						$repay_msg = '会员还款，逾期管理费：' . $site_repay_sum['total_repay_manage_impose_money'];
-						$dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+						$add_repay_log_status = $dealRepayLogBusiness->addDealRepayLog($repay_id,$user_id,$repay_msg);
+						if($add_repay_log_status === false) {
+							$root['show_err'] = '保存还款日志失败';
+							return $root;
+						}
 					}
 				}
 				//判断代还款表中是否存在该期数据
@@ -861,21 +1065,33 @@ class  business_loan_loan extends Business {
 					$generation_repay['create_time'] = $time;
 					$generation_repay['is_auto_site_repay'] = 0; //网站垫付操作: 0-手动,1-自动
 					//insert
-					$generationDao->insert($generation_repay);
+					$add_generation_status = $generationDao->insert($generation_repay);
+					if($add_generation_status === false) {
+						$root['show_err'] = '保存代款数据失败';
+						return $root;
+					}
 					//记录网站代还日志
 					$site_money_data['user_id'] = $user_id;
 					$site_money_data['create_time'] = $time;
 					if($repay_sum['total_repay_manage_money'] != 0 && $get_manage == 0) {
-						$site_money_data['memo'] = "[<a href='' target='_blank'>" . $loanbaseDao->getName($id) . "</a>],第" . ($lkey+1) . "期,借款管理费";
+						$site_money_data['memo'] = "[<a href='' target='_blank'>" . $loan_name . "</a>],第" . ($lkey+1) . "期,借款管理费";
 						$site_money_data['type'] = 10;
 						$site_money_data['money'] = $repay_sum['total_repay_manage_money'];
-						$siteMoneyLogDao->insert($site_money_data);
+						$add_site_money_status = $siteMoneyLogDao->insert($site_money_data);
+						if($add_site_money_status === false) {
+							$root['show_err'] = '保存代款数据失败';
+							return $root;
+						}
 					}
 					if($repay_sum['total_repay_manage_impose_money'] != 0 ) {
-						$site_money_data['memo'] = "[<a href='' target='_blank'>" .$loanbaseDao->getName($id). "</a>],第" . ($lkey+1) . "期,逾期管理费";
+						$site_money_data['memo'] = "[<a href='' target='_blank'>" .$loan_name. "</a>],第" . ($lkey+1) . "期,逾期管理费";
 						$site_money_data['type'] = 12;
 						$site_money_data['money'] = $repay_sum['total_repay_manage_impose_money'];
-						$siteMoneyLogDao->insert($site_money_data);
+						$add_site_money_status = $siteMoneyLogDao->insert($site_money_data);
+						if($add_site_money_status === false) {
+							$root['show_err'] = '保存代款数据失败';
+							return $root;
+						}
 					}
 				}
 			}
@@ -889,18 +1105,158 @@ class  business_loan_loan extends Business {
 			}
 			$root['show_err'] = '网站代还款成功';
 			$root['status'] = 1;
+			return $root;
 		}catch (\Exception $e){
+			$userDao->getDb()->rollback();
 			$root['show_err'] = '系统错误';
 			return $root;
 		}finally{
 			if($root['status'] == 1) {
 				$userDao->getDb()->commit();
-				return $root;
 			}else {
 				$userDao->getDb()->rollback();
-				return $root;
 			}
 		}
-
 	}
+	/*
+	 * 还款返利(普通会员邀请返利)
+	 * $loan_id 贷款id
+	 * $deal_repay_id 回款计划id
+	 * $user_id 回款用户id（有转标则为转标承接人id）
+	 * */
+	public function getReferrals($loan_id,$deal_repay_id,$user_id){
+		if(!$deal_repay_id) return false;
+		if(!$loan_id) return false;
+		if(!$user_id) return false;
+		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$userDao = \Core::dao('user_user');
+		$dealLoadDao = \Core::dao('loan_dealload');
+		$referralsDao = \Core::dao('loan_referrals');
+		$time = time();
+		//返利用户信息
+		$user_where = array('id'=>$user_id,'pid >'=>0,'referral_rate >'=>0,'user_type <'=>2);
+
+		$user_info = $userDao->getUserInfo('user_name,referral_rate,pid,create_time,referral_time',$user_where)->row();
+		if(!$user_info) return false;
+		if (intval(C("INVITE_REFERRALS_DATE")) > 0) {
+			//计算分销有效期
+			$after_year = 0;
+			if($user_info['referral_time'] > -1) {
+				$after_year = strtotime(date('Y-m-d',$time).'-'.$user_info['referral_time'].'month');
+			}else {
+				$after_year = strtotime(date('Y-m-d',$time).'-'.C('INVITE_REFERRALS_DATE').'month');
+			}
+		}
+		//用户注册时间不在返利时间内
+		if($user_info['create_time'] >= $after_year) return false;
+		//获取回款信息
+		$deal_load_repay_info = $dealLoadRepayDao->getDataById($deal_repay_id,'repay_time,l_key,load_id,true_interest_money,true_self_money');
+		if(!$deal_load_repay_info) return false;
+		$deal_load_info = $dealLoadDao->getDealLoad('id,create_time',array('create_time > '=>$after_year,'id'=>$deal_load_repay_info['load_id']));
+		if(!$deal_load_info) return false;
+		$referrals_money = 0;
+		if(C('INVITE_REFERRALS_TYPE') == 0) {
+			$referrals_money = $deal_load_repay_info['true_interest_money'] * $user_info['referral_rate'] *0.01;
+		}else {
+			$referrals_money = $deal_load_repay_info['true_self_money'] * $user_info['referral_rate'] *0.01;
+		}
+		if($referrals_money == 0) return false;
+		//整理返利数据
+		$data = array();
+		$data['deal_id'] = $loan_id;
+		$data['load_id'] = $deal_load_repay_info['load_id'];
+		$data['l_key'] = $deal_load_repay_info['l_key'];
+		$data['money'] = round($referrals_money,2);
+		$data['user_id'] = $user_id;
+		$data['rel_user_id'] = $user_info['pid'];
+		$data['referral_type'] = intval(C("INVITE_REFERRALS_TYPE")) == 0 ? 0 : 1;
+		$data['referral_rate'] = $user_info['referral_rate'];
+		$data['repay_time'] = $deal_load_repay_info['repay_time'];
+		$data['create_time'] = $time;
+		//TODO 对数据库进行修改，开启事务
+		$referralsDao->getDb()->begin();
+		try{
+			$referrals_id = true;
+			$referrals_id = $referralsDao->insert($data);
+			unset($data);
+			if($referrals_id === false) return false;
+			if(intval(C('INVITE_REFERRALS_AUTO')) == 1) {
+				//自动发放返利
+				$userBusiness = \Core::business('user_userinfo');
+				$msg = '[<a href="" target="_blank">' .$loanBaseDao->getName($loan_id). '</a>],第' . ($deal_load_repay_info['l_key'] + 1) . '期,还款获取邀请返利';
+				//修改用户余额
+				$edit_status = $userBusiness->editUserMoney($user_id,round($referrals_money,2),$msg,23);
+				if($edit_status === false) {
+					$referrals_id = $edit_status;
+					return $referrals_id;
+				}
+				//修改返利表时间
+				$update_status = $referralsDao->update(array('pay_time'=>time()),array('id'=>$referrals_id));
+				if($update_status === false) {
+					$referrals_id = $update_status;
+					return $referrals_id;
+				}
+			}
+		}catch(\Exception $e){
+			$referralsDao->getDb()->rollback();
+			$referrals_id = false;
+		}finally{
+			if($referrals_id === false) {
+				$referralsDao->getDb()->rollback();
+				return $referrals_id;
+			}else {
+				$referralsDao->getDb()->commit();
+				return $referrals_id;
+			}
+		}
+	}
+	/*
+	 * 手动还款返利(普通会员邀请返利)
+	 * $id 返利表id
+	 * */
+	public function payReferrals($id){
+		if(!$id) return false;
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$referralsDao = \Core::dao('loan_referrals');
+		$time = time();
+		if($loanBaseDao->findCol('is_referral_award',array('id'=>$id)) == 0) return false;
+		//返利信息
+		$referrals_info = $referralsDao->getDataById($id);
+		if(!$referrals_info) return false;
+		//TODO 对数据库进行修改，开启事务
+		$referralsDao->getDb()->begin();
+		try{
+			$referrals_id = true;
+			if($referrals_info['money'] != 0) {
+				//自动发放返利
+				$userBusiness = \Core::business('user_userinfo');
+				$msg = '[<a href="" target="_blank">' .$loanBaseDao->getName($referrals_info['deal_id']). '</a>],第' . ($referrals_info['l_key'] + 1) . '期,还款获取邀请返利';
+				//修改用户余额
+				$edit_status = $userBusiness->editUserMoney($referrals_info['user_id'],round($referrals_info['money'],2),$msg,23);
+				if($edit_status === false) {
+					$referrals_id = $edit_status;
+					return $referrals_id;
+				}
+				//修改返利表时间
+				$update_status = $referralsDao->update(array('pay_time'=>time()),array('id'=>$id));
+				if($update_status === false) {
+					$referrals_id = $update_status;
+					return $referrals_id;
+				}
+			}
+		}catch(\Exception $e){
+			$referralsDao->getDb()->rollback();
+			$referrals_id = false;
+		}finally{
+			if($referrals_id === false) {
+				$referralsDao->getDb()->rollback();
+				return $referrals_id;
+			}else {
+				$referralsDao->getDb()->commit();
+				return $referrals_id;
+			}
+		}
+	}
+
 }

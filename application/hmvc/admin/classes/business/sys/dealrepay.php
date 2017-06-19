@@ -224,9 +224,6 @@ class  business_sys_dealrepay extends Business {
 		//判断是否逾期
 		//获取普通配置中的罚息利率等配置 loan_ext表的config_common字段
 		$config_common = \Core::dao('loan_loanext')->getCommonconfig($deal_id);
-		if ($config_common ){
-			unserialize($config_common);
-		}
 		//判断是否罚息(**到期还本息到最后一期才算罚息**)
 		if($time == 0){
 			$time = time();
@@ -246,8 +243,8 @@ class  business_sys_dealrepay extends Business {
 				$impose_fee = \Core::arrayKeyExists('impose_fee_day2',$config_common)?\Core::arrayGet($config_common,'impose_fee_day2'):0.9;
 				$manage_impose_fee = \Core::arrayKeyExists('manage_impose_fee_day2',$config_common)?\Core::arrayGet($config_common,'manage_impose_fee_day2'):9;
 			}else {
-				$impose_fee = \Core::arrayKeyExists('impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'impose_fee_day1'):1;
-				$manage_impose_fee = \Core::arrayKeyExists('manage_impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'manage_impose_fee_day1'):10;
+				$impose_fee = \Core::arrayKeyExists('impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'impose_fee_day1'):0.5;
+				$manage_impose_fee = \Core::arrayKeyExists('manage_impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'manage_impose_fee_day1'):5;
 			}
 			$impose_fee = floatval($impose_fee);
 			$manage_impose_fee = floatval($manage_impose_fee);
@@ -351,7 +348,6 @@ class  business_sys_dealrepay extends Business {
 		if(!$loan_config) {
 			return false;
 		}
-		$loan_config = unserialize($loan_config);
 		$compensate_fee = \Core::arrayKeyExists('compensate_fee',$loan_config)?\Core::arrayGet($loan_config,'compensate_fee'):0;
 		$mortgage_fee = \Core::arrayKeyExists('mortgage_fee',$loan_config)?\Core::arrayGet($loan_config,'mortgage_fee'):0;
 		$manage_fee = \Core::arrayKeyExists('manage_fee',$loan_config)?\Core::arrayGet($loan_config,'manage_fee'):0;
@@ -376,10 +372,6 @@ class  business_sys_dealrepay extends Business {
 		$return["true_mortgage_fee"] = round($mortgage_fee, 2);
 		$return["true_manage_money_rebate"] = round($return["true_manage_money"] * floatval(C('INVESTORS_COMMISSION_RATIO'))/100, 2);
 		$return["true_manage_money"] = round($loan['borrow_amount']*$manage_fee/100,2);
-		//利息管理费
-		$return["true_manage_interest_money"] = 0;
-		//$return["true_manage_interest_money_rebate"] = round($loaninfo['deal']['manage_interest_money_rebate'], 2);
-
 		return $return;
 	}
 	//根据还款方式判断是否最后才一期还款
