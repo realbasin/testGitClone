@@ -248,10 +248,10 @@ class dao_User extends Dao
         $where['id'] = $ids;
 
         if ($start != '') {
-            $where['create_time>='] = $start;
+            $where['create_time >='] = $start;
         }
         if ($end != '') {
-            $where['create_time<'] = $end;
+            $where['create_time <'] = $end;
         }
 
         return $this->getDb()->select('count(id) CNT')->from($this->getTable())->where($where)->execute()->value('CNT');
@@ -333,7 +333,7 @@ class dao_User extends Dao
             return array();
         }
 
-        $where = ['create_time>=' => $starttime, 'create_time<=' => $endtime];
+        $where = ['create_time >=' => $starttime, 'create_time <=' => $endtime];
 
         if (in_array($user_mark, array('0', '1', '2'))) {
             $where['user_mark'] = $user_mark;
@@ -364,7 +364,7 @@ class dao_User extends Dao
         $userList = $this->getDb()
             ->select('id,zm_openid')
             ->from($this->getTable())
-            ->where(['zm_openid<>' => ''])
+            ->where(['zm_openid <>' => ''])
             ->execute()
             ->rows();
 

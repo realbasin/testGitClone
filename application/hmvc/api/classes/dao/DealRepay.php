@@ -82,15 +82,16 @@ class dao_DealRepay extends Dao
         return $data;
     }
 
-    public function getYesterdayDealRepayLateData($now_date)
+    public function getDealRepayLateData($now_date)
     {
-
-        $sql = "SELECT '" . date('Y-m-d', $now_date) . "' as date_time,a.id deal_repay_id,a.*
+        $time = strtotime($now_date);
+        $sql = "SELECT $now_date as date_time,a.id deal_repay_id,a.*
         FROM _tablePrefix_deal_repay a INNER JOIN _tablePrefix_deal b ON a.deal_id = b.id
-        WHERE (a.has_repay=0 AND (a.repay_time+3600*24-1)<" . $now_date . ") OR (a.has_repay=1 AND a.true_repay_date='" . date('Y-m-d', $now_date) . "' AND (a.repay_time+3600*24)<" . $now_date . ")
+        WHERE (a.has_repay=0 AND (a.repay_time+3600*24-1)<" . $time . ") 
+        OR (a.has_repay=1 AND a.true_repay_date=$now_date AND (a.repay_time+3600*24)<" . $time . ")
         GROUP BY a.deal_id,a.l_key";
 
-        return Core::db()->execute($sql);
+        return Core::db()->execute($sql)->rows();
     }
 
     public function getNoRepayDealRepaysByDate($start_date, $end_date)
@@ -138,7 +139,7 @@ class dao_DealRepay extends Dao
 
         $data = $this->getDb()
             ->from($this->getTable())
-            ->select('*,l_key + 1 AS l_key_index')
+            ->select('*,(l_key + 1) AS l_key_index')
             ->where(['repay_date' => [$today, $third_day, $seven_day], 'has_repay' => 0])
             ->orderBy('repay_time', 'asc')
             ->execute()

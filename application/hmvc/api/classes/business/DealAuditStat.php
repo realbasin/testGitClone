@@ -14,7 +14,7 @@ class business_DealAuditStat extends Business
     public function statistics()
     {
         // 执行日期
-        $date_time = date('Y-m-d', strtotime('-1day' ,time()));
+        $date_time = date('Y-m-d', strtotime('-1day', time()));
 
         $start_date = "2016-01-07";
 
@@ -43,17 +43,21 @@ class business_DealAuditStat extends Business
      */
     private function saveDealAuditStatData($date_time)
     {
-        $op_log_list = $this->getArrangeDealOpLogStat($date_time);
-
         $dealAuditStatDao = \Core::dao('DealAuditStat');
+        $op_log_list = $this->getArrangeDealOpLogStat($date_time);
+        if (empty($op_log_list)) {
+            $dealAuditStatDao->insert(['date_time' => $date_time]);
+            return true;
+        }
+
         $result = array();
         foreach ($op_log_list as $k => $item) {
             $item['date_time'] = $date_time;
 
             $id = $dealAuditStatDao->getDealAuditStatId($item['admin_id'], $date_time);
-            if($id){
-                $res = $dealAuditStatDao->update($item,['id' => $id]);
-            }else{
+            if ($id) {
+                $res = $dealAuditStatDao->update($item, ['id' => $id]);
+            } else {
                 $res = $dealAuditStatDao->insert($item);
             }
 
@@ -69,6 +73,9 @@ class business_DealAuditStat extends Business
         // 审核总笔数/审核成功总笔数
         $dealOpLogDao = Core::dao('DealOpLog');
         $total_totals = $dealOpLogDao->getDealOpLogTotals($date_time);
+        if (empty($total_totals)) {
+            return null;
+        }
 
         // 首借审核总笔数
         $first_totals = $dealOpLogDao->getDealOpLogFirstTotals($date_time);
@@ -94,7 +101,7 @@ class business_DealAuditStat extends Business
         $op_log_list = array();
 
         if ($total_totals != null) {
-            for ($i=0; $i<count($total_totals); $i++) {
+            for ($i = 0; $i < count($total_totals); $i++) {
                 $admin_id = $total_totals[$i]['admin_id'];
                 $op_log_list[$admin_id]['admin_id'] = $total_totals[$i]['admin_id'];
                 $op_log_list[$admin_id]['totals'] = $total_totals[$i]['totals'];
@@ -109,28 +116,28 @@ class business_DealAuditStat extends Business
         }
 
         if ($first_totals != null) {
-            for ($i=0; $i<count($first_totals); $i++) {
+            for ($i = 0; $i < count($first_totals); $i++) {
                 $admin_id = $first_totals[$i]['admin_id'];
                 $op_log_list[$admin_id]['first_totals'] = $first_totals[$i]['first_totals'];
             }
         }
 
         if ($first_success_totals != null) {
-            for ($i=0; $i<count($first_success_totals); $i++) {
+            for ($i = 0; $i < count($first_success_totals); $i++) {
                 $admin_id = $first_success_totals[$i]['admin_id'];
                 $op_log_list[$admin_id]['first_success_totals'] = $first_success_totals[$i]['first_success_totals'];
             }
         }
 
         if ($renew_totals != null) {
-            for ($i=0; $i<count($renew_totals); $i++) {
+            for ($i = 0; $i < count($renew_totals); $i++) {
                 $admin_id = $renew_totals[$i]['admin_id'];
                 $op_log_list[$admin_id]['renew_totals'] = $renew_totals[$i]['renew_totals'];
             }
         }
 
         if ($renew_success_totals != null) {
-            for ($i=0; $i<count($renew_success_totals); $i++) {
+            for ($i = 0; $i < count($renew_success_totals); $i++) {
                 $admin_id = $renew_success_totals[$i]['admin_id'];
                 $op_log_list[$admin_id]['renew_success_totals'] = $renew_success_totals[$i]['renew_success_totals'];
             }
@@ -139,9 +146,9 @@ class business_DealAuditStat extends Business
         //by xssd xbw 20160923 审核业绩统计与借款人数的数据有出入 WWW-321
 
         if ($true_totals != null) {
-            for ($i=0; $i<count($true_totals); $i++) {
+            for ($i = 0; $i < count($true_totals); $i++) {
                 $admin_id = $true_totals[$i]['admin_id'];
-                if (empty($op_log_list[$admin_id]['admin_id'])){
+                if (empty($op_log_list[$admin_id]['admin_id'])) {
                     $op_log_list[$admin_id]['admin_id'] = $admin_id;
                 }
                 $op_log_list[$admin_id]['true_totals'] = $true_totals[$i]['true_totals'];
@@ -149,14 +156,13 @@ class business_DealAuditStat extends Business
         }
 
         if ($true_success_totals != null) {
-            for ($i=0; $i<count($true_success_totals); $i++) {
+            for ($i = 0; $i < count($true_success_totals); $i++) {
                 $admin_id = $true_success_totals[$i]['admin_id'];
                 $op_log_list[$admin_id]['true_success_totals'] = $true_success_totals[$i]['true_success_totals'];
             }
         }
         //by xssd xbw 20160923 审核业绩统计与借款人数的数据有出入 WWW-321 End
 
-        print_r($op_log_list);exit;
         return $op_log_list;
     }
 

@@ -51,7 +51,7 @@ class dao_DealRepayLateAnalysisDetail extends Dao
         $yesterday = $now_date;
 
         if ($all) {
-            $field = "'合计' level";
+            $field = "('合计') AS level";
         } else {
             $field = "level";
         }
