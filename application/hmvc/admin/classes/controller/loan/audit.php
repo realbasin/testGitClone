@@ -793,7 +793,12 @@ class  controller_loan_audit extends controller_sysBase {
         $loan_id = intval(\Core::post('loan_id'));
         $user_id = intval(\Core::post('user_id'));
         $first_yn = intval(\Core::get('first_yn'));
-        
+
+        $loanbaseDao = \Core::dao('loan_loanbase');
+        $loanextDao = \Core::dao('loan_loanext');
+        $dealsatuslogBusiness = \Core::business('loan_dealstatuslog');
+        $loanBusiness = \Core::business('loan_loanenum');
+
         $loanbase['borrow_amount'] = trim(\Core::post('borrow_amount'));
         $loanbase['loantype'] = intval(\Core::post('loantype'));
         $loanbase['description'] = trim(\Core::post('description'));
@@ -820,10 +825,30 @@ class  controller_loan_audit extends controller_sysBase {
         $loanext['scontract_id'] = intval(\Core::post('scontract_id'));
         $loanext['tcontract_id'] = intval(\Core::post('tcontract_id'));
 
-        $loanbaseDao = \Core::dao('loan_loanbase');
-        $loanextDao = \Core::dao('loan_loanext');
-        $dealsatuslogBusiness = \Core::business('loan_dealstatuslog');
-        $loanBusiness = \Core::business('loan_loanenum');
+        //相关参数
+        $commonConfig = $loanextDao->getCommonconfig($loan_id);
+        $commonConfig['services_fee'] = trim(\Core::post('services_fee'));
+        $commonConfig['manage_fee'] = trim(\Core::post('manage_fee'));
+        $commonConfig['user_loan_manage_fee'] = trim(\Core::post('user_loan_manage_fee'));
+        $commonConfig['user_loan_interest_manage_fee'] = trim(\Core::post('user_loan_interest_manage_fee'));
+        $commonConfig['user_loan_early_interest_manage_fee'] = trim(\Core::post('user_loan_early_interest_manage_fee'));
+        $commonConfig['manage_impose_fee_day1'] = trim(\Core::post('manage_impose_fee_day1'));
+        $commonConfig['manage_impose_fee_day2'] = trim(\Core::post('manage_impose_fee_day2'));
+        $commonConfig['impose_fee_day1'] = trim(\Core::post('impose_fee_day1'));
+        $commonConfig['impose_fee_day2'] = trim(\Core::post('impose_fee_day2'));
+        $commonConfig['user_load_transfer_fee'] = trim(\Core::post('user_load_transfer_fee'));
+        $commonConfig['compensate_fee'] = trim(\Core::post('compensate_fee'));
+        $commonConfig['user_bid_rebate'] = trim(\Core::post('user_bid_rebate'));
+        $commonConfig['user_bid_score_fee'] = trim(\Core::post('user_bid_score_fee'));
+        $commonConfig['generation_position'] = trim(\Core::post('generation_position'));
+
+        $loanext['config_common'] = serialize($commonConfig);
+
+        //保证金
+        $amtConfig = $loanextDao->getAmtconfig($loan_id);
+        $amtConfig['l_guarantees_amt'] = trim(\Core::post('l_guarantees_amt'));
+        $amtConfig['guarantees_amt'] = trim(\Core::post('guarantees_amt'));
+        $loanext['config_amt'] = serialize($amtConfig);
 
         $update_time = intval(\Core::post('update_time'));
 
@@ -860,6 +885,7 @@ class  controller_loan_audit extends controller_sysBase {
             $loanbase['first_audit_time'] = $loanbase['update_time'];  //初审通过时间为当前时间
         }
 
+        // 用户的生日和性别从身份证号重新获取
         $userDao = \Core::dao('user_user');
         $idno = $userDao->findCol('AES_DECRYPT(idno_encrypt,\'__FANWEP2P__\')',$user_id);
         if (!empty($idno)) {
@@ -998,6 +1024,7 @@ class  controller_loan_audit extends controller_sysBase {
         $deal_loan_type_list = \Core::business('loan_publish')->getLoanTypeList($user_level_id);
 
         \Core::view() -> set('deal_loan_type_list_json',json_encode($deal_loan_type_list))
+            -> set('deal_loan_type_list',$deal_loan_type_list)
             -> set('action',$action)
             -> set('title',$title);
         \Core::view() -> load('loan_publishEditLoanType');
@@ -1172,13 +1199,13 @@ class  controller_loan_audit extends controller_sysBase {
             $loan_type_list = $loanBusiness->getDealLoanTypeList($loanbase['type_id']);
             $loan_type = $loan_type_list[$loanbase['type_id']];
             
-            if ($loan_type['is_extend_effect']) {
+            /*if ($loan_type['is_extend_effect']) {
                 $guarantees_amt = $loan_type['guarantees_amt'];
                 $max_borrow_amount = $loan_type['maximum'];
                 $min_borrow_amount = $loan_type['minimum'];
             } else {
                 $guarantees_amt = $max_borrow_amount = $min_borrow_amount = 0;
-            }
+            }*/
             
             $config = \Core::business('loan_loanenum')->loanExtConfig($loanbase,$loan_type);//借款保证金及费率信息
             if(!\Core::arrayGet($loanbid,'deal_status')) {
@@ -1209,11 +1236,11 @@ class  controller_loan_audit extends controller_sysBase {
                 ->set('first_yn',$first_yn)
                 ->set('sorcode',$loanBusiness->enumSorCode())
                 ->set('region',$region)
+                //->set('guarantees_amt',$guarantees_amt)
+                //->set('max_borrow_amount',$max_borrow_amount)
+                //->set('min_borrow_amount',$min_borrow_amount)
                 ->set('amtConfig',$config['amtConfig'])
-                ->set('commonConfig',$config['commonConfig'])
-                ->set('guarantees_amt',$guarantees_amt)
-                ->set('max_borrow_amount',$max_borrow_amount)
-                ->set('min_borrow_amount',$min_borrow_amount);
+                ->set('commonConfig',$config['commonConfig']);
         }
     }
     

@@ -47,10 +47,11 @@
             </div>
         </div>
     </div>
-    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn)) ?>" enctype="multipart/form-data">
+    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn)) ?>" enctype="multipart/form-data"  onsubmit="return checkForm();">
         <input type="hidden" name="form_submit" value="ok" />
         <input type="hidden" name="loan_id" value="<?php echo $loanbase['id'];?>" />
         <input type="hidden" name="update_time" value="<?php echo $loanbase['update_time'];?>" />
+        <input type="hidden" name="type_id" value="<?php echo $loanbase['type_id'];?>" />
         <!--基本信息-->
         <div class="tab-content">
             <dl class="row">
@@ -67,7 +68,14 @@
                     <label><em>*</em>借款名称</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="name" id="name" class="input-txt" readonly="readonly" value="<?php echo $loanbase['name'];?>">
+                    <select name="name" id="loan_type_name" onchange="deal_loan_type_change()">
+                        <?php foreach($deal_loan_type_list as $k=>$v){?>
+                            <?php if($k == $loanbase['type_id']) {?>
+                                <?php echo "<option value='".$v['name']."'selected='selected' data-loan='".$v['id']."'>".$v['name']."</option>";?>
+                            <?php }?>
+                                <?php echo "<option value='".$v['name']." data-loan='".$v['id'].">".$v['name']."</option>";?>
+                        <?php }?>
+                    </select>
                     <a href="<?php echo adminUrl('loan_audit','first_publish_edit',array('loan_id'=>$loanbase['id'],'first_yn'=>$first_yn));?>"><b>放弃修改贷款类型</b></a>
                     <p class="notic">借款名称</p>
                 </dd>
@@ -77,7 +85,7 @@
                     <label><em>*</em>简短名称</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="sub_name" id="sub_name" class="input-txt" readonly="readonly" value="<?php echo $loanbase['sub_name'];?>">
+                    <input type="text" name="sub_name" id="sub_name" class="input-txt" value="<?php echo $loanbase['sub_name'];?>">
                     <p class="notic">简短名称</p>
                 </dd>
             </dl>
@@ -236,7 +244,7 @@
                     <label>风险保证金（非托管标）</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" readonly="readonly" value="<?php echo number_format($amtConfig['l_guarantees_amt'],2);?>">
+                    <input type="text" name="l_guarantees_amt" id="l_guarantees_amt" class="input-txt" readonly="readonly" value="<?php echo number_format($amtConfig['l_guarantees_amt'],2);?>">
                     <p class="notic">冻结借款人的金额，满标放款时从用户账户扣除</p>
                 </dd>
             </dl>
@@ -249,13 +257,18 @@
                     <p class="notic">冻结借款人的金额，需要提前存钱</p>
                 </dd>
             </dl>
+
             <dl class="row">
                 <dt class="tit">
                     <label>借款期限</label>
                 </dt>
                 <dd class="opt">
                     <input type="text" name="repay_time" id="repay_time"  readonly="readonly" style="width: 80px;" value="<?php echo $loanbase['repay_time'];?>">
-                    <?php echo $loanbase['repay_time_type']?'月':'天';?>
+                    <select name="repay_time_type" id="repay_time_type">
+                        <?php if($loanbase['repay_time_type'] >= 1){?>
+                            <?php echo '<option value="1">月</option>'; ?>
+                        <?php }?>
+                    </select>
                 </dd>
             </dl>
 
@@ -308,7 +321,10 @@
                     <label>所在城市</label>
                 </dt>
                 <dd class="opt">
-
+                    <?php if(!empty($region['region_location'])) ?>
+                    <?php echo $region['region_location']; ?>
+                    <?php if(!empty($region['no_region_reason'])) ?>
+                    <?php echo $region['no_region_reason'].' <input type="button" value="完成后请点击刷新页面" onclick="window.location.reload();"/>'; ?>
                 </dd>
             </dl>
             <dl class="row">
@@ -428,6 +444,15 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>借款者获得积分</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="score" readonly="readonly" id="score" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('score',$commonConfig)?\Core::arrayGet($commonConfig,'score'):0;?>">%
+                    <p class="notic">非信用积分</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>借款者管理费</label>
                 </dt>
                 <dd class="opt">
@@ -525,6 +550,24 @@
                     <p class="notic">返利金额=投标金额×返利百分比【需满标】</p>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>投资返还积分比率</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="user_bid_score_fee" readonly="readonly" id="user_bid_score_fee" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('user_bid_score_fee',$commonConfig)?\Core::arrayGet($commonConfig,'user_bid_score_fee'):0;?>">%
+                    <p class="notic">投标返还积分 = 投标金额 ×返还比率【需满标】(如果是VIP会员将从VIP会员配置里读取)【非信用积分】</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>申请延期</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="generation_position" readonly="readonly" id="generation_position" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('generation_position',$commonConfig)?\Core::arrayGet($commonConfig,'generation_position'):0;?>">%
+                    <p class="notic">当还款金额大于或等于设置的额度，借款人如果资金不够，可申请延期还款，延期还款就是平台代其还此借款。借款人未还部分由平台跟借款人协商。</p>
+                </dd>
+            </dl>
         </div>
         <!--相关资料-->
         <div class="tab-content" style="display: none;">
@@ -567,8 +610,6 @@
     var viewinfonum = 1;
     var contractnum = 1;
     var infosnum = 1;
-    var loan_id = <?php echo $loanbase['id'] ?>;
-    var deal_loan_type_list = <?php echo $deal_loan_type_list_json; ?>;
     function help(ctrl){
         var d = dialog({
             content: help_content,
@@ -592,7 +633,6 @@
             return false;
         }
     });
-
     function add_mortgage_img(type){
         var str = '';
         str += '名称：<input type="text" size="10" name="mortgage_'+type+'_name_';
@@ -631,7 +671,138 @@
         }
         return true;
     });
-    //todo checkform
+    
+    var submited = false; //不能重复提交
+    function checkForm(){
+        if(submited){
+            alert("提交中，请勿重复提交.....");
+            return false;
+        }
+
+        var no_region = $("#no_region");
+        var is_delete = $('input[name=is_delete]:checked').val();
+        var publish_wait = $('input[name=publish_wait]:checked').val();
+        var real_msg = $('select[name=delete_real_msg]').val();
+        if (is_delete == 3 && real_msg == '') {
+            alert('请填写真实原因');
+            return false;
+        }
+
+        var borrow_amount = $("input[name='borrow_amount']").val();
+        if(borrow_amount == 0){
+            alert("请输入借款金额！"); return false;
+        }
+        var use_type = $("select[name='use_type']").val();
+        if(use_type == 0){
+            /*alert("请选择借款用途！");*/ return false;
+        }
+
+        var status_0 = $("input[name='is_delete']").is(':checked');  //审核失败
+        var status_1 = $("input[name='publish_wait']").is(':checked'); //审核成功
+        if(!status_0 && !status_1){
+            /*alert("请选择审核状态！");*/ return false;
+        }
+
+        if(status_0){
+            var delete_msg = $("select[name='delete_msg']").val();
+            if(delete_msg == ''){
+                alert('请选择短信回复！'); return false;
+            }
+            var delete_real_msg = $("select[name='delete_real_msg']").val();
+            if(delete_real_msg == ''){
+                alert('请选择真实原因！'); return false;
+            }
+        }
+
+        submited = true;
+        return true;
+    }
+
+    //根据贷款类型ID选择相应的配置
+    var loan_id = <?php echo $loanbase['type_id']?>;
+    var deal_loan_type_list = <?php echo $deal_loan_type_list_json;?>;
+    function deal_loan_type_change()
+    {
+        //贷款类型ID
+        var loan_id = $("#loan_type_name option:selected").attr('data-loan');
+        $("input[name=type_id]").val(loan_id);
+
+        //贷款类型
+        var deal_loan_type = deal_loan_type_list[loan_id];
+
+        //简短名称
+        $("input[name=sub_name]").val(deal_loan_type.name);
+
+        //风险保证金
+        var guarantees_amt = deal_loan_type.guarantees_amt;
+        var borrow_amount = $("input[name=borrow_amount]").val();
+        var l_guarantees_amt = borrow_amount*guarantees_amt/100;
+        $("input[name=l_guarantees_amt]").val(l_guarantees_amt);
+
+        //借款期限
+        var select_html = '<select name="repay_time" onchange="change_deal_type_rate(this.value)">';
+        $.each(deal_loan_type.user_level_list, function(i, vv){
+            select_html += '<option value="'+i+'">'+i+'</option>';
+        });
+        select_html += '</select>';
+        $("select[name=repay_time]").replaceWith(select_html);
+        //默认年化利率
+        var min = deal_loan_type.min_month;
+        $("input[name=rate]").val(deal_loan_type.user_level_list[min][3]);
+
+        //成交服务费
+        $("input[name=services_fee]").val(deal_loan_type.services_fee);
+
+        //借款者管理费
+        $("input[name=manage_fee]").val(deal_loan_type.manage_fee);
+
+        //投资者管理费
+        $("input[name=user_loan_manage_fee]").val(deal_loan_type.user_loan_manage_fee);
+
+        //普通逾期管理费
+        $("input[name=manage_impose_fee_day1]").val(deal_loan_type.manage_impose_fee_day1);
+
+        //严重逾期管理费
+        $("input[name=manage_impose_fee_day2]").val(deal_loan_type.manage_impose_fee_day2);
+
+        //普通逾期罚息
+        $("input[name=impose_fee_day1]").val(deal_loan_type.impose_fee_day1);
+
+        //严重逾期罚息
+        $("input[name=impose_fee_day2]").val(deal_loan_type.impose_fee_day2);
+
+        //债权转让管理费
+        $("input[name=user_load_transfer_fee]").val(deal_loan_type.user_load_transfer_fee);
+
+        //提前还款补偿
+        $("input[name=compensate_fee]").val(deal_loan_type.compensate_fee);
+
+        //投资人返利
+        $("input[name=user_bid_rebate]").val(deal_loan_type.user_bid_rebate);
+
+        //申请延期
+        $("input[name=generation_position]").val(deal_loan_type.generation_position);
+
+        //是否使用红包
+        $("select[name=use_ecv]").val(deal_loan_type.is_use_ecv);
+
+        //是否纳入推荐奖励
+        if(deal_loan_type.is_referral_award == 1) {
+            $("#is_referral_award span").text('是');
+            $("input[name=is_referral_award]").val(1);
+        }else{
+            $("#is_referral_award span").text('否');
+            $("input[name=is_referral_award]").val(0);
+        }
+    }
+
+    //根据贷款期限的变化，选择对应的年利率
+    function change_deal_type_rate(month)
+    {
+        var deal_loan_type = deal_loan_type_list[loan_id];
+
+        $("input[name=rate]").val(deal_loan_type.user_level_list[month][3]);
+    }
 
 </script>
 </body>

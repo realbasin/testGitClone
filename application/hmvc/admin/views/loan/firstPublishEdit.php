@@ -256,7 +256,11 @@
                 </dt>
                 <dd class="opt">
                     <input type="text" name="repay_time" id="repay_time"  readonly="readonly" style="width: 80px;" value="<?php echo $loanbase['repay_time'];?>">
-                    <?php echo $loanbase['repay_time_type']?'月':'天';?>
+                    <select name="repay_time_type" id="repay_time_type">
+                        <?php if($loanbase['repay_time_type'] >= 1){?>
+                            <?php echo '<option value="1">月</option>'; ?>
+                        <?php }?>
+                    </select>
                 </dd>
             </dl>
 
@@ -432,6 +436,15 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>借款者获得积分</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="score" readonly="readonly" id="score" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('score',$commonConfig)?\Core::arrayGet($commonConfig,'score'):0;?>">%
+                    <p class="notic">非信用积分</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>借款者管理费</label>
                 </dt>
                 <dd class="opt">
@@ -527,6 +540,24 @@
                 <dd class="opt">
                     <input type="text" name="user_bid_rebate" readonly="readonly" id="user_bid_rebate" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('user_bid_rebate',$commonConfig)?\Core::arrayGet($commonConfig,'user_bid_rebate'):0;?>">%
                     <p class="notic">返利金额=投标金额×返利百分比【需满标】</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>投资返还积分比率</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="user_bid_score_fee" readonly="readonly" id="user_bid_score_fee" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('user_bid_score_fee',$commonConfig)?\Core::arrayGet($commonConfig,'user_bid_score_fee'):0;?>">%
+                    <p class="notic">投标返还积分 = 投标金额 ×返还比率【需满标】(如果是VIP会员将从VIP会员配置里读取)【非信用积分】</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>申请延期</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="generation_position" readonly="readonly" id="generation_position" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('generation_position',$commonConfig)?\Core::arrayGet($commonConfig,'generation_position'):0;?>">%
+                    <p class="notic">当还款金额大于或等于设置的额度，借款人如果资金不够，可申请延期还款，延期还款就是平台代其还此借款。借款人未还部分由平台跟借款人协商。</p>
                 </dd>
             </dl>
         </div>
