@@ -243,8 +243,8 @@ class  business_sys_dealrepay extends Business {
 				$impose_fee = \Core::arrayKeyExists('impose_fee_day2',$config_common)?\Core::arrayGet($config_common,'impose_fee_day2'):0.9;
 				$manage_impose_fee = \Core::arrayKeyExists('manage_impose_fee_day2',$config_common)?\Core::arrayGet($config_common,'manage_impose_fee_day2'):9;
 			}else {
-				$impose_fee = \Core::arrayKeyExists('impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'impose_fee_day1'):1;
-				$manage_impose_fee = \Core::arrayKeyExists('manage_impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'manage_impose_fee_day1'):10;
+				$impose_fee = \Core::arrayKeyExists('impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'impose_fee_day1'):0.5;
+				$manage_impose_fee = \Core::arrayKeyExists('manage_impose_fee_day1',$config_common)?\Core::arrayGet($config_common,'manage_impose_fee_day1'):5;
 			}
 			$impose_fee = floatval($impose_fee);
 			$manage_impose_fee = floatval($manage_impose_fee);

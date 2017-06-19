@@ -268,10 +268,10 @@ class  business_loan_loan extends Business {
 						//投资者返佣金
 						if ($user_load['manage_interest_money_rebate'] != 0) {
 							//是否有上级，有上级则给上级返佣
-							$rebate_user = $userDao->getUser($invest_user_id, 'id,pid');
-							if ($rebate_user[$invest_user_id]['pid'] != 0) {
+							$rebate_user = $userDao->findCol('pid',array('id'=>$invest_user_id));
+							if ($rebate_user != 0) {
 								$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($l_key + 1) . '期，返佣金';
-								$editMoneyStatus = $userBusiness->editUserMoney($rebate_user[$invest_user_id]['pid'], $user_load['manage_interest_money_rebate'], $log_msg, 23);
+								$editMoneyStatus = $userBusiness->editUserMoney($rebate_user, $user_load['manage_interest_money_rebate'], $log_msg, 23);
 								if($editMoneyStatus === false){
 									$root['show_err'] = '回款失败，返佣金发放失败';
 									return $root;
@@ -573,7 +573,7 @@ class  business_loan_loan extends Business {
 				}
 				//修改loanbid表中的pay_off_status为1,表示所有投资人已回款
 				$loanbid_status = $loanBidDao->update(array('pay_off_status'=>1),array('loan_id'=>$id));
-				if($dealload_status === false) {
+				if($loanbid_status === false) {
 					$root['show_err'] = '回款失败，修改投资人已回款状态失败';
 					return $root;
 				}
@@ -764,6 +764,19 @@ class  business_loan_loan extends Business {
 				$log_msg = "[<a href='' target='_blank'>" .$loanBaseDao->getName($id). "</a>],还清借款获得额度";
 				$userBusiness->editUserQuota($user_id,trim(C('USER_REPAY_QUOTA')),$log_msg, 6);
 				//TODO 判断借款人是否获得信用
+				//判断获得信用是否超过上限
+				$point_sum = \Core::dao('user_userPointLog')->getSumPoint(array('user_id'=>$user_id,'type'=>6));
+				if($point_sum < intval(C('REPAY_SUCCESS_LIMIT'))) {
+					//获取上一次还款时间
+					$max_time =  \Core::dao('user_userPointLog')->getMaxTime(array('user_id'=>$user_id,'type'=>6));
+					$day = ceil(($time - $max_time) / 24 / 3600);
+					if($day >= intval(C('REPAY_SUCCESS_DAY'))) {
+						$point = intval(C('REPAY_SUCCESS_POINT'));
+						$log_msg = "[<a href='' target='_blank'>" . $loan_name . "</a>],还清借款";
+						//增加借款用户信用
+						$userBusiness->editUserPoint($user_id,$point,$log_msg,4);
+					}
+				}
 				$root['status'] = 1;
 				$root['show_err'] = '还款成功';
 				return $root;
@@ -898,13 +911,18 @@ class  business_loan_loan extends Business {
 						}
 					}
 					//TODO 普通会员邀请返利
+					//判断该标是否参与分销返利
+					if ($loanbaseDao->findCol('is_referral_award',array('id'=>$id)) != 0) {
+						$deal_load_repay_id = $dealLoadRepayDao->findCol('id',array('deal_id'=>$id,'user_id'=>$user_id,'l_key'=>$lkey));
+						$this->getReferrals($id,$deal_load_repay_id,$invest_user_id);
+					}
 					//投资者返佣金
 					if ($user_load['manage_interest_money_rebate'] != 0) {
 						//是否有上级，有上级则给上级返佣
-						$rebate_user = $userDao->getUser($invest_user_id, 'id,pid');
-						if ($rebate_user[$invest_user_id]['pid'] != 0) {
+						$rebate_user = $userDao->findCol('pid',array('id'=>$invest_user_id));
+						if ($rebate_user != 0) {
 							$log_msg = '<a href="" target="_blank">' . $loan_name . '</a>第' . ($lkey + 1) . '期，返佣金';
-							$editMoneyStatus = $userBusiness->editUserMoney($rebate_user[$invest_user_id]['pid'], $user_load['manage_interest_money_rebate'], $log_msg, 23);
+							$editMoneyStatus = $userBusiness->editUserMoney($rebate_user, $user_load['manage_interest_money_rebate'], $log_msg, 23);
 							if($editMoneyStatus === false){
 								$root['show_err'] = '回款失败，返佣金发放失败';
 								return $root;
@@ -942,10 +960,10 @@ class  business_loan_loan extends Business {
 				//借款者返佣
 				if($repay_data['true_manage_money_rebate'] != 0 ) {
 					//是否有上级，有上级则给上级返佣
-					$rebate_user = $userDao->getUser($user_id,'id,pid');
-					if($rebate_user[$invest_user_id]['pid'] != 0) {
+					$rebate_user = $userDao->findCol('pid',array('id'=>$user_id));
+					if($rebate_user != 0) {
 						$log_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($v['l_key']+1).'期，返佣金';
-						$editMoneyStatus = $userBusiness->editUserMoney($rebate_user[$invest_user_id]['pid'],$repay_data['true_manage_money_rebate'],$log_msg, 23);
+						$editMoneyStatus = $userBusiness->editUserMoney($rebate_user,$repay_data['true_manage_money_rebate'],$log_msg, 23);
 						if($editMoneyStatus === false) {
 							$root['show_err'] = '代还失败，返佣失败';
 							return $root;
@@ -1099,7 +1117,6 @@ class  business_loan_loan extends Business {
 				$userDao->getDb()->rollback();
 			}
 		}
-
 	}
 	/*
 	 * 还款返利(普通会员邀请返利)

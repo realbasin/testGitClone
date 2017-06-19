@@ -111,7 +111,7 @@ class  business_user_userlog extends Business {
 		//$score_log_info['create_time_ym'] = to_date(TIME_UTC,"Ym");
 		//$score_log_info['create_time_y'] = to_date(TIME_UTC,"Y");
 		$point_log_info['type'] = $type;
-		$insert_id = \Core::dao('user_userscorelog')->insert($point_log_info);
+		$insert_id = \Core::dao('user_userPointLog')->insert($point_log_info);
 		return $insert_id;
 	}
 }
