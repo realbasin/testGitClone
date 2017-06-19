@@ -519,6 +519,7 @@ class  controller_loan_loan extends controller_sysBase {
 				$result['message'] = '更新贷款状态失败';
 				return @json_encode($result);
 			}
+			\Core::business('loan_loan')->sendDealFaildMessage($deal_id);
 		}catch(\Exception $e){
 			$result['code'] = 404;
 			$result['status'] = 0;

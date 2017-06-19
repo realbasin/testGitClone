@@ -5,7 +5,7 @@ class  business_loan_loan extends Business {
 		
 	}
 	//TODO 发送放款成功短信邮件
-	public function sendDealSuccessMessage($loan_id,$template_name=''){
+	public function sendDealSuccessMessage($loan_id){
 		if(intval($loan_id) == 0) {
 			return false;
 		}
@@ -29,11 +29,6 @@ class  business_loan_loan extends Business {
 		$notice['user_name'] = $user_info['user_name'];
 		$notice['deal_name'] = $loan_base_info['name'];
 		$notice['deal_publish_time'] = date("Y年m月d日",$loan_base_info['create_time']);
-		//$notice['site_name'] = C("SHOP_TITLE");
-		//$notice['site_url'] = SITE_DOMAIN . APP_ROOT;
-		//$notice['send_deal_url'] = SITE_DOMAIN . url("index", "borrow");
-		//$notice['help_url'] = SITE_DOMAIN . url("index", "helpcenter");
-		//$notice['msg_cof_setting_url'] = SITE_DOMAIN . url("index", "uc_msg#setting");
 		$notice['bad_msg'] = $bad_msg;
 		//发送数据
 		$msg_data['send_type'] = 1;
@@ -113,7 +108,7 @@ class  business_loan_loan extends Business {
 
 	}
 	//发送放款成功站内信
-	public function sendDealSiteMessage($loan_id,$template_name=''){
+	public function sendDealSiteMessage($loan_id){
 		if(intval($loan_id) == 0) return false;
 		$loanBaseDao = \Core::dao('loan_loanbase');
 		$loan_base_info = $loanBaseDao->getloanbase($loan_id,'id,name,create_time');
@@ -305,6 +300,143 @@ class  business_loan_loan extends Business {
 	//发送电子协议邮件
 	public function sendDealContractEmail($loan_id){
 		if(intval($loan_id) == 0) return false;
+	}
+	//发送流标通知邮件短信站内信
+	public function sendDealFaildMessage($loan_id){
+		if(intval($loan_id) == 0) {
+			return false;
+		}
+		if (C('MAIL_ON') == 0 && C('SMS_ON') == 0) {
+			return false;
+		}
+		$time = time();
+		//获取贷款信息
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$loanBidDao = \Core::dao('loan_loanbid');
+		$userDao=\Core::dao('user_user');
+		$msgTemplateDao = \Core::dao('msg_msgtemplate');
+		$msgConf = \Core::dao('msg_msgconf');
+		$loan_base_info = $loanBaseDao->getloanbase($loan_id,'id,name,user_id,create_time');
+		if(!$loan_base_info) return false;
+		$mail_myfail = $msgConf->findCol('mail_myfail',array('user_id'=>$loan_base_info['user_id']));
+		$sms_myfail = $msgConf->findCol('sms_myfail',array('user_id'=>$loan_base_info['user_id']));
+		//借款者信息
+		$bad_msg = $loanBidDao->findCol('bad_msg',array('loan_id'=>$loan_id));
+		$user_info = $userDao->getUserInfo('user_name,mobile,email',array('id'=>$loan_base_info['user_id']))->row();
+		//模板信息
+		$notice['user_name'] = $user_info['user_name'];
+		$notice['deal_name'] = $loan_base_info['name'];
+		$notice['deal_publish_time'] = date("Y年m月d日",$loan_base_info['create_time']);
+		$notice['bad_msg'] = $bad_msg;
+		//发送数据
+
+		$msg_data['send_time'] = 0;
+		$msg_data['is_send'] = 0;
+		$msg_data['create_time'] = $time;
+		$msg_data['user_id'] = $loan_base_info['user_id'];
+		$dealMsgListDao = \Core::dao('msg_dealmsglist');
+		//获取短信和邮件模板
+		if(C('MAIL_ON') == 1 && $mail_myfail == 1) {
+			$msg_data['send_type'] = 1;
+			$msg_data['title'] = "您的所投的借款“" . $loan_base_info['name'] . "”已流标！";
+			$tmpl = $msgTemplateDao->getTemplateByName('TPL_MAIL_DEAL_SUCCESS','id,content,is_html');
+			//模板内容
+
+			$msg = '【小树时代测试】<p>尊敬的用户'.$user_info['user_name'].'：&nbsp; </p>';
+			$msg .= '<p>遗憾的通知您，您于'.$notice['deal_publish_time'].'发布的借款“'.$loan_base_info['name'].'”流标，您的本次借款行为失败。&nbsp;</p><p>您借款失败的可能原因为：&nbsp; </p><br><br>';
+			$msg .= '1. 您没能按时提交四项必要信用认证的材料。<br><br>2. 您在招标期间没有筹集到足够的借款。&nbsp;&nbsp;';
+			$msg .= '<p>如果您属于认证未通过流标，为了您能够成功贷款，请凑齐申请贷款所需要的材料。';
+			$msg .= '您可以点击<a href="#" target="_blank">需要提供哪些材料？</a>来了解更多所需材料的详情。进行更多的信用认证将有助您获得更高的贷款额度。</p>';
+			$msg .= '<p>如果您属于招标到期流标，为了您能够成功贷款，请适度提高贷款利率，将有助您更快的获得贷款。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>点击 <a href="">这里</a>重新发布借款。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>感谢您对我们的支持与关注。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>小树时代测试&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>注：此邮件由系统自动发送，请勿回复！&nbsp; </p>';
+			$msg .= '<p>如果您有任何疑问，请您查看 <a href="" target="_blank">帮助</a>，或访问 <a href="" target="_blank">客服中心</a></p>';
+			$msg .= '<p>如果您觉得收到过多邮件，可以点击 <a href="" target="_blank">这里</a>进行设置&nbsp; </p>';
+			$msg_data['content'] = addslashes($msg);
+			$msg_data['is_html'] = $tmpl['is_html'];
+			$msg_data['dest'] = $user_info['email'];
+			$dealMsgListDao->insert($msg_data);
+		}
+		if(C('SMS_ON') == 1) {
+			$msg_data['send_type'] = 0;
+			$msg_data['title'] = $user_info['user_name'] . "的借款“" . $loan_base_info['name'] . "”流标通知";
+			$tmpl = $msgTemplateDao->getTemplateByName('TPL_SMS_DEAL_FAILED','id,content,is_html');
+			//【小树时代测试】尊敬的用户{$notice.user_name}，遗憾的通知您，您于{$notice.deal_publish_time}发布的借款“{$notice.deal_name}”流标。
+			$msg = '【小树时代测试】尊敬的用户'.$user_info['user_name'].'，遗憾的通知您，您于'.$notice['deal_publish_time'].'发布的借款“'.$loan_base_info['name'].'”流标。';
+			$msg_data['content'] = addslashes($msg);
+			$msg_data['is_html'] = $tmpl['is_html'];
+			$msg_data['dest'] = $user_info['mobile'];
+			$dealMsgListDao->insert($msg_data);
+		}
+		//站内信
+
+		if($sms_myfail == 1) {
+			$content = '【小树时代测试】<p>感谢您使用'.'小树时代'.'贷款融资，';
+			$content .= '但有一些遗憾的通知您，您于'.$notice['deal_publish_time'].'发布的借款'.$loan_base_info['name'].'流标，';
+			$content .= '导致您本次所投的贷款列表流标的原因可能包括的原因：</p>1. 借款者没能按时提交四项必要信用认证的材料。<br>2. 借款者在招标期间没有筹集到足够的借款。';
+			\Core::dao('msg_msgbox')->sendUserMsg("", addslashes($content), 0, $loan_base_info['user_id'], $time, 0, true, 10);
+		}
+		//投资者通知信息
+		$load_user_list = \Core::dao('loan_dealload')->getLoads($loan_id,'id,user_id,user_name,create_time,money,bonus_user_id');
+		$msgConfDao = \Core::dao('msg_msgconf');
+		if($load_user_list) {
+			foreach ($load_user_list as $v){
+				// 获取所使用的优惠券金额
+				$bonus_money = 0;
+				if ($v['bonus_user_id'] > 0) {
+					$bonus_rule_id = \Core::dao('user_bonususer')->getBonusRuleIdByUserId($v['bonus_user_id']);
+					$bonus_money = \Core::dao('user_bonusrule')->findCol('money',array('id'=>$bonus_rule_id));
+				}
+				//获取个人邮件设置
+				$mail_bidsuccess = $msgConfDao->findCol('mail_bidsuccess',array('user_id'=>$v['user_id']));
+				$user_info = $userDao->getUserInfo('user_name,mobile,email',array('id'=>$v['user_id']))->row();
+				//是否发送邮件
+
+				$msg_data['send_time'] = 0;
+				$msg_data['is_send'] = 0;
+				$msg_data['create_time'] = $time;
+				$msg_data['user_id'] = $v['user_id'];
+				if($mail_bidsuccess == 1 && C('MAIL_ON') == 1) {
+					$msg_data['send_type'] = 1;
+					$msg_data['title'] = "您的所投的借款“" . $loan_base_info['name'] . "”已流标！";
+					$tmpl = $msgTemplateDao->getTemplateByName('TPL_MAIL_LOAD_SUCCESS','id,content,is_html');
+
+					$msg = '【小树时代测试】<p>尊敬的用户'.$user_info['user_name'].'：&nbsp; </p>';
+					$msg .= '<p>遗憾的通知您，您于'.date('Y年m月d日',$v['create_time']).'所投的借款“{$notice.deal_name}”流标，您的本次投标行为失败。&nbsp;</p><p>您所投的借款失败的可能原因为：&nbsp; </p><br><br>';
+					$msg .= '1. 借款者没能按时提交四项必要信用认证的材料。<br><br>2. 借款者在招标期间没有筹集到足够的借款。&nbsp;&nbsp;';
+					$msg .= '<p>感谢您对我们的支持与关注。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+					$msg .= '<p>小树时代测试&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+					$msg .= '<p>注：此邮件由系统自动发送，请勿回复！&nbsp; </p>';
+					$msg .= '<p>如果您有任何疑问，请您查看 <a href="" target="_blank">帮助</a>，或访问 <a href="" target="_blank">客服中心</a></p>';
+					$msg .= '<p>如果您觉得收到过多邮件，可以点击 <a href="" target="_blank">这里</a>进行设置 &nbsp; </p>';
+					$msg_data['content'] = addslashes($msg);
+					$msg_data['is_html'] = $tmpl['is_html'];
+					$msg_data['dest'] = $user_info['email'];
+					$dealMsgListDao->insert($msg_data);
+				}
+				//是否发送短信
+				if(C('SMS_ON') == 1) {
+					$msg_data['send_type'] = 0;
+					$msg_data['title'] = $user_info['user_name'] . "的投标“" . $loan_base_info['name'] . "”流标通知";
+					//【小树时代测试】尊敬的用户{$notice.user_name}，遗憾的通知您，您于{$notice.deal_publish_time}发布的借款“{$notice.deal_name}”流标，解冻投标资金{$notice.money}。
+					$msg = '【小树时代测试】尊敬的用户'.$user_info['user_name'].'，遗憾的通知您，您于'.date('Y年m月d日',$v['create_time']).'所投的借款“'.$loan_base_info['name'].'”满标，解冻投标资金'.($v['money']-$bonus_money).'。';
+					$msg_data['content'] = addslashes($msg);
+					$msg_data['is_html'] = $tmpl['is_html'];
+					$msg_data['dest'] = $user_info['mobile'];
+					$dealMsgListDao->insert($msg_data);
+				}
+				//站内信
+				if($sms_myfail) {
+					$content = '【小树时代测试】<p>感谢您使用'.'小树时代'.'贷款融资，';
+					$content .= '但有一些遗憾的通知您，您于'.$notice['deal_publish_time'].'投标的借款'.$loan_base_info['name'].'流标，';
+					$content .= '导致您本次所投的贷款列表流标的原因可能包括的原因：</p>1. 借款者没能按时提交四项必要信用认证的材料。<br>2. 借款者在招标期间没有筹集到足够的借款。';
+					\Core::dao('msg_msgbox')->sendUserMsg("", addslashes($content), 0, $v['user_id'], $time, 0, true, 10);
+				}
+
+			}
+		}
 	}
 	//手动单期还款
 	public function repayLoanBills($id,$l_key,$user_id){
