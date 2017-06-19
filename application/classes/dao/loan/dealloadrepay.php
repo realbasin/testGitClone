@@ -190,10 +190,13 @@ class dao_loan_dealloadrepay extends Dao {
 		$this->getDb()->where(array('deal_id'=>$deal_id,'l_key >='=>$l_key,'user_id'=>$user_id));
 		return $this->getDb()->execute()->row();
 	}
-	//获取某个标未回款期数，用于判断某个标是否全部回款
-	public function getNoRepayCountByDealId($deal_id){
+	//获取某个标未回款期数，用于判断某个标某期是否全部回款
+	public function getNoRepayCountByDealId($deal_id,$l_key=-1){
 		$where = array();
 		$where['deal_id'] = $deal_id;
+		if($l_key != -1){
+			$where['l_key'] = $l_key;
+		}
 		$where['has_repay'] = 0;
 		return $this->getCount($where);
 	}

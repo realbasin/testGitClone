@@ -4,7 +4,7 @@ class  business_loan_loan extends Business {
 	public function business() {
 		
 	}
-	//TODO 发送放款成功短信邮件(修改通过传入模板名称，选取发送内容，可改为通用发送邮件短信方法)
+	//TODO 发送放款成功短信邮件
 	public function sendDealSuccessMessage($loan_id,$template_name=''){
 		if(intval($loan_id) == 0) {
 			return false;
@@ -112,7 +112,7 @@ class  business_loan_loan extends Business {
 
 
 	}
-	//发送站内信
+	//发送放款成功站内信
 	public function sendDealSiteMessage($loan_id,$template_name=''){
 		if(intval($loan_id) == 0) return false;
 		$loanBaseDao = \Core::dao('loan_loanbase');
@@ -133,11 +133,174 @@ class  business_loan_loan extends Business {
 					$notice['time'] = date("Y年m月d日",$v['create_time']);
 					$notice['deal_name'] = "“<a href=\"" . \Core::getUrl("index", "detail","deal", array("id" => $loan_base_info['id'])) . "\">" . $loan_base_info['name'] . "</a>”";
 					$content = '【小树时代测试】<p>感谢您使用'.$notice['shop_title'].'贷款融资，很高兴的通知您，您于'.$notice['time'].'投标的借款列表'.$notice['deal_name'].'满标';
-					//TODO 发送站内信
+					//TODO 保存站内信
 					\Core::dao('msg_msgbox')->sendUserMsg("", $content, 0, $v['user_id'], time(), 0, true, 16);
 				}
 			}
 		}
+	}
+	//TODO 发送回款成功短信邮件站内信to投资人(区分是否提前还款)
+	public function sendRepayRebackMessage($loan_id,$l_key,$user_id,$repay_money,$interest_money,$impose_money,$is_advance=0,$time=0){
+		if($time == 0) {
+			$time = time();
+		}
+		$msgConfDao = \Core::dao('msg_msgconf');
+		$userDao = \Core::dao('user_user');
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$msgTemplateDao = \Core::dao('msg_msgtemplate');
+		$dealMsgListDao = \Core::dao('msg_dealmsglist');
+		$dealRepay = \Core::dao('loan_dealrepay');
+		//贷款基本
+		$loan_base_info = $loanBaseDao->getloanbase($loan_id,'id,name,user_id,create_time');
+		//下期还款信息
+		$next_loan = $dealRepay->getNextLoan($loan_id,$l_key);
+		//获取个人邮件设置
+		$mail_bidrepaid = $msgConfDao->findCol('mail_bidrepaid',array('user_id'=>$user_id));
+		$user_info = $userDao->getUserInfo('user_name,mobile,email',array('id'=>$user_id))->row();
+		//是否发送邮件
+		$msg_data['send_type'] = 1;
+		$msg_data['title'] = "您的所投的借款“" . $loan_base_info['name'] . "”已回款！";
+		$msg_data['send_time'] = 0;
+		$msg_data['is_send'] = 0;
+		$msg_data['create_time'] = $time;
+		$msg_data['user_id'] = $user_id;
+		if($mail_bidrepaid == 1 && C('MAIL_ON') == 1) {
+			//【小树时代测试】<p>尊敬的用户{$notice.user_name}：&nbsp; </p>
+			//<p>您好，您在{$notice.site_name}所投的的投标“<a href="{$notice.deal_url}">{$notice.deal_name}</a>”成功还款{$notice.repay_money}元 </p>
+			//{if $notice.need_next_repay}
+			//<p>本笔投标的下个还款日为{$notice.next_repay_time}，需还本息{$notice.next_repay_money}元。</p>
+			//{else}
+			//<p>本次投标共获得收益:{$notice.all_repay_money}元,{if $notice.impose_money}其中违约金为:{$notice.impose_money}元,{/if}本次投标已回款完毕！</p>
+			//{/if}
+			//<p>感谢您对我们的支持与关注。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+			//<p>{$notice.site_name}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>
+			//<p>注：此邮件由系统自动发送，请勿回复！&nbsp; </p>
+			//<p>如果您有任何疑问，请您查看 <a href="{$notice.help_url}" target="_blank">帮助</a>，或访问 <a href="{$notice.site_url}" target="_blank">客服中心</a></p>
+			//<p>如果您觉得收到过多邮件，可以点击 <a href="{$notice.msg_cof_setting_url}" target="_blank">这里</a>进行设置
+			//&nbsp; </p>
+			$tmpl = $msgTemplateDao->getTemplateByName('TPL_MAIL_LOAD_SUCCESS','id,content,is_html');
+			$msg = '【小树时代测试】<p>尊敬的用户'.$user_info['user_name'].'：&nbsp; </p>';
+			$msg .= '您好，您在'.'小树时代'.'所投的的投标“'.$loan_base_info['name'].'”成功还款'.$repay_money.'元。&nbsp;</p><br><br>';
+
+			if($next_loan && $is_advance == 0) {
+				$msg .= '<p>本笔投标的下个还款日为'.date('Y年m月d日',$next_loan['repay_time']).'，需还本息'.$next_loan['repay_money'].'元。&nbsp;</p><br><br>';
+			}else{
+				$msg .='<p>本次投标共获得收益:'.($interest_money+$impose_money).'元，';
+				if($impose_money != 0) {
+					$msg .= '其中违约金为:'.$impose_money.'元,';
+				}
+				$msg .= '本次投标已回款完毕！</p>';
+			}
+			$msg .= '<p>点击 <a href="">这里</a>查看您所投的借款。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>感谢您对我们的支持与关注。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>小树时代测试&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </p>';
+			$msg .= '<p>注：此邮件由系统自动发送，请勿回复！&nbsp; </p>';
+			$msg .= '<p>如果您有任何疑问，请您查看 <a href="" target="_blank">帮助</a>，或访问 <a href="" target="_blank">客服中心</a></p>';
+			$msg .= '<p>如果您觉得收到过多邮件， <a href="" target="_blank">这里</a>进行设置 &nbsp; </p>';
+			$msg_data['content'] = addslashes($msg);
+			$msg_data['is_html'] = $tmpl['is_html'];
+			$msg_data['dest'] = $user_info['email'];
+			$dealMsgListDao->insert($msg_data);
+		}
+		//是否发送短信
+		if(C('SMS_ON') == 1) {
+			//TODO 获取短信模板
+			//【小树时代测试】尊敬的{$notice.site_name}用户{$notice.user_name}，您所投的标“{$notice.deal_name}”回款{$notice.repay_money}元，感谢您的关注和支持。
+			$msg = '【小树时代测试】尊敬的用户'.$user_info['user_name'].'，您所投的标“'.$loan_base_info['name'].'”回款。'.($repay_money+$impose_money).'元，感谢您的关注和支持。';
+			$msg_data['content'] = addslashes($msg);
+			$msg_data['is_html'] = $tmpl['is_html'];
+			$msg_data['dest'] = $user_info['mobile'];
+			$dealMsgListDao->insert($msg_data);
+		}
+		//记录回款站内信
+		//【小树时代测试】您好，您在{$notice.site_title}的投标{$notice.url}成功还款{$notice.repay_money}元
+		//{if $notice.has_next_loan}本笔投标的下个还款日为{$notice.next_repay_time}，
+		//需还本息{$notice.next_repay_money}元。{else}本次投标共获得收益:{$notice.all_shouyi_money}元,
+		//其中违约金为:{$notice.all_impose_money}元,本次投标已回款完毕！{/if}
+		if($mail_bidrepaid == 1) {
+			$content = '【小树时代测试】您好，您在小树时代的投标'.$loan_base_info['name'].'成功还款'.$repay_money.'元';
+			if($next_loan && $is_advance == 0) {
+				$content .= '<p>本笔投标的下个还款日为'.date('Y年m月d日',$next_loan['repay_time']).'，需还本息'.$next_loan['repay_money'].'元。&nbsp;</p><br><br>';
+			}else{
+				$content .='<p>本次投标共获得收益:'.($interest_money+$impose_money).'元，';
+				if($impose_money != 0) {
+					$content .= '其中违约金为:'.$impose_money.'元,';
+				}
+				$content .= '本次投标已回款完毕！</p>';
+			}
+			\Core::dao('msg_msgbox')->sendUserMsg("", $content, 0, $user_id, time(), 0, true, 9);
+		}
+	}
+	//TODO 发送还款成功短信站内信to借款人（是否提前还款）
+	/**
+	 * 发送还款成功短信站内信to借款人
+	 * @param $loan_id 借款id
+	 * @param $l_key 还的第几期
+	 * @param $user_id 还款人id
+	 * @param $repay_money 还款本息
+	 * @param $manage_money 管理费
+	 * @param $impose_money 逾期违约金
+	 * @param $impose_manage_money 逾期违约金管理费
+	 * @param $is_advance  是否提前还款
+	 * @param $time 还款时间
+	 * **/
+	public function sendRepayMessage($loan_id,$l_key,$user_id,$repay_money,$manage_money,$impose_money=0,$impose_manage_money=0,$is_advance=0,$time=0){
+		if($time == 0) {
+			$time = time();
+		}
+		$msgConfDao = \Core::dao('msg_msgconf');
+		$userDao = \Core::dao('user_user');
+		$loanBaseDao = \Core::dao('loan_loanbase');
+		$dealMsgListDao = \Core::dao('msg_dealmsglist');
+		$dealRepay = \Core::dao('loan_dealrepay');
+		$dealLoadRepayDao = \Core::dao('loan_dealloadrepay');
+		//贷款基本
+		$loan_base_info = $loanBaseDao->getloanbase($loan_id,'id,name,user_id,create_time');
+		//下期还款信息
+		$next_loan = $dealRepay->getNextLoan($loan_id,$l_key);
+		//获取个人邮件设置
+		$mail_bidrepaid = $msgConfDao->findCol('mail_bidrepaid',array('user_id'=>$user_id));
+		$user_info = $userDao->getUserInfo('user_name,mobile,email',array('id'=>$user_id))->row();
+		//未回款投资人
+		$no_repay_count = $dealLoadRepayDao->getNoRepayCountByDealId($loan_id,$l_key);
+		$msg_data['send_type'] = 0;
+		$msg_data['send_time'] = 0;
+		$msg_data['is_send'] = 0;
+		$msg_data['create_time'] = $time;
+		$msg_data['user_id'] = $user_id;
+		//是否发送短信
+		if(C('SMS_ON') == 1) {
+			//TODO 获取短信模板
+			if($is_advance == 1){
+				$msg_data['title'] = "提前还款短信通知";
+				//【小树时代测试】尊敬的{$notice.site_name}用户{$notice.user_name}，
+				//您的借款“{$notice.deal_name}”在第{$notice.index}期{$notice.status}还款{$notice.all_money}元，感谢您的关注和支持。
+				$user_msg = '【小树时代测试】您的借款“'.$loan_base_info['name'].'”在第'.($l_key+1).'期还款'.($repay_money+$manage_money+$impose_money+$impose_manage_money).'元，感谢您的关注和支持。';
+			}else {
+				$msg_data['title'] = "还款短信通知";
+				//【小树时代测试】您好，您在{$notice.site_title}的借款{$notice.url}的借款第{$notice.index}期还款{$notice.repay_money}元
+				//{$notice.repay_status}{if $notice.left_user_count gt 0}，还有{$notice.left_user_count}个投资人待还{/if}。
+				//{if $notice.has_next_loan}本笔借款的下个还款日为{$notice.next_repay_time}，需要本息{$notice.next_repay_money}元。{/if}
+				$user_msg = '【小树时代测试】您好，您在'.'小树时代'.'的借款“'.$loan_base_info['name'].'”第'.($l_key+1).'期还款'.($repay_money+$manage_money+$impose_money+$impose_manage_money).'元';
+				if($no_repay_count > 0 ) {
+					$user_msg .= '本期部分还款，还有'.$no_repay_count.'个投资人待还';
+				}
+
+			}
+			$msg_data['content'] = addslashes($user_msg);
+			$msg_data['is_html'] = 0;
+			$msg_data['dest'] = $user_info['mobile'];
+			$dealMsgListDao->insert($msg_data);
+		}
+		if($is_advance == 1) {
+			//站内信内容
+			//【小树时代测试】您好，您在{$notice.shop_title}的借款{$notice.url}成功提前还款{$notice.repay_money}元，
+			//其中违约金为:{$notice.impose_money}元,本笔借款已还款完毕！
+			$user_msg = '【小树时代测试】您好，您在'.'小树时代'.'，的借款“'.$loan_base_info['name'].'”成功提前还款'.$repay_money.'元，其中违约金为:'.$impose_money.'元,本笔借款已还款完毕！';
+		}
+		//发送站内信
+		\Core::dao('msg_msgbox')->sendUserMsg("", addslashes($user_msg), 0, $user_id, time(), 0, true, 8);
+
 	}
 	//发送电子协议邮件
 	public function sendDealContractEmail($loan_id){
@@ -244,7 +407,8 @@ class  business_loan_loan extends Business {
 							}
 						}
 						//逾期罚息
-						if (($impose_money*($user_load['repay_money']/$v['money'])) != 0) {
+						$user_impose_money = $impose_money*($user_load['repay_money']/$v['money']);
+						if ($user_impose_money != 0) {
 							$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, number_format($impose_money*($user_load['repay_money']/$v['money']),2), $log_impose_msg, 21);
 							if($editMoneyStatus === false){
 								$root['show_err'] = '回款失败，逾期罚息发放失败';
@@ -279,6 +443,9 @@ class  business_loan_loan extends Business {
 							}
 						}
 						//TODO 短信通知回款
+						//站内信。邮件短信
+						//发送站内信。邮件短信
+						$this->sendRepayRebackMessage($id,$l_key,$invest_user_id,$user_load['repay_money'],$user_load['interest_money'],$user_impose_money);
 					}
 				}
 				//2.借款人扣款
@@ -286,7 +453,6 @@ class  business_loan_loan extends Business {
 				$dealRepayBusiness = \Core::business('sys_dealrepay');
 				//判断当前期是否还款完毕
 				$no_repay_count = $dealLoadRepayBusiness->isRepayedByLkey($id,$l_key);
-				$ext_str = "";
 				if($no_repay_count == 0) {
 					$hasRepayTotal = $dealLoadRepayDao->getHasRepayTotal($id,$l_key);
 					//\Core::dump($hasRepayTotal);die();
@@ -299,7 +465,7 @@ class  business_loan_loan extends Business {
 						return $root;
 					}
 					//借款人扣款
-					$log_repay_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，偿还本息'.$ext_str;
+					$log_repay_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，偿还本息';
 					$editMoneyStatus = $userBusiness->editUserMoney($user_id,-$hasRepayTotal['total_repay_money'],$log_repay_msg,4);
 					if($editMoneyStatus === false) {
 						$root['show_err'] = '还款失败，扣除借款人本息失败';
@@ -314,7 +480,7 @@ class  business_loan_loan extends Business {
 					}
 					//罚息
 					if($hasRepayTotal['total_impose_money'] != 0) {
-						$log_impose_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，逾期罚息'.$ext_str;
+						$log_impose_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，逾期罚息';
 						$editMoneyStatus = $userBusiness->editUserMoney($user_id,-$hasRepayTotal['total_impose_money'],$log_impose_msg,11);
 						if($editMoneyStatus === false) {
 							$root['show_err'] = '还款失败，扣除借款人逾期罚息失败';
@@ -330,7 +496,7 @@ class  business_loan_loan extends Business {
 					}
 					//借款管理费
 					if ($user_repay['manage_money'] > 0 && $getManage == 0) {
-						$log_manage_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，借款管理费'.$ext_str;
+						$log_manage_msg = '<a href="" target="_blank">'.$loan_name.'</a>第'.($l_key+1).'期，借款管理费';
 						$editMoneyStatus = $userBusiness->editUserMoney($user_id,-$user_repay['manage_money'],$log_manage_msg,10);
 						if($editMoneyStatus === false) {
 							$root['show_err'] = '还款失败，扣除借款人借款管理费失败';
@@ -408,18 +574,11 @@ class  business_loan_loan extends Business {
 							}
 						}
 					}
+					//TODO 发送还款短信站内信
+					$this->sendRepayMessage($id,$l_key,$user_id,$hasRepayTotal['total_repay_money'],$user_repay['manage_money'],$hasRepayTotal['total_impose_money'],$manage_impose_money,0);
 					//TODO 修改代还款表信息
 					//\Core::dao('loan_generationrepay')->update(array('status'=>1),array('deal_id'=>$id,'repay_id'=>$user_repay['id']));
-					$notices['has_next_loan'] = 0;
-					//下一期还款|**没有下一期是否代表已还最后一期**|
-					$next_loan = $dealRepayDao->getNextLoan($id,$l_key);
-					if($next_loan) {
-						$notices['has_next_loan'] = 1;
-						$notices['next_repay_time'] = date("Y年m月d日",$next_loan['repay_time']);
-						$notices['next_repay_money'] = number_format($next_loan['repay_money'], 2);
-					}
 
-					//判断是否最后一期还款
 					//全部还清
 					$bid_no_repay = $dealRepayDao->getAllNoRepay($id);
 					if($bid_no_repay == 0) {
@@ -438,6 +597,11 @@ class  business_loan_loan extends Business {
 							return $root;
 						}
 					}
+					//TODO 保存催收日志
+					//查看催收表中该借款是否正在催收（正在催收则记录日志）
+					//TODO 债权回滚
+					//标对应的正在转让中的债权
+					$this->transReback($id);
 					$root['show_err'] = '还款成功';
 					$root['status'] = 1;
 					return $root;
@@ -452,15 +616,21 @@ class  business_loan_loan extends Business {
 					$updateWhere['deal_id'] = $id;
 					$updateWhere['l_key'] = $l_key;
 					$updateStatus = $dealRepayDao->update($updateData,$updateWhere);
+					//TODO 保存催收日志
+					//查看催收表中该借款是否正在催收（正在催收则记录日志）
 					if($updateStatus === false) {
 						$root['show_err'] = '部分还款失败，更新还款计划状态失败';
 						return $root;
 					}else{
+						//站内信。邮件短信
+						$this->sendDealSuccessMessage($id);
+						$this->sendDealSiteMessage($id);
 						$root['show_err'] = '部分还款成功';
 						$root['status'] = 1;
 						return $root;
 					}
 				}
+
 			}catch (\Exception $e){
 				$userDao->getDb()->rollback();
 				$root['show_err'] = '系统错误';
@@ -648,6 +818,8 @@ class  business_loan_loan extends Business {
 					}
 				}
 				//TODO 发送通知短信、邮件、站内信
+				//发送站内信。邮件短信
+				$this->sendRepayRebackMessage($id,$start_lkey,$repay_user_id,$user_inrepay_info['true_repay_money'],$need_interest_money,$user_inrepay_info['impose_money'],1);
 			}
 			//2.借款人扣款
 			//判断回款计划是否修改已还完
@@ -741,7 +913,7 @@ class  business_loan_loan extends Business {
 						return $root;
 					}
 				}
-				$update_deal_status = \Core::dao('loan_loanbid')->update(array('deal_status'=>5),array('loan_id'=>$id));
+				$update_deal_status = \Core::dao('loan_loanbid')->update(array('deal_status'=>5,'pay_off_status'=>1,'payoff_time'=>$time),array('loan_id'=>$id));
 				if($update_deal_status === false) {
 					$root['show_err'] = '更新贷款状态出错！';
 					return $root;
@@ -777,6 +949,11 @@ class  business_loan_loan extends Business {
 						$userBusiness->editUserPoint($user_id,$point,$log_msg,4);
 					}
 				}
+				//TODO 发送还款成功短信、站内信
+				$this->sendRepayMessage($id,$start_lkey,$user_id,$inrepay_info['true_repay_money'],$inrepay_info['true_manage_money'],$inrepay_info['impose_money'],$inrepay_info['true_manage_money'],1);
+				//TODO 回滚债权
+				$this->transReback($id);
+				//TODO 更新债权转让状态
 				$root['status'] = 1;
 				$root['show_err'] = '还款成功';
 				return $root;
@@ -877,6 +1054,7 @@ class  business_loan_loan extends Business {
 						$root['show_err'] = '回款失败，回报本息发放失败';
 						return $root;
 					}
+					$message_data['repay_money'] = $user_load['repay_money'];
 					if ($user_load['manage_money'] > 0) {
 						$log_msg = '[<a href="" target="_blank">' . $loan_name . '</a>]第' . ($lkey + 1) . '期，投标管理费';
 						$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, -$user_load['manage_money'], $log_msg, 20);
@@ -894,7 +1072,8 @@ class  business_loan_loan extends Business {
 						}
 					}
 					//逾期罚息
-					if (($impose_money*($user_load['repay_money']/$v['money'])) != 0) {
+					$user_impose_money = $impose_money*($user_load['repay_money']/$v['money']);
+					if ($user_impose_money != 0) {
 						$editMoneyStatus = $userBusiness->editUserMoney($invest_user_id, number_format($impose_money*($user_load['repay_money']/$v['money']),2), $log_impose_msg, 21);
 						if($editMoneyStatus === false){
 							$root['show_err'] = '回款失败，逾期罚息发放失败';
@@ -929,9 +1108,11 @@ class  business_loan_loan extends Business {
 							}
 						}
 					}
-					//TODO 短信通知回款
+					//发送站内信。邮件短信
+					$this->sendRepayRebackMessage($id,$lkey,$invest_user_id,$user_load['repay_money'],$user_load['interest_money'],$user_impose_money,0,$time);
 				}
 			}
+
 			//2.记录网站资金
 			//判断投资人是否回款完毕
 			$no_repay_count = $dealLoadRepayDao->getCount(array('deal_id'=>$id,'l_key'=>$lkey,'has_repay'=>0));
@@ -1258,5 +1439,27 @@ class  business_loan_loan extends Business {
 			}
 		}
 	}
+	//债权回滚
+	public function transReback($id){
+		$dealLoadTransDao = \Core::dao('loan_dealloadtransfer');
+		$trans_info = $dealLoadTransDao->getTransInfoByLoanId($id);
+		if($trans_info) {
+			foreach ($trans_info as $k => $transfer) {
+				if($transfer['status'] != 0) {
+					if ($transfer['next_dltid'] > 0) {
+						$update_trans_status = $dealLoadTransDao->update(array('status'=>0,'callback_count'=>$transfer['callback_count']+1),array('id'=>$transfer['next_dltid'],'t_user_id'=>0,'callback_count'=>$transfer['callback_count']));
+						if ($update_trans_status !== false) {
+							$dealLoadTransDao->update(array('status2'=>0),array('id'=>$transfer['id']));
+						}
+					} else {
+						$dealLoadTransDao->update(array('status'=>0,'callback_count'=>$transfer['callback_count']+1),array('id'=>$transfer['id'],'t_user_id'=>0,'callback_count'=>$transfer['callback_count']));
 
+					}
+				}
+			}
+			return true;
+		}else {
+			return false;
+		}
+	}
 }
