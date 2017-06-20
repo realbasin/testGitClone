@@ -61,11 +61,8 @@ class  business_sys_dealloadrepay extends Business {
 			} else {
 				if($loan['loantype'] == 0) {
 					$load_repay['repay_money'] = $repaymoney['month_repay_money'];
-					$load_repay['self_money'] = number_format(\Core::business('sys_dealrepay')->get_self_money($idx, $v['money'], $repaymoney['month_repay_money'], $loan['rate']), 2);
+					$load_repay['self_money'] = round(\Core::business('sys_dealrepay')->get_self_money($idx, $v['money'], $repaymoney['month_repay_money'], $loan['rate']), 2);
 					@$total_money[$v['id']] += round((float)$load_repay['self_money'],2);
-					//$self_money = \Core::arrayKeyExists($v['id'],$total_money)?\Core::arrayGet($total_money,$v['id']):0;
-					//$self_money += round((float)$load_repay['self_money'],2);
-					//\Core::arraySet($total_money,$v['id'],$self_money);
 				}
 				if($loan['loantype'] == 1) {
 					$load_repay['repay_money'] = $repaymoney['month_repay_money'];

@@ -387,11 +387,11 @@ class  controller_loan_loan extends controller_sysBase {
 				$result['code'] = 404;
 				$result['status'] = 0;
 				$result['message'] = "放款失败，生成还款、回款计划失败";
-
-				return @json_encode($repayplan);
+				return @json_encode($result);
 			}
 		}catch(\Exception $e){
 			$result['message'] = '系统错误';
+			return @json_encode($result);
 		}finally{
 			if($result['code'] == 200 && $result['status'] == 1){
 				\Core::db()->commit();
