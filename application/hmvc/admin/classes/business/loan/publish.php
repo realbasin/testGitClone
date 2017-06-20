@@ -172,7 +172,8 @@ class  business_loan_publish extends Business
         return $log_ids;
     }
 
-    public function getDealLoanTypeList($user_level_id)
+    //根据用户等级获取贷款类型列表
+    public function getLoanTypeList($user_level_id)
     {
 
         $now_time = time();

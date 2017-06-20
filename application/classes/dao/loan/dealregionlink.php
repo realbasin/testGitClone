@@ -19,5 +19,9 @@ class dao_loan_dealregionlink extends Dao {
 	public function getTable() {
 		return 'deal_region_link';
 	}
+	
+	public function getRegionLink($fields,$where) {
+		return $this->getDb()->select($fields)->from($this->getTable())->where($where)->execute()->row();
+	}
 
 }

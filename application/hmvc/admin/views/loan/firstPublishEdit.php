@@ -47,7 +47,7 @@
             </div>
         </div>
     </div>
-    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn,'loan_id'=>$loanbase['id'])); ?>" enctype="multipart/form-data">
+    <form method="post" id="form1" name="form1" action="<?php echo adminUrl('loan_audit','first_publish_update',array('first_yn'=>$first_yn,'loan_id'=>$loanbase['id'])); ?>" enctype="multipart/form-data" onsubmit="return checkForm();">
         <input type="hidden" name="form_submit" value="ok" />
         <input type="hidden" name="loan_id" value="<?php echo $loanbase['id'];?>" />
         <input type="hidden" name="update_time" value="<?php echo $loanbase['update_time'];?>" />
@@ -236,17 +236,31 @@
                     <label>风险保证金（非托管标）</label>
                 </dt>
                 <dd class="opt">
-                    <input type="text" name="borrow_amount" id="borrow_amount" class="input-txt" readonly="readonly" value="<?php echo $l_guarantees_amt;?>">
+                    <input type="text" name="l_guarantees_amt" id="l_guarantees_amt" class="input-txt" readonly="readonly" value="<?php echo number_format($amtConfig['l_guarantees_amt'],2);?>">
                     <p class="notic">冻结借款人的金额，满标放款时从用户账户扣除</p>
                 </dd>
             </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>借款保证金（第三方托管）</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="guarantees_amt" id="guarantees_amt" class="input-txt" readonly="readonly" value="<?php echo number_format($amtConfig['guarantees_amt'],2);?>">
+                    <p class="notic">冻结借款人的金额，需要提前存钱</p>
+                </dd>
+            </dl>
+
             <dl class="row">
                 <dt class="tit">
                     <label>借款期限</label>
                 </dt>
                 <dd class="opt">
                     <input type="text" name="repay_time" id="repay_time"  readonly="readonly" style="width: 80px;" value="<?php echo $loanbase['repay_time'];?>">
-                    <?php echo $loanbase['repay_time_type']?'月':'天';?>
+                    <select name="repay_time_type" id="repay_time_type">
+                        <?php if($loanbase['repay_time_type'] >= 1){?>
+                            <?php echo '<option value="1">月</option>'; ?>
+                        <?php }?>
+                    </select>
                 </dd>
             </dl>
 
@@ -299,7 +313,10 @@
                     <label>所在城市</label>
                 </dt>
                 <dd class="opt">
-
+                    <?php if(!empty($region['region_location'])) ?>
+                        <?php echo $region['region_location']; ?>
+                    <?php if(!empty($region['no_region_reason'])) ?>
+                        <?php echo $region['no_region_reason'].' <input type="button" value="完成后请点击刷新页面" onclick="window.location.reload();"/>'; ?>
                 </dd>
             </dl>
             <dl class="row">
@@ -419,6 +436,15 @@
             </dl>
             <dl class="row">
                 <dt class="tit">
+                    <label>借款者获得积分</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="score" readonly="readonly" id="score" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('score',$commonConfig)?\Core::arrayGet($commonConfig,'score'):0;?>">%
+                    <p class="notic">非信用积分</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
                     <label>借款者管理费</label>
                 </dt>
                 <dd class="opt">
@@ -514,6 +540,24 @@
                 <dd class="opt">
                     <input type="text" name="user_bid_rebate" readonly="readonly" id="user_bid_rebate" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('user_bid_rebate',$commonConfig)?\Core::arrayGet($commonConfig,'user_bid_rebate'):0;?>">%
                     <p class="notic">返利金额=投标金额×返利百分比【需满标】</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>投资返还积分比率</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="user_bid_score_fee" readonly="readonly" id="user_bid_score_fee" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('user_bid_score_fee',$commonConfig)?\Core::arrayGet($commonConfig,'user_bid_score_fee'):0;?>">%
+                    <p class="notic">投标返还积分 = 投标金额 ×返还比率【需满标】(如果是VIP会员将从VIP会员配置里读取)【非信用积分】</p>
+                </dd>
+            </dl>
+            <dl class="row">
+                <dt class="tit">
+                    <label>申请延期</label>
+                </dt>
+                <dd class="opt">
+                    <input type="text" name="generation_position" readonly="readonly" id="generation_position" style="width: 80px;" value="<?php echo \Core::arrayKeyExists('generation_position',$commonConfig)?\Core::arrayGet($commonConfig,'generation_position'):0;?>">%
+                    <p class="notic">当还款金额大于或等于设置的额度，借款人如果资金不够，可申请延期还款，延期还款就是平台代其还此借款。借款人未还部分由平台跟借款人协商。</p>
                 </dd>
             </dl>
         </div>
@@ -620,6 +664,51 @@
         return true;
     });
     //todo checkform
+    var submited = false; //不能重复提交
+    function checkForm(){
+        if(submited){
+            alert("提交中，请勿重复提交.....");
+            return false;
+        }
+
+        var no_region = $("#no_region");
+        var is_delete = $('input[name=is_delete]:checked').val();
+        var publish_wait = $('input[name=publish_wait]:checked').val();
+        var real_msg = $('select[name=delete_real_msg]').val();
+        if (is_delete == 3 && real_msg == '') {
+            alert('请填写真实原因');
+            return false;
+        }
+
+        var borrow_amount = $("input[name='borrow_amount']").val();
+        if(borrow_amount == 0){
+            alert("请输入借款金额！"); return false;
+        }
+        var use_type = $("select[name='use_type']").val();
+        if(use_type == 0){
+            /*alert("请选择借款用途！");*/ return false;
+        }
+
+        var status_0 = $("input[name='is_delete']").is(':checked');  //审核失败
+        var status_1 = $("input[name='publish_wait']").is(':checked'); //审核成功
+        if(!status_0 && !status_1){
+            /*alert("请选择审核状态！");*/ return false;
+        }
+
+        if(status_0){
+            var delete_msg = $("select[name='delete_msg']").val();
+            if(delete_msg == ''){
+                alert('请选择短信回复！'); return false;
+            }
+            var delete_real_msg = $("select[name='delete_real_msg']").val();
+            if(delete_real_msg == ''){
+                alert('请选择真实原因！'); return false;
+            }
+        }
+
+        submited = true;
+        return true;
+    }
 
 </script>
 </body>
