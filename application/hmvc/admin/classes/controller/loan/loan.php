@@ -39,10 +39,13 @@ class  controller_loan_loan extends controller_sysBase {
 		// 用户余额
 		$loan_id = \Core::get('loan_id',0);
 		$userDao = \Core::dao('user_user');
-		$user = \Core::dao('loan_loanbase')->getLoan($loan_id,'id,user_id');
-		$user_id = $user[$loan_id]['user_id'];
-		$user_money = $userDao->getUserMoney($user_id);
-		$money = $user_money?$user_money:0.00;
+		$user_id = \Core::dao('loan_loanbase')->findCol('user_id',array('id'=>$loan_id));
+		if($user_id) {
+			$user_money = $userDao->getUserMoney($user_id);
+			$money = $user_money?$user_money:0.00;
+		}else {
+			$money = 0;
+		}
 		//TODO 需还总额 $data['l_key']=$money
 		//$loanBusiness = \Core::business('loan_loanenum');
 		//$loan_data = $loanBusiness->enumLoanRepay($loan_id);
@@ -562,8 +565,8 @@ class  controller_loan_loan extends controller_sysBase {
 			$loan_bid['end_time'] = \Core::post('enddate',0);
 			$loan_bid['use_ecv'] = \Core::post('use_ecv',0);
 			$loan_base['description'] = \Core::post('description','');
-			$loan_bid['risk_rank'] = \Core::post('risk_rank',0);
-			$loan_bid['risk_security'] = \Core::post('risk_security','');
+			$loan_base['risk_rank'] = \Core::post('risk_rank',0);
+			$loan_base['risk_security'] = \Core::post('risk_security','');
 			$loan_base['use_type'] = \Core::post('use_type',0);
 			$loan_bid['start_time'] = strtotime(\Core::post('time',''));
 
@@ -594,7 +597,7 @@ class  controller_loan_loan extends controller_sysBase {
 			$loan_id = \Core::get('loan_id',0);
 			$loanBusiness=\Core::business('loan_loanenum');
 			//根据借款id，获取贷款基本信息
-			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,description';
+			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,description,risk_rank,risk_security';
 			$loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
 			//获取会员名称
 			$user_id = $loanbase['user_id'];
@@ -617,7 +620,7 @@ class  controller_loan_loan extends controller_sysBase {
 			//获取合同范本
 			$contract =  \Core::dao('loan_contract')->getContractList('id,title');
 			//根据借款id，获取标基本信息
-			$bidfields = 'loan_id,min_loan_money,max_loan_money,deal_status,start_time,end_time,uloadtype,portion,max_portion,use_ecv,risk_rank,risk_security';
+			$bidfields = 'loan_id,min_loan_money,max_loan_money,deal_status,start_time,end_time,uloadtype,portion,max_portion,use_ecv';
 			$loanbid = \Core::dao('loan_loanbid')->getOneLoanById($loan_id,$bidfields);
 			\Core::view()->set('loantype',$loanBusiness->enumLoanType())
 				->set('dealcate',$loanBusiness->enumDealCate())
