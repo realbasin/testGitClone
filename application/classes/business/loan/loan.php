@@ -203,7 +203,7 @@ class  business_loan_loan extends Business {
 			//【小树时代测试】尊敬的{$notice.site_name}用户{$notice.user_name}，您所投的标“{$notice.deal_name}”回款{$notice.repay_money}元，感谢您的关注和支持。
 			$msg = '【小树时代测试】尊敬的用户'.$user_info['user_name'].'，您所投的标“'.$loan_base_info['name'].'”回款。'.($repay_money+$impose_money).'元，感谢您的关注和支持。';
 			$msg_data['content'] = addslashes($msg);
-			$msg_data['is_html'] = $tmpl['is_html'];
+			$msg_data['is_html'] = 0;
 			$msg_data['dest'] = $user_info['mobile'];
 			$dealMsgListDao->insert($msg_data);
 		}

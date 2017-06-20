@@ -92,7 +92,7 @@
             var manage_money = 0;
             $("#flexitable table").find('tr').each(function () {
                 var tdArr = $(this).children();
-                var money = tdArr.eq(7).find("div").text();
+                var money = tdArr.eq(6).find("div").text();
                 var repay_str= tdArr.eq(11).find("div").text();
                 var is_repay_money = tdArr.eq(4).find("div").text().substring(1);
 
@@ -100,7 +100,7 @@
                     is_overdue = 1;
                 }
                 if(repay_str == '待还'){
-                    need_repay_money = need_repay_money + parseFloat(money.substring(1));
+                    need_repay_money = need_repay_money + parseFloat(money.replace(/,/g,'').substring(1));
                 }
                 manage_money = parseFloat(tdArr.eq(8).find("div").text().substring(1));
             });
