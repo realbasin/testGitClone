@@ -189,22 +189,22 @@ class dao_Deal extends Dao
         return 'deal';
     }
 
-    public function getTotalRecordNum()
+    public function getMaxId()
     {
         $data = $this->getDb()
             ->from($this->getTable())
-            ->select('COUNT(*) AS num')
+            ->select('MAX(id) AS max_id')
             ->execute()
-            ->value('num');
+            ->value('max_id');
         return $data;
     }
 
-    public function getDealList($startLimit, $endLimit)
+    public function getDealList($startId, $endId)
     {
         $data = $this->getDb()
             ->from($this->getTable())
             ->select('*')
-            ->limit($startLimit, $endLimit)
+            ->where(['id >=' => $startId, 'id <=' => $endId])
             ->execute()
             ->rows();
         return $data;

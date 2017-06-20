@@ -118,31 +118,49 @@ class  task_DatabaseSync extends Task
         $this->check();
 
         $dealDao = \Core::dao('Deal');
-        $totalRecordNum = $dealDao->getTotalRecordNum();
-        printf("deal table total record num:%s\n\n", $totalRecordNum);
+        $maxId = $dealDao->getMaxId();
+        printf("deal table max id:%s\n\n", $maxId);
 
         $pageSize = 1000;
-        $pageCount = ceil($totalRecordNum / $pageSize);
+        $pageCount = ceil($maxId / $pageSize);
         for ($i = 1; $i <= $pageCount; $i++) {
             $startTime = microtime(true);
 
-            $startLimit = ($i - 1) * $pageSize;
-            $endLimit = $startLimit + $pageSize;
-            printf("get deal table data,start-end:%s-%s\n", $startLimit, $endLimit);
-            $dealList = $dealDao->getDealList($startLimit, $pageSize);
+            if($i == 1){
+                $startId = ($i - 1) * $pageSize;
+            }else{
+                $startId = ($i - 1) * $pageSize + 1;
+            }
 
-            printf("sync deal,start-end:%s-%s\n", $startLimit, $endLimit);
+            if($i != $pageCount){
+                $endId = $i * $pageSize;
+            }else{
+                $endId = $maxId;
+            }
+
+            printf("get deal table data,start-end:%s-%s\n", $startId, $endId);
+            $dealList = $dealDao->getDealList($startId, $endId);
+
+            $currentRecordNum = count($dealList);
+            printf("get deal table data,current deal list record %s\n", count($dealList));
+            if($currentRecordNum == 0){
+                $endTime = microtime(true);
+                printf("execute time:%s sec\n\n", $endTime - $startTime);
+                continue;
+            }
+
+            printf("sync deal start,start-end:%s-%s\n", $startId, $endId);
             \Core::db()->begin();
             try {
                 foreach ($dealList as $deal) {
                     $this->dealSync($deal);
                 }
                 \Core::db()->commit();
-                printf("sync deal start-end:%s-%s success\n", $startLimit, $endLimit);
+                printf("sync deal start-end:%s-%s success\n", $startId, $endId);
             } catch (Exception $e) {
                 \Core::db()->rollback();
-                printf("deal %s-%s data sync failed,fail msg:%s\n", $startLimit, $endLimit, $e->getMessage());
-                printf("deal %s-%s data sync failed,executed rollback\n", $startLimit, $endLimit);
+                printf("deal %s-%s data sync failed,fail msg:%s\n", $startId, $endId, $e->getMessage());
+                printf("deal %s-%s data sync failed,executed rollback\n", $startId, $endId);
                 exit("execute exit operation");
             }finally{
                 $endTime = microtime(true);
