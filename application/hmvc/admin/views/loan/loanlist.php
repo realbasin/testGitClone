@@ -36,136 +36,95 @@
 </div>
 <div class="line10"></div>
 <div class="page">
-	<div  id="flexitable" class="flexitable"></div>
-</div>
-<!--高级搜索-->
-<div class="search-ban-s" id="searchBarOpen"><i class="fa fa-search-plus"></i>高级搜索</div>
-<div class="search-bar">
-		<div class="handle-btn" id="searchBarClose"><i class="fa fa-search-minus"></i>收起边栏</div>
-    	<div class="title">
-      		<h3>高级搜索</h3>
-    	</div>
-     <form method="get" name="formSearch" id="formSearch">
-      <div id="searchCon" class="content">
-        <div class="layout-box">
-          <dl>
-            <dt>贷款ID</dt>
-            <dd>
-              <label>
-                <input type="text" value="" name="id" id="id" class="s-input-txt" placeholder="输入贷款id">
-              </label>
-            </dd>
-          </dl>
-          <dl>
-            <dt>贷款名称</dt>
-            <dd>
-              <label>
-                <input type="text" value="" name="name" id="name" class="s-input-txt" placeholder="输入贷款名称">
-              </label>
-            </dd>
-          </dl>
-          
-          <dl>
-            <dt>贷款期数</dt>
-            <dd>
-              <label>
-                <input type="text" value="" name="repay_time" id="repay_time" class="s-input-txt" placeholder="输入贷款期数">
-                <select class="class-select" id="repay_time_type" name="repay_time_type" value="-1">
-                <option value="-1">-全部类型-</option>
-                <?php if($repaytimetype){?>
-                <?php foreach($repaytimetype as $k=>$v){?>
-                	<?php echo "<option value='".$k."'>".$v."</option>";?>
-                <?php }?>
-                <?php }?>
-              </select>
-              </label>
-            </dd>
-          </dl>
-          <dl>
-            <dt>还款方式</dt>
-            <dd>
-              <select class="class-select" id="loantype" name="loantype" value="-1">
-                <option value="-1">-全部类型-</option>
-                <?php if($loantype){?>
-                <?php foreach($loantype as $k=>$v){?>
-                	<?php echo "<option value='".$k."'>".$v."</option>";?>
-                <?php }?>
-                <?php }?>
-              </select>
-            </dd>
-          </dl>
+    <!--高级搜索-->
+    <div class="form-default">
+        <form method="get" name="formSearch" id="formSearch">
+            <div class="title">
+                    贷款ID
+                    <label>
+                        <input type="text" value="" name="id" id="id" class="s-input-txt" placeholder="输入贷款id">
+                    </label>
 
-          <dl>
-            <dt>贷款用途</dt>
-            <dd>
-              <select class="class-select" id="use_type" name="use_type" value="-1">
-                <option value="-1">-全部类型-</option>
-                <?php if($dealusetype){?>
-                <?php foreach($dealusetype as $k=>$v){?>
-                	<?php echo "<option value='".$k."'>".$v['name']."</option>";?>
-                <?php }?>
-                <?php }?>
-              </select>
-            </dd>
-          </dl>
-          <dl>
-            <dt>客户端</dt>
-            <dd>
-              <select class="class-select" id="sor_code" name="sor_code" value="-1">
-              	<option value="-1">-全部类型-</option>
-                 <?php if($sorcode){?>
-                <?php foreach($sorcode as $k=>$v){?>
-                	<?php echo "<option value='".$k."'>".$v['code_name']."</option>";?>
-                <?php }?>
-                <?php }?>
-              </select>
-            </dd>
-          </dl>
-          <dl>
-            <dt>贷款状态</dt>
-            <dd>
-              <select class="class-select" id="deal_status" name="deal_status" value="-1">
-                <option value="-1">-全部类型-</option>
-                <?php if($dealstatus){?>
-                <?php foreach($dealstatus as $k=>$v){?>
-                	<?php echo "<option value='".$k."'>".$v."</option>";?>
-                <?php }?>
-                <?php }?>
-              </select>
-            </dd>
-          </dl>
-          <dl>
-            <dt>流标返还</dt>
-            <dd>
-              <select class="class-select" id="is_has_received" name="is_has_received" value="-1">
-                <option value="-1">-全部类型-</option>
-               <option value="0">未返还</option>
-                <option value="1">已返还</option>
-              </select>
-            </dd>
-          </dl>
-            <dl>
-                <dt>手机号</dt>
-                <dd>
+                    贷款名称
+                    <label>
+                        <input type="text" value="" name="name" id="name" class="s-input-txt" placeholder="输入贷款名称">
+                    </label>
+
+                    贷款期数
+                    <label>
+                        <input type="text" value="" name="repay_time" id="repay_time" class="s-input-txt" placeholder="输入贷款期数">
+                        <select class="class-select" id="repay_time_type" name="repay_time_type" value="-1">
+                            <option value="-1">-全部类型-</option>
+                            <?php if($repaytimetype){?>
+                                <?php foreach($repaytimetype as $k=>$v){?>
+                                    <?php echo "<option value='".$k."'>".$v."</option>";?>
+                                <?php }?>
+                            <?php }?>
+                        </select>
+                    </label>
+
+                    还款方式
+                    <select class="class-select" id="loantype" name="loantype" value="-1">
+                        <option value="-1">-全部类型-</option>
+                        <?php if($loantype){?>
+                            <?php foreach($loantype as $k=>$v){?>
+                                <?php echo "<option value='".$k."'>".$v."</option>";?>
+                            <?php }?>
+                        <?php }?>
+                    </select>
+
+                    贷款用途
+                    <select class="class-select" id="use_type" name="use_type" value="-1">
+                        <option value="-1">-全部类型-</option>
+                        <?php if($dealusetype){?>
+                            <?php foreach($dealusetype as $k=>$v){?>
+                                <?php echo "<option value='".$k."'>".$v['name']."</option>";?>
+                            <?php }?>
+                        <?php }?>
+                    </select>
+
+                    客户端
+                    <select class="class-select" id="sor_code" name="sor_code" value="-1">
+                        <option value="-1">-全部类型-</option>
+                        <?php if($sorcode){?>
+                            <?php foreach($sorcode as $k=>$v){?>
+                                <?php echo "<option value='".$k."'>".$v['code_name']."</option>";?>
+                            <?php }?>
+                        <?php }?>
+                    </select>
+                  
+                    贷款状态
+                    <select class="class-select" id="deal_status" name="deal_status" value="-1">
+                        <option value="-1">-全部类型-</option>
+                        <?php if($dealstatus){?>
+                            <?php foreach($dealstatus as $k=>$v){?>
+                                <?php echo "<option value='".$k."'>".$v."</option>";?>
+                            <?php }?>
+                        <?php }?>
+                    </select>
+
+                    流标返还
+                    <select class="class-select" id="is_has_received" name="is_has_received" value="-1">
+                        <option value="-1">-全部类型-</option>
+                        <option value="0">未返还</option>
+                        <option value="1">已返还</option>
+                    </select>
+
+                    手机号
                     <label>
                         <input type="text" value="" name="user_mobile" id="user_mobile" class="s-input-txt" placeholder="输入手机号">
                     </label>
-                </dd>
-            </dl>
 
-            <dl>
-                <dt>贷款人名称</dt>
-                <dd>
+                    贷款人名称
                     <label>
                         <input type="text" value="" name="user_name" id="user_name" class="s-input-txt" placeholder="输入贷款人名称">
                     </label>
-                </dd>
-            </dl>
-        </div>
-      </div>
-      <div class="bottom"><a href="javascript:void(0);" id="submit" style="color: #ffffff;" class="btn btn-green mr5">提交查询</a><a href="javascript:void(0);" id="reset" style="color: #ffffff;" class="btn btn-orange" title="撤销查询结果，还原列表项所有内容"><i class="fa fa-retweet"></i>撤销</a></div>
-    </form>
-	</div>
+                <input type="button" id="submit" style="height: 26px;padding: 0 5px;margin-left: 20px;" value="提交查询"></button>
+            </div>
+        </form>
+    </div>
+	<div  id="flexitable" class="flexitable"></div>
+</div>
 <script>
 $(function(){
 	$("#flexitable").flexigrid({
@@ -191,14 +150,6 @@ $(function(){
         buttons : [
             {display: '<i class="fa fa-file-excel-o"></i> 导出贷款列表', name : 'cvs', bclass : 'csv',title : '导出贷款列表', onpress : flexPress },
         ],
-        searchitems : [
-            {display: '编号', name : 'id'},
-            {display: '贷款名称', name : 'name'},
-            {display: '贷款金额', name : 'borrow_amount'},
-            {display: '贷款利率', name : 'rate'},
-            {display: '贷款人ID', name : 'user_id'},
-            ],
-
         sortname: "id",
         sortorder: "desc",
         title: '全部贷款'

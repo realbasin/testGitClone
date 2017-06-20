@@ -40,16 +40,13 @@ class  controller_loan_loan extends controller_sysBase {
 		$loan_id = \Core::get('loan_id',0);
 		$userDao = \Core::dao('user_user');
 		$user_id = \Core::dao('loan_loanbase')->findCol('user_id',array('id'=>$loan_id));
+		//用户当前余额
 		if($user_id) {
 			$user_money = $userDao->getUserMoney($user_id);
 			$money = $user_money?$user_money:0.00;
 		}else {
 			$money = 0;
 		}
-		//TODO 需还总额 $data['l_key']=$money
-		//$loanBusiness = \Core::business('loan_loanenum');
-		//$loan_data = $loanBusiness->enumLoanRepay($loan_id);
-		//\Core::dump($loan_data);die();
 		\Core::view()->set('loan_id',$loan_id)->set('usermoney',$money)->load('loan_repayplan');
 	}
 	//手动还款
@@ -58,7 +55,6 @@ class  controller_loan_loan extends controller_sysBase {
 		$result = array();
 		$result['code'] = 200;
 		$loan_id = \Core::get('id',0);
-		$time = time();
 		if(!$loan_id) {
 			$result['message'] = \Core::L('fail');
 			$this->log($act.$result['message'],'manual_repay');
@@ -599,6 +595,9 @@ class  controller_loan_loan extends controller_sysBase {
 			//根据借款id，获取贷款基本信息
 			$basefields = 'id,deal_sn,name,user_id,type_id,loantype,borrow_amount,repay_time,rate,is_referral_award,use_type,repay_time_type,use_type,description,risk_rank,risk_security';
 			$loanbase = \Core::dao('loan_loanbase')->getloanbase($loan_id,$basefields);
+			if (!$loanbase) {
+				\Core::redirect(\Core::getUrl('admin','loan_loan'),'贷款数据出错');
+			}
 			//获取会员名称
 			$user_id = $loanbase['user_id'];
 			$user = \Core::dao('user_user')->getUser($user_id,'id,user_name,real_name,pid');
@@ -622,6 +621,9 @@ class  controller_loan_loan extends controller_sysBase {
 			//根据借款id，获取标基本信息
 			$bidfields = 'loan_id,min_loan_money,max_loan_money,deal_status,start_time,end_time,uloadtype,portion,max_portion,use_ecv';
 			$loanbid = \Core::dao('loan_loanbid')->getOneLoanById($loan_id,$bidfields);
+			if (!$loanbid) {
+				\Core::redirect(\Core::getUrl('admin','loan_loan'),'贷款数据出错');
+			}
 			\Core::view()->set('loantype',$loanBusiness->enumLoanType())
 				->set('dealcate',$loanBusiness->enumDealCate())
 				->set('dealusetype',$loanBusiness->enumDealUseType())
@@ -982,37 +984,37 @@ class  controller_loan_loan extends controller_sysBase {
 			$is_site_repay = $loadrepayDao->findCol('is_site_repay',array('deal_id'=>$deal_id,'l_key'=>$v['l_key']));
 			if($v['has_repay'] == 1) {
 				//已还总额
-				$isrepay = $v['true_repay_money'] + $v['true_manage_money'] + $v['impose_money'] + $v['manage_impose_money'];
+				$isrepay = round($v['true_repay_money'] + $v['true_manage_money'] + $v['impose_money'] + $v['manage_impose_money'],2);
 				//待还总额
 				$repay_all_money = '0.00';
 				$need_repay_money = '0.00';
 				//待还本息
 				$repay_money = '0.00';
 				//管理费
-				$manage_money = $v['true_manage_money'];
+				$manage_money = round($v['true_manage_money'],2);
 				//逾期/违约金
-				$impose_money = $v['impose_money'];
+				$impose_money = round($v['impose_money'],2);
 				//逾期/违约金管理费
-				$manage_impose_money = $v['manage_impose_money'];
+				$manage_impose_money = round($v['manage_impose_money'],2);
 				//还款情况
-				$status = $v['status'] + 1;
+				$status = intval($v['status']) + 1;
 				$repaydate = date('Y-m-d H:i:s',$v['true_repay_time']);
-				$overdue_day = $imposeInfo['overday'];
+				$overdue_day = intval($imposeInfo['overday']);
 
 			}elseif($is_site_repay == 1) {
 				//已还总额
-				$isrepay = $v['true_repay_money'] + $v['true_manage_money'] + $v['impose_money'] + $v['manage_impose_money'];
+				$isrepay = round($v['true_repay_money'] + $v['true_manage_money'] + $v['impose_money'] + $v['manage_impose_money'],2);
 				//待还总额
-				$repay_all_money = $imposeInfo['need_repay_money'] + $v['manage_money'];
-				$need_repay_money = $imposeInfo['need_repay_money'];
+				$repay_all_money = round($imposeInfo['need_repay_money'] + $v['manage_money'],2);
+				$need_repay_money = round($imposeInfo['need_repay_money'],2);
 				//待还本息
-				$repay_money = $v['repay_money'];
+				$repay_money = round($v['repay_money'],2);
 				//管理费
-				$manage_money = $v['true_manage_money'];
+				$manage_money = round($v['true_manage_money'],2);
 				//逾期/违约金
-				$impose_money = $imposeInfo['impose_money'];
+				$impose_money = round($imposeInfo['impose_money'],2);
 				//逾期/违约金管理费
-				$manage_impose_money = $imposeInfo['manage_impose_money'];
+				$manage_impose_money = round($imposeInfo['manage_impose_money'],2);
 				//还款情况
 				$status = ($imposeInfo['status'] > 1)?($imposeInfo['status']+1):$imposeInfo['status'];
 				$repaydate = '';
@@ -1021,16 +1023,16 @@ class  controller_loan_loan extends controller_sysBase {
 				//已还总额
 				$isrepay = '0.00';
 				//待还总额
-				$repay_all_money = $imposeInfo['need_repay_money'] + $v['manage_money'];
-				$need_repay_money = $imposeInfo['need_repay_money'];
+				$repay_all_money = round($imposeInfo['need_repay_money'] + $v['manage_money'],2);
+				$need_repay_money = round($imposeInfo['need_repay_money'],2);
 				//待还本息
-				$repay_money = $v['repay_money'];
+				$repay_money = round($v['repay_money'],2);
 				//管理费
-				$manage_money = $v['manage_money'];
+				$manage_money = round($v['manage_money'],2);
 				//逾期/违约金
-				$impose_money = $imposeInfo['impose_money'];
+				$impose_money = round($imposeInfo['impose_money'],2);
 				//逾期/违约金管理费
-				$manage_impose_money = $imposeInfo['manage_impose_money'];
+				$manage_impose_money = round($imposeInfo['manage_impose_money'],2);
 				//还款情况
 				$status = ($imposeInfo['status'] > 1)?($imposeInfo['status']+1):$imposeInfo['status'];
 				$repaydate = '';
@@ -1068,7 +1070,7 @@ class  controller_loan_loan extends controller_sysBase {
 			//逾期/违约金管理费
 			$row['cell'][] = '￥'.number_format($manage_impose_money,2);
 			//还款状态
-			$row['cell'][] = $loanenumBusiness->enumLoanRepayType($status);
+			$row['cell'][] = $loanenumBusiness->enumLoanRepayType(intval($status));
 			//还款时间
 			$row['cell'][] = $repaydate;
 			//逾期天数
