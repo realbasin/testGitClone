@@ -51,191 +51,253 @@ class  controller_dashboard extends controller_sysBase {
 	
 	//工作队列，就是1个队列，多个消费者
 	public function do_queuetest_task(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$workTopic = $amqpContext->createTopic('test.amqp.work');
-		$workTopic->addFlag(AMQP_DURABLE);//持久化
-		$workTopic->setType(AMQP_EX_TYPE_DIRECT);//直连
-		//$amqpContext->deleteTopic($workTopic);
-		$amqpContext->declareTopic($workTopic);
-		$workQueue = $amqpContext->createQueue('test.work');
-		$workQueue->addFlag(AMQP_DURABLE);
-		//$amqpContext->deleteQueue($workQueue);
-		$amqpContext->declareQueue($workQueue);
-		$amqpContext->bind($workTopic, $workQueue);
-		//声明工作队列
-		$producer=$amqpContext->createProducer();
-		//发送10条信息
-		$i=0;
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeDirect('test.work','test.amqp.work');
 		for($i=0;$i<10;$i++){
-			$message = $amqpContext->createMessage("work{$i}");
-			$producer->send($workQueue, $message);
+			$amqp->publishDirect('test.work', "work{$i}");
 			echo "send work{$i}<br>";
 		}
-		$amqpContext->close();
+		$amqp->close();
 	}
 	
 	//工作队列接收A
 	public function do_queuetest_task_A(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$queue = $amqpContext->createQueue('test.work');
-		$consumer = $amqpContext->createConsumer($queue);
-		$m = $consumer->receive(1);
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.work',true);//这里做自动应答
 		if($m){
-			$consumer->acknowledge($m);
-			echo "receive ".$m->getBody();
+			echo "receive ".$m->body;
 		}else{
-			echo "no data yet";
+			echo "no data";
 		}
-		$amqpContext->close();
+		$amqp->close();
 	}
 	
 	//工作队列接收B
 	public function do_queuetest_task_B(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$queue = $amqpContext->createQueue('test.work');
-		$consumer = $amqpContext->createConsumer($queue);
-		$m = $consumer->receive(1);
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.work',true);
 		if($m){
-			$consumer->acknowledge($m);
-			echo "receive ".$m->getBody();
+			echo "receive ".$m->body;
 		}else{
-			echo "no data yet";
+			echo "no data";
 		}
-		$amqpContext->close();
+		$amqp->close();
 	}
 	
-	//消息队列
-	public function do_queuetest_direct(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$workTopic = $amqpContext->createTopic('test.amqp.work');
-		$workTopic->addFlag(AMQP_DURABLE);//持久化
-		$workTopic->setType(AMQP_EX_TYPE_DIRECT);//直连
-		$amqpContext->declareTopic($workTopic);
-		$workQueueA = $amqpContext->createQueue('test.work.A');
-		$workQueueA->addFlag(AMQP_DURABLE);
-		$amqpContext->declareQueue($workQueueA);
-		$amqpContext->bind($workTopic, $workQueueA);
-		$workQueueB = $amqpContext->createQueue('test.work.B');
-		$workQueueB->addFlag(AMQP_DURABLE);
-		$amqpContext->declareQueue($workQueueB);
-		$amqpContext->bind($workTopic, $workQueueB);
-		//声明工作队列
-		$producer=$amqpContext->createProducer();
-		//发送10条信息
-		$i=0;
-		for($i=0;$i<10;$i++){
-			$messageA = $amqpContext->createMessage("directA{$i}");
-			$messageB = $amqpContext->createMessage("directB{$i}");
-			$producer->send($workQueueA, $messageA);
-			$producer->send($workQueueB, $messageB);
-			echo "send directA{$i}<br>";
-			echo "send directB{$i}<br>";
-		}
-		$amqpContext->close();
+	//direct队列
+	public function do_queuetest_direct_sendA(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeDirect('test.direct','test.amqp.fruit','apple');
+		$amqp->bindQueueToExchangeDirect('test.direct','test.amqp.fruit','banana');
+		
+		$amqp->bindQueueToExchangeDirect('test.direct','test.amqp.banana','banana');
+		
+		$amqp->publishDirect('test.direct', "i love apple","apple");
+		echo "send i love apple<br>";
+		
+		$amqp->close();
+	}
+	
+	public function do_queuetest_direct_sendB(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeDirect('test.direct','test.amqp.fruit','apple');
+		$amqp->bindQueueToExchangeDirect('test.direct','test.amqp.fruit','banana');
+		
+		$amqp->bindQueueToExchangeDirect('test.direct','test.amqp.banana','banana');
+		
+		$amqp->publishDirect('test.direct', "i love banana","banana");
+		echo "send i love banana<br>";
+		
+		$amqp->close();
 	}
 
 	public function do_queuetest_direct_A(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$queue = $amqpContext->createQueue('test.work.A');
-		$consumer = $amqpContext->createConsumer($queue);
-		$m = $consumer->receive(1);
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.fruit',true);//这里做自动应答
 		if($m){
-			$consumer->acknowledge($m);
-			echo "receive ".$m->getBody();
+			echo "receive ".$m->body;
 		}else{
-			echo "no data yet";
+			echo "no data";
 		}
-		$amqpContext->close();
+		$amqp->close();
 	}
 	
 	public function do_queuetest_direct_B(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$queue = $amqpContext->createQueue('test.work.B');
-		$consumer = $amqpContext->createConsumer($queue);
-		$m = $consumer->receive(1);
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.banana',true);//这里做自动应答
 		if($m){
-			$consumer->acknowledge($m);
-			echo "receive ".$m->getBody();
+			echo "receive ".$m->body;
 		}else{
-			echo "no data yet";
+			echo "no data";
 		}
-		$amqpContext->close();
+		$amqp->close();
 	}
 	
 	//广播
 	public function do_queuetest_boardcast(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$workTopic = $amqpContext->createTopic('test.boardcast');
-		$workTopic->addFlag(AMQP_DURABLE);//持久化
-		$workTopic->setType(AMQP_EX_TYPE_FANOUT);//广播
-		$amqpContext->declareTopic($workTopic);
-		//声明2个空队列
-		$workQueueA = $amqpContext->createQueue('test.boardcast.A');
-		$workQueueA->addFlag(AMQP_DURABLE);
-		$amqpContext->declareQueue($workQueueA);
-		$amqpContext->bind($workTopic, $workQueueA);
-		$workQueueB = $amqpContext->createQueue('test.boardcast.B');
-		$workQueueB->addFlag(AMQP_DURABLE);
-		$amqpContext->declareQueue($workQueueB);
-		$amqpContext->bind($workTopic, $workQueueB);
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeFanout('test.fanout','test.amqp.fanoutA');
+		$amqp->bindQueueToExchangeFanout('test.fanout','test.amqp.fanoutB');
 		
-		
-		//声明队列
-		$producer=$amqpContext->createProducer();
-		//发送10条广播信息
-		$i=0;
 		for($i=0;$i<10;$i++){
-			$message = $amqpContext->createMessage("boardcast{$i}");
-			$producer->send($workTopic, $message);
-			echo "send boardcast{$i}<br>";
+			$amqp->publishFanout('test.fanout', "fanout{$i}");
+			echo "send fanout{$i}<br>";
 		}
-		$amqpContext->close();
+		
+		$amqp->close();
 	}
 	
 	public function do_queuetest_boardcast_A(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$queue = $amqpContext->createQueue('test.boardcast.A');
-		$consumer = $amqpContext->createConsumer($queue);
-		$m = $consumer->receive(1);
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.fanoutA',true);//这里做自动应答
 		if($m){
-			$consumer->acknowledge($m);
-			echo "receive ".$m->getBody();
+			echo "receive ".$m->body;
 		}else{
-			echo "no data yet";
+			echo "no data";
 		}
-		$amqpContext->close();
+		$amqp->close();
 	}
 	
 	public function do_queuetest_boardcast_B(){
-		$amqp=\Core::library('XSQueue/QueueManager');
-		$amqpConn=$amqp->queue();
-		$amqpContext=$amqpConn->createContext();
-		$queue = $amqpContext->createQueue('test.boardcast.B');
-		$consumer = $amqpContext->createConsumer($queue);
-		$m = $consumer->receive(1);
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.fanoutB',true);//这里做自动应答
 		if($m){
-			$consumer->acknowledge($m);
-			echo "receive ".$m->getBody();
+			echo "receive ".$m->body;
 		}else{
-			echo "no data yet";
+			echo "no data";
 		}
-		$amqpContext->close();
+		$amqp->close();
+	}
+	
+	public function do_queuetest_topic_sendA(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeTopic('test.topic','test.amqp.topicA','#.log');
+		$amqp->bindQueueToExchangeTopic('test.topic','test.amqp.topicB','mail.#');
+		
+		$amqp->publishTopic('test.topic', "this is a mail log","mail.log");
+		echo "this is a mail log<br>";
+		
+		$amqp->close();
+	}
+	
+	public function do_queuetest_topic_sendB(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeTopic('test.topic','test.amqp.topicA','#.log');
+		$amqp->bindQueueToExchangeTopic('test.topic','test.amqp.topicB','mail.#');
+		
+		$amqp->publishTopic('test.topic', "this is a mobile log","mobile.log");
+		echo "this is a mobile log<br>";
+		
+		$amqp->close();
+	}
+	
+	public function do_queuetest_topic_sendC(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeTopic('test.topic','test.amqp.topicA','#.log');
+		$amqp->bindQueueToExchangeTopic('test.topic','test.amqp.topicB','mail.#');
+		
+		$amqp->publishTopic('test.topic', "this is a mail send","mail.send");
+		echo "this is a mail send<br>";
+		
+		$amqp->close();
+	}
+	
+	public function do_queuetest_topic_A(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.topicA',true);//这里做自动应答
+		if($m){
+			echo "receive ".$m->body;
+		}else{
+			echo "no data";
+		}
+		$amqp->close();
+	}
+	
+	public function do_queuetest_topic_B(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.topicB',true);//这里做自动应答
+		if($m){
+			echo "receive ".$m->body;
+		}else{
+			echo "no data";
+		}
+		$amqp->close();
+	}
+	
+	public function do_queuetest_delay(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeDelay('test.delay','test.amqp.delay');
+		$amqp->publishDelay('test.delay', "this message delay 10s",'',0,0,10);
+		echo "send delay message<br>";
+		$amqp->close();
+	}
+	
+	public function do_queuetest_delay_A(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$amqp->consume('test.amqp.delay',function($message){
+			echo "receive ".$message->body;
+		},true);//这里做自动应答
+		
+		$amqp->close();
+	}
+	
+	public function do_queuetest_delay_B(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.delay',true);//这里做自动应答
+		if($m){
+			echo "receive ".$m->body;
+		}else{
+			echo "no data";
+		}
+		$amqp->close();
+	}
+
+	public function do_queuetest_pr_sendA(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeDirect('test.pr','test.amqp.pr');
+		$amqp->publishDirect('test.pr', "this message is common");
+		echo "this message is common<br>";
+		$amqp->close();
+	}
+	
+	public function do_queuetest_pr_sendB(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		//注意，如果已经声明了队列，下面这一句是非必须的
+		$amqp->bindQueueToExchangeDirect('test.pr','test.amqp.pr');
+		$amqp->publishDirect('test.pr', "this message is priority",'',5);
+		echo "this message is priority<br>";
+		$amqp->close();
+	}
+
+	public function do_queuetest_pr_A(){
+		$amqp=\Core::library('AmqpLib/AmqpManager');
+		
+		$m = $amqp->getOne('test.amqp.pr',true);//这里做自动应答
+		if($m){
+			echo "receive ".$m->body;
+		}else{
+			echo "no data";
+		}
+		$amqp->close();
 	}
 	
 	

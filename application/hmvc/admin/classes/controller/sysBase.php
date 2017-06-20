@@ -101,25 +101,6 @@ class  controller_sysBase extends Controller {
 		$data['link'] = $controller . '&' . $method;
 		return \Core::dao('sys_admin_log') -> insert($data);
 	}
-
-	//后台日志记录
-	protected final function saveLog($msg,$status)
-	{
-		if (!C('sys_log') || !is_string($msg))
-			return true;
-		$route = \Base::getConfig() -> getRoute();
-		$controller = $route -> getControllerShort();
-		$method = $route -> getMethodShort();
-		
-		$log_data['log_info'] = $msg;
-		$log_data['log_time'] = time();
-		$log_data['log_admin'] = $this->admininfo['id'];
-		$log_data['log_ip']	= \Core::clientIp();
-		$log_data['log_status'] = $status;
-		$log_data['module']	=	$controller;
-		$log_data['action'] = 	$method;
-		return \Core::dao('sys_log')->insert($log_data,false);
-	}
 	
 	protected final function createTaps($links = array(), $actived = '') {
 		$linkstr = '';

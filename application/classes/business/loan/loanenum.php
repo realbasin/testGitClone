@@ -161,6 +161,36 @@ class  business_loan_loanenum extends Business {
 			}
 			return $has_html.'<br>'.$no_html.'<br>'.$fail_html;
 		}
+
+		//贷款所在城市
+		public function regionLocation($loan_id,$user_id,$loantype)
+		{
+			$region_link = \Core::dao('loan_dealregionlink')->getRegionLink('region_pid,region_id',array('deal_id'=>$loan_id));
+			$no_region_reason = $region_location = '';
+			if (empty($region_link)) {
+				// 获取用户扩展信息（院校ID）
+				$user_extend = \Core::dao('user_userextend')->findCol('value',array('user_id'=>$user_id,'field_id'=>24));
+
+				if (empty($user_extend)) {
+					$no_region_reason = "<span id=\"no_region\" style=\"color:#FF0000\">未获取学信网认证院校信息</span>：获取学信网数据后自动关联所在城市，请先进行<a href=\"?m=User&a=passed&id=" . $user_id . "&loantype=" . $loantype . "\" target=\"_blank\">在校认证</a>";
+				} else {
+					$school_data = \Core::db()->execute("SELECT CONCAT(xr.name,'-',r.name) location,s.province_id,region_id AS city_id,s.name FROM _tablePrefix_school s LEFT JOIN _tablePrefix_region_conf r ON s.region_id=r.id LEFT JOIN _tablePrefix_region_conf xr ON s.province_id=xr.id WHERE s.id=" . $user_extend)->row();
+
+					if (empty($school_data['province_id']) && empty($school_data['city_id'])) {
+						$no_region_reason = "<span id=\"no_region\" style=\"color:#FF0000\">无院校匹配数据</span>：用户所在院校「<span style=\"color:#008000\">" . $school_data['name'] . "</span>」不存在于院校数据库，请先<a href=\"?m=School&a=edit&id=" . $user_extend . "\" target=\"_blank\">更新院校数据</a>";
+					} else {
+						$region_location = $school_data['location'];
+					}
+				}
+			} else {
+				$sql = "SELECT CONCAT(a.name,'-',b.name) location FROM " . DB_PREFIX . "region_conf a INNER JOIN " . DB_PREFIX . "region_conf b ON a.id=b.pid WHERE a.id=" . $region_link['region_pid'] . " AND b.id=" . $region_link['region_id'];
+				$region_location = \Core::db()->execute($sql)->value('location');
+			}
+			
+			$data['no_region_reason'] = $no_region_reason;
+			$data['region_location'] = $region_location;
+			return $data;
+		}
 		
 		//当前使用的贷款类型List
 		public function enumDealLoanTypeActive(){
@@ -177,10 +207,11 @@ class  business_loan_loanenum extends Business {
 
 		//还款方式列表
 		public function loanTypeList() {
-			$loanTypeList[0] = array('name'=>'等额本息','repay_time_type'=>array(1));
-			$loanTypeList[1] = array('name'=>'先息后本','repay_time_type'=>array(1));
-			$loanTypeList[2] = array('name'=>'到期还本息','repay_time_type'=>array(0,1));
-			$loanTypeList[3] = array('name'=>'等额本金','repay_time_type'=>array(1));
+			$loanTypeList[0] = array('name'=>'等额本息','sub_name'=>'等额本息','repay_time_type'=>array(1),'repay_time_type_str'=>1);
+			$loanTypeList[1] = array('name'=>'先息后本','sub_name'=>'先息后本','repay_time_type'=>array(1),'repay_time_type_str'=>1);
+			$loanTypeList[2] = array('name'=>'到期还本息','sub_name'=>'到期还本息','repay_time_type'=>array(0,1),'repay_time_type_str'=>'0,1');
+			$loanTypeList[3] = array('name'=>'等额本金','sub_name'=>'等额本金','repay_time_type'=>array(1),'repay_time_type_str'=>1);
+			return $loanTypeList;
 		}
 	
 		//当前用户贷款次数
@@ -195,6 +226,87 @@ class  business_loan_loanenum extends Business {
 		public function enumOverRepayTimes($user_id) {
 			return \Core::dao('loan_dealloadrepay')->getCount(array('user_id'=>$user_id,'status >'=>1));
 		}
+
+		//获取借款保证金及费率信息
+		public function loanExtConfig($loanbase,$loan_type) {
+			$loanextDao = \Core::dao('loan_loanext');
+			$amtConfig = $loanextDao->getAmtconfig($loanbase['id']);
+			$commonConfig = $loanextDao->getCommonconfig($loanbase['id']);
+			if(\Core::arrayGet($commonConfig,'manage_fee')=='') {
+				// VIP状态处于有效 、采用 VIP借款管理费 比例 计算
+				$vip_id = \Core::dao('user_user')->findCol('vip_id',array('id'=>$loanbase['user_id'],'vip_state'=>1));
+				$load_mfee = \Core::dao('user_vipsetting')->findCol('load_fee',array('vip_id'=>$vip_id));
+				if ($load_mfee) {
+					$commonConfig['manage_fee'] = $load_mfee;
+				} else {
+					if ($loan_type['is_extend_effect']) {
+						$commonConfig['manage_fee'] = $loan_type['manage_fee'];
+					} else {
+						$commonConfig['manage_fee'] = C('MANAGE_FEE');
+					}
+				}
+
+			}
+			if ($loan_type['is_extend_effect']) {
+				if(\Core::arrayGet($commonConfig,'user_loan_manage_fee')=='') {
+					$commonConfig['user_loan_manage_fee'] = $loan_type['user_loan_manage_fee'];
+				}
+				if (\Core::arrayGet($commonConfig,'manage_impose_fee_day1')=='')
+					$commonConfig['manage_impose_fee_day1'] = $loan_type['manage_impose_fee_day1'];
+				if (\Core::arrayGet($commonConfig,'manage_impose_fee_day2')=='')
+					$commonConfig['manage_impose_fee_day2'] = $loan_type['manage_impose_fee_day2'];
+				if (\Core::arrayGet($commonConfig,'impose_fee_day1')=='')
+					$commonConfig['impose_fee_day1'] = $loan_type['impose_fee_day1'];
+				if (\Core::arrayGet($commonConfig,'impose_fee_day2')=='')
+					$commonConfig['impose_fee_day2'] = $loan_type['impose_fee_day2'];
+				if (\Core::arrayGet($commonConfig,'user_load_transfer_fee')=='')
+					$commonConfig['user_load_transfer_fee'] = $loan_type['user_load_transfer_fee'];
+				if (\Core::arrayGet($commonConfig,'compensate_fee')=='')
+					$commonConfig['compensate_fee'] = $loan_type['compensate_fee'];
+				if (\Core::arrayGet($commonConfig,'user_bid_rebate')=='')
+					$commonConfig['user_bid_rebate'] = $loan_type['user_bid_rebate'];
+				if (\Core::arrayGet($commonConfig,'user_loan_interest_manage_fee')=='')
+					$commonConfig['user_loan_interest_manage_fee'] = C("USER_LOAN_INTEREST_MANAGE_FEE");
+				if (\Core::arrayGet($commonConfig,'generation_position')=='')
+					$commonConfig['generation_position'] = 100;
+				if (\Core::arrayGet($commonConfig,'user_bid_score_fee')=='')
+					$commonConfig['user_bid_score_fee'] = C("USER_BID_SCORE_FEE");
+				//风险保证金-非托管
+				if (\Core::arrayGet($amtConfig,'l_guarantees_amt') == "0.00" || \Core::arrayGet($amtConfig,'l_guarantees_amt') == "")
+					$amtConfig['l_guarantees_amt'] = $loanbase['borrow_amount'] * $loan_type['guarantees_amt'] / 100;
+			} else {
+				if (\Core::arrayGet($commonConfig,'user_loan_manage_fee') == "")
+					$commonConfig['user_loan_manage_fee'] = C("USER_LOAN_MANAGE_FEE");
+				if (\Core::arrayGet($commonConfig,'manage_impose_fee_day1') == "")
+					$commonConfig['manage_impose_fee_day1'] = C("MANAGE_IMPOSE_FEE_DAY1");
+				if (\Core::arrayGet($commonConfig,'user_loan_manage_fee') == "")
+					$commonConfig['manage_impose_fee_day2'] = C("MANAGE_IMPOSE_FEE_DAY2");
+				if (\Core::arrayGet($commonConfig,'user_loan_manage_fee') == "")
+					$commonConfig['impose_fee_day1'] = C("IMPOSE_FEE_DAY1");
+				if (\Core::arrayGet($commonConfig,'impose_fee_day2') == "")
+					$commonConfig['impose_fee_day2'] = C("IMPOSE_FEE_DAY2");
+				if (\Core::arrayGet($commonConfig,'user_load_transfer_fee') == "")
+					$commonConfig['user_load_transfer_fee'] = C("USER_LOAD_TRANSFER_FEE");
+				if (\Core::arrayGet($commonConfig,'compensate_fee') == "")
+					$commonConfig['compensate_fee'] = C("COMPENSATE_FEE");
+				if (\Core::arrayGet($commonConfig,'user_bid_rebate') == "")
+					$commonConfig['user_bid_rebate'] = C("USER_BID_REBATE");
+				if (\Core::arrayGet($commonConfig,'user_loan_interest_manage_fee') == "")
+					$commonConfig['user_loan_interest_manage_fee'] = C("USER_LOAN_INTEREST_MANAGE_FEE");
+				if (\Core::arrayGet($commonConfig,'generation_position') == "")
+					$commonConfig['generation_position'] = 100;
+				if (\Core::arrayGet($commonConfig,'user_bid_score_fee') == "")
+					$commonConfig['user_bid_score_fee'] = C("USER_BID_SCORE_FEE");
+			}
+
+			$amtConfig['guarantees_amt'] = \Core::arrayGet($amtConfig,'guarantees_amt') ? \Core::arrayGet($amtConfig,'guarantees_amt') : 0.00;
+			$amtConfig['l_guarantees_amt'] = \Core::arrayGet($amtConfig,'l_guarantees_amt') ? \Core::arrayGet($amtConfig,'l_guarantees_amt') : 0.00;
+			
+			$data['amtConfig'] = $amtConfig;
+			$data['commonConfig'] = $commonConfig;
+			return $data;
+		}
+
 	
 		//检测并更正借款状态,触发自动投标，并发送提示信息
 		public function synDealStatus($loan_id,$is_autobid=true) {
@@ -293,4 +405,92 @@ class  business_loan_loanenum extends Business {
 			return $loanbid;
 			
 		}
+	
+	public function getDealLoanTypeList($id=0)
+	{
+		$key = 'deal_loan_type_list'.$id;
+		$loan_type_list = \Core::cache()->get($key);
+		if(!$loan_type_list) {
+			$time = time();
+			if ($id > 0) {
+				$ext = " AND d.id=" . $id;  //详细页图片列表（is_display=0也显示）
+			} else {
+				$ext = " AND d.is_display=1 ";  //首页图片列表（is_display=1不显示）
+			}
+			$ext .= " AND (d.is_extend_effect=0 OR (d.is_extend_effect=1 AND de.start_time<=" . $time . " AND de.end_time>=" . $time . "))";
+			$sql = "SELECT d.*,de.start_time,de.end_time,de.city_ids,de.min_deadline,de.deadline,de.is_recommend,de.banner,de.seo_title,de.seo_keyword,de.seo_description,de.guarantees_amt,de.guarantor_amt,de.guarantor_pro_fit_amt,de.manage_fee,de.user_loan_manage_fee,de.manage_impose_fee_day1,de.manage_impose_fee_day2,de.impose_fee_day1,de.impose_fee_day2,de.minimum,de.maximum,de.user_load_transfer_fee,de.compensate_fee,de.user_bid_rebate,de.min_loan_money,de.max_loan_money,de.limit_loan_money,de.limit_bid_money,de.loan_limit_time,de.generation_position,de.uloadtype,de.portion,de.max_portion FROM  _tablePrefix_deal_loan_type d LEFT JOIN _tablePrefix_deal_loan_type_extern de ON d.id=de.loan_type_id WHERE d.is_effect = 1 and d.is_delete = 0 $ext ORDER BY d.sort DESC";
+			$t_loan_type_list = \Core::db()->execute($sql)->rows();
+			$loan_type_list = array();
+			foreach ($t_loan_type_list as $k => $v) {
+				$v['banner'] = set_cdn_host($v['banner']);
+				$v['icon'] = set_cdn_host($v['icon']);
+				$v['identity_auth'] = json_decode($v['identity_auth'], true);
+				$v['education_auth'] = json_decode($v['education_auth'], true);
+				$v['relation_info'] = json_decode($v['relation_info'], true);
+				$v['work_info'] = json_decode($v['work_info'], true);
+				$loan_type_list[$v['id']] = $v;
+			}
+			\Core::cache()->set($key,$loan_type_list);
+		}
+
+		return $loan_type_list;
+	}
+	
+	public function getLevelList($type_id) {
+
+		$key = 'level_list'.$type_id;
+		$level_list = \Core::cache()->get($key);
+		if(!$level_list){
+			if ($type_id > 0) {
+				$is_extend_effect = \Core::dao('loan_dealloantype')->findCol('is_extend_effect',array('is_effect'=>1,'is_delete'=>0,'id'=>$type_id));
+				if ($is_extend_effect) {
+					$level_list['list'] = \Core::dao('loan_dealloantypeuserlevel')->findAll(array('loan_type_id'=>$type_id),array('point'=>'desc'),null,'*');
+				}
+				if (!$level_list['list']) {
+					$type_id = 0;
+					$level_list['list'] = \Core::dao('user_userlevel')->findAll(null,array('point'=>'desc'),null,'*');
+				}
+			} else {
+				$level_list['list'] = \Core::dao('user_userlevel')->findAll(array('is_delete'=>0),array('pont'=>'desc'));
+			}
+			if ($type_id > 0) {
+				foreach($level_list['list'] as $k=>$v){
+					$level_list['point'][$v['user_level_id']] = $v['point'];
+					$level_list['services_fee'][$v['user_level_id']] = $v['services_fee'];
+					$level_list['enddate'][$v['user_level_id']] = $v['enddate'];
+					$level_list['enddate_list'][$v['user_level_id']] = explode(",",$v['enddate']);
+					$level_list['repaytime'][$v['user_level_id']] = $v['repaytime'];
+					if($v['repaytime']){
+						$repaytime_list = explode("\n",$v['repaytime']);
+						foreach($repaytime_list as $kkkk=>$vvv)
+						{
+							if(explode("|",$vvv))
+								$level_list['repaytime_list'][$v['user_level_id']][] =explode("|",str_replace("\r","",$vvv));
+						}
+						unset($repaytime_list);
+					}
+				}
+			} else {
+				foreach($level_list['list'] as $k=>$v){
+					$level_list['point'][$v['id']] = $v['point'];
+					$level_list['services_fee'][$v['id']] = $v['services_fee'];
+					$level_list['enddate'][$v['id']] = $v['enddate'];
+					$level_list['enddate_list'][$v['id']] = explode(",",$v['enddate']);
+					$level_list['repaytime'][$v['id']] = $v['repaytime'];
+					if($v['repaytime']){
+						$repaytime_list = explode("\n",$v['repaytime']);
+						foreach($repaytime_list as $kkkk=>$vvv)
+						{
+							if(explode("|",$vvv))
+								$level_list['repaytime_list'][$v['id']][] =explode("|",str_replace("\r","",$vvv));
+						}
+						unset($repaytime_list);
+					}
+				}
+			}
+			\Core::cache()->set($key,$level_list);
+		}
+		return $level_list;
+
+	}
 }
