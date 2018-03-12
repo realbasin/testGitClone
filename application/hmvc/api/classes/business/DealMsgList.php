@@ -91,7 +91,7 @@ class business_DealMsgList extends Business
                 'id' => $item['id'],
                 'deal_id' => $item['deal_id'],
                 'mobile' => $mobile,
-                'repay_money' => $item['repay_money'] + $item['manage_money'] + $item['manage_impose_money'] + $item['impose_money'],
+                'repay_money' => $item['repay_money'] + $item['manage_money'] /*+ $item['manage_impose_money']*/ + $item['impose_money'],
                 'repay_date' => $item['repay_date'],
                 'repay_time' => $item['repay_time']
             ];
