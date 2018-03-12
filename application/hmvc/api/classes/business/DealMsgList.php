@@ -13,7 +13,9 @@ class business_DealMsgList extends Business
     static $threeDaysAgoSMSContent = "还记得树疙瘩里的账单吗？您本期账单%s元，账单日%s月%s日。加上往期未还共%s元（截至今日）。若已清还则无须理会。";
     // 短信内容模版(当天)
     static $todaySMSContent = "小树来讯提示：今日是账单日啦，账单宝宝眼巴巴等您呐！本期账单%s元，其中已还%s元，剩余未还为%s元~";
-
+	//目标用户
+	static $targetSMSList = array();
+	
     public function sendMessageToUser()
     {
         //@TODO 短信发送方案   发送到mq队列，非实时
@@ -91,7 +93,8 @@ class business_DealMsgList extends Business
                 'id' => $item['id'],
                 'deal_id' => $item['deal_id'],
                 'mobile' => $mobile,
-                'repay_money' => $item['repay_money'] + $item['manage_money'] + $item['manage_impose_money'] + $item['impose_money'],
+				'impose_money' => item['manage_impose_money'] + $item['impose_money'],
+                'repay_money' => $item['repay_money'] + $item['manage_money'],
                 'repay_date' => $item['repay_date'],
                 'repay_time' => $item['repay_time']
             ];
