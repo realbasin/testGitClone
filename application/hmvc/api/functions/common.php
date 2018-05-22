@@ -52,17 +52,17 @@ function formatMoneyIndex($number, $decimal_count=0, $accurate=false){
 
     $hundredmillion = "";
     if($number >= 100000000){
-        $hundredmillion = intval($number/100000000)."<i>亿</i>";
+        $hundredmillion = intval($number/100000000)."<i>hundred million</i>";
         $number = $number - intval($number/100000000)*100000000;
     }
 
     $tenthousand = "";
     if($number + 5000 >= 10000){  // +5000 兼容四舍五入
         if($hundredmillion != "" || !$accurate){
-            $tenthousand = sprintf("%.".$decimal_count."f<i>万</i>", $number/10000);
+            $tenthousand = sprintf("%.".$decimal_count."f<i>ten thousand</i>", $number/10000);
             return $hundredmillion.$tenthousand;
         }else{
-            $tenthousand = intval($number/10000)."<i>万</i>";
+            $tenthousand = intval($number/10000)."<i>ten thousand</i>";
             $number = $number - intval($number/10000)*10000;
         }
     }
