@@ -48,7 +48,7 @@ function formatMoneyIndex($number,$decimal_count=0){
         $wan_str = $yi_arr[1]/$wan;
         $wan_arr = explode('.',$wan_str);
 
-        $data_str = $yi_arr[0].'<i>亿</i>'.$wan_arr[0].'<i>万</i>';
+        $data_str = $yi_arr[0].'<i>100 million</i>'.$wan_arr[0].'<i>ten thousand</i>';
         return $data_str;
     }elseif($num_str > $wan){
         $wan_str = $num_str/$wan;
